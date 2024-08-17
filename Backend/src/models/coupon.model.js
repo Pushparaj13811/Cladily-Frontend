@@ -5,6 +5,7 @@ const couponSchema = new Schema(
         code: {
             type: String,
             required: true,
+            unique: true,
         },
         discountAmount: {
             type: Number,
@@ -17,6 +18,10 @@ const couponSchema = new Schema(
         minimumPurchaseAmount: {
             type: Number,
             required: true,
+        },
+        isActive: {
+            type: Boolean,
+            default: true,
         },
     },
     { timestamps: true }

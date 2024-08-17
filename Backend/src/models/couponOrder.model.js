@@ -12,6 +12,13 @@ const couponOrderSchema = new Schema(
             ref: "Order",
             required: true,
         },
+        discountAmount: {
+            type: Number,
+        },
+        appliedAt: {
+            type: Date,
+            default: Date.now,
+        },
     },
     { timestamps: true }
 );
