@@ -14,6 +14,7 @@ import { User } from "../models/user.model.js";
 import { Address } from "../models/address.model.js";
 import sendVerificationEmail from "../services/sendVerificationEmail.service.js";
 import sendWelcomeEmail from "../services/sendWelcomeEmail.services.js";
+import sendResetPasswordEmail from "../services/sendResetPasswordEmail.service.js";
 
 const userNameGenerator = (firstName, lastName) => {
     const random = Math.floor(Math.random() * 1000);
@@ -38,7 +39,8 @@ const registerUser = asyncHandler(async (req, res) => {
     // Send the response with the user and auth token
     // Catch any error and pass it to the error handler
 
-    const { email, password } = req.body;
+    const { email, password, firstName, lastName } = req.body;
+    let role = req.body?.role;
 
     if (!email || !password || !firstName || !lastName) {
         throw new ApiError(
@@ -49,6 +51,7 @@ const registerUser = asyncHandler(async (req, res) => {
     if (!role) {
         role = "user";
     }
+    console.log(role);
     const existedUser = await User.findOne({ email });
 
     if (existedUser) {
@@ -66,6 +69,7 @@ const registerUser = asyncHandler(async (req, res) => {
             password,
             firstName,
             lastName,
+            role,
         });
 
         const authToken = user.generateAuthToken();
@@ -101,7 +105,8 @@ const verifyEmail = asyncHandler(async (req, res) => {
     // Send the welcome email
     // Catch any error and pass it to the error handler
 
-    const { token } = req.params;
+    const token = req.params?.token || req.query?.token;
+    console.log(token);
 
     if (!token) {
         throw new ApiError(HTTP_BAD_REQUEST, "Verification token is required");
@@ -112,12 +117,11 @@ const verifyEmail = asyncHandler(async (req, res) => {
         const user = await User.findOneAndUpdate(
             {
                 emailVerificationToken: token,
-                emailVerificationTokenExpires: { $gt: Date.now() }, // Ensure token is not expired
             },
             {
                 emailVerified: true,
-                emailVerificationToken: undefined,
-                emailVerificationTokenExpires: undefined,
+                emailVerificationToken: null,
+                emailVerificationTokenExpires: null,
             },
             { new: true } // Return the updated document
         );
@@ -162,7 +166,11 @@ const resendVerificationEmail = asyncHandler(async (req, res) => {
             throw new ApiError(HTTP_NOT_FOUND, "User does not exist");
         }
 
+        if (user.emailVerified) {
+            throw new ApiError(HTTP_BAD_REQUEST, "Email already verified");
+        }
         const verificationToken = user.generateVerificationToken();
+        user.emailVerificationToken = verificationToken;
         await user.save();
 
         // Send verification email
@@ -270,7 +278,6 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 
     try {
         const user = req.user;
-
         const isPasswordCorrect = await user.isPasswordCorrect(currentPassword);
 
         if (!isPasswordCorrect) {
@@ -278,7 +285,7 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
         }
 
         user.password = newPassword;
-        await user.save();
+        await user.save({ validateBeforeSave: false });    
 
         return res
             .status(HTTP_OK)
@@ -322,12 +329,71 @@ const forgotPassword = asyncHandler(async (req, res) => {
         await user.save();
 
         // Send email with reset token
-        // You can use nodemailer or any other email service
+
+        const response = await sendResetPasswordEmail(email, resetToken);
 
         return res
             .status(HTTP_OK)
             .json(
-                new ApiResponse(HTTP_OK, "Reset token sent successfully", null)
+                new ApiResponse(
+                    HTTP_OK,
+                    "Reset password email sent successfully",
+                    null
+                )
+            );
+    } catch (error) {
+        throw new ApiError(HTTP_INTERNAL_SERVER_ERROR, error.message);
+    }
+});
+
+const resetPassword = asyncHandler(async (req, res) => {
+    // Get the reset token, new password, and confirm new password from req.body
+    // Validate and sanitize all data provided
+    // Check if the new password and confirm new password match
+    // If the new password and confirm new password do not match, throw an error "Passwords do not match"
+    // Find the user by the reset token
+    // If the user does not exist, throw an error "Invalid or expired reset token"
+    // Check if the reset token has expired
+    // If the reset token has expired, throw an error "Reset token has expired"
+    // Update the user's password
+    // Send the response with the message "Password reset successfully"
+    // Catch any error and pass it to the error handler
+
+    const resetToken = req.query?.token;
+    const { newPassword, confirmNewPassword } = req.body;
+
+    if (!resetToken || !newPassword || !confirmNewPassword) {
+        throw new ApiError(
+            HTTP_BAD_REQUEST,
+            "Please provide all required fields"
+        );
+    }
+
+    if (newPassword !== confirmNewPassword) {
+        throw new ApiError(HTTP_BAD_REQUEST, "Passwords do not match");
+    }
+
+    try {
+        const user = await User.findOneAndUpdate(
+            { resetToken },
+            {
+                resetToken: null,
+                resetTokenExpires: null,
+                password: newPassword,
+            }
+        );
+
+        if (!user) {
+            throw new ApiError(
+                HTTP_BAD_REQUEST,
+                "Invalid or expired reset token"
+            );
+        }
+
+        return res
+            .status(HTTP_OK)
+            .json(
+                new ApiResponse(HTTP_OK, "Password reset successfully", null)
             );
     } catch (error) {
         throw new ApiError(HTTP_INTERNAL_SERVER_ERROR, error.message);
@@ -555,14 +621,13 @@ const updateUserAddress = asyncHandler(async (req, res) => {
     }
 });
 
-
-
 export {
     registerUser,
     loginUser,
     logoutUser,
     changeCurrentPassword,
     forgotPassword,
+    resetPassword,
     getUserProfile,
     updateUserProfile,
     updateUsername,
