@@ -84,10 +84,7 @@ UserSchema.methods.generateAuthToken = function () {
             fullName: this.fullName,
             role: this.role,
         },
-        process.env.AUTH_TOKEN_SECRET,
-        {
-            expiresIn: process.env.AUTH_TOKEN_EXPIRES_IN,
-        }
+        process.env.JWT_SECRET
     );
 };
 
