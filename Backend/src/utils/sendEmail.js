@@ -1,5 +1,7 @@
 import nodemailer from "nodemailer";
-import { OAuth2Client } from "google-auth-library";
+import { google } from "googleapis";
+import ApiError from "./apiError.js";
+import { HTTP_INTERNAL_SERVER_ERROR } from "../httpStatusCode.js";
 
 const sendEmail = async (email, subject, message) => {
     const OAUTH_PLAYGROUND = "https://developers.google.com/oauthplayground";
@@ -10,7 +12,7 @@ const sendEmail = async (email, subject, message) => {
         EMAIL_USER,
     } = process.env;
 
-    const oauth2Client = new OAuth2Client(
+    const oauth2Client = new google.auth.OAuth2(
         EMAIL_CLIENT_ID,
         EMAIL_CLIENT_SECRET,
         OAUTH_PLAYGROUND
@@ -18,7 +20,8 @@ const sendEmail = async (email, subject, message) => {
 
     try {
         oauth2Client.setCredentials({ refresh_token: EMAIL_REFRESH_TOKEN });
-        const accessToken = await oauth2Client.getAccessToken();
+
+        const { token } = await oauth2Client.getAccessToken();
 
         const transport = nodemailer.createTransport({
             service: "gmail",
@@ -28,7 +31,7 @@ const sendEmail = async (email, subject, message) => {
                 clientId: EMAIL_CLIENT_ID,
                 clientSecret: EMAIL_CLIENT_SECRET,
                 refreshToken: EMAIL_REFRESH_TOKEN,
-                accessToken: accessToken.token,
+                accessToken: token,
             },
         });
 
@@ -42,7 +45,7 @@ const sendEmail = async (email, subject, message) => {
         const result = await transport.sendMail(mailOptions);
         return result;
     } catch (error) {
-        throw new Error(`Failed to send email: ${error.message}`);
+        throw new ApiError(HTTP_INTERNAL_SERVER_ERROR, error.message);
     }
 };
 
