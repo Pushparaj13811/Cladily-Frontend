@@ -36,15 +36,12 @@ const userSchema = new Schema(
         gender: {
             type: String,
             enum: ["male", "female", "other"],
-            required: true,
         },
         phone: {
             type: Number,
-            required: true,
         },
         dateOfBirth: {
             type: Date,
-            required: true,
         },
         addressId: {
             type: Schema.Types.ObjectId,
@@ -85,18 +82,18 @@ const userSchema = new Schema(
     { timestamps: true }
 );
 
-UserSchema.pre("save", async function (next) {
+userSchema.pre("save", async function (next) {
     if (!this.isModified("password")) return next();
 
     this.password = await bcrypt.hash(this.password, 10);
     next();
 });
 
-UserSchema.methods.isPasswordCorrect = async function (inputPassword) {
+userSchema.methods.isPasswordCorrect = async function (inputPassword) {
     return await bcrypt.compare(inputPassword, this.password);
 };
 
-UserSchema.methods.generateAuthToken = function () {
+userSchema.methods.generateAuthToken = function () {
     return jwt.sign(
         {
             _id: this._id,
@@ -109,7 +106,7 @@ UserSchema.methods.generateAuthToken = function () {
     );
 };
 
-UserSchema.methods.generateResetToken = function () {
+userSchema.methods.generateResetToken = function () {
     return jwt.sign(
         {
             _id: this._id,
@@ -119,7 +116,7 @@ UserSchema.methods.generateResetToken = function () {
     );
 };
 
-UserSchema.methods.generateVerificationToken = function () {
+userSchema.methods.generateVerificationToken = function () {
     const verificationToken = crypto.randomBytes(32).toString("hex");
 
     this.emailVerificationToken = crypto
@@ -128,7 +125,7 @@ UserSchema.methods.generateVerificationToken = function () {
         .digest("hex");
     this.emailVerificationTokenExpires = Date.now() + 24 * 60 * 60 * 1000; // Token valid for 24 hours
 
-    return verificationToken;
+    return this.emailVerificationToken;
 };
 
 export const User = mongoose.model("User", userSchema);
