@@ -1,5 +1,5 @@
 import asyncHandler from "../utils/asyncHandler.js";
-import { User } from "../models/index.js";
+import { User } from "../models/user.model.js";
 import ApiError from "../utils/apiError.js";
 import { HTTP_UNAUTHORIZED } from "../httpStatusCode.js";
 import jwt from "jsonwebtoken";
