@@ -1,6 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 
 const userSchema = new Schema(
     {
@@ -57,9 +58,29 @@ const userSchema = new Schema(
         authToken: {
             type: String,
         },
+        resetToken: {
+            type: String,
+        },
         googleId: {
             type: String,
         },
+        emailVerified: {
+            type: Boolean,
+            default: false,
+        },
+        emailVerificationToken: {
+            type: String,
+        },
+        emailVerificationTokenExpires: {
+            type: Date,
+        },
+        usedCoupons: [
+            {
+                type: Schema.Types.ObjectId,
+                ref: "Coupon",
+                unique: true,
+            },
+        ],
     },
     { timestamps: true }
 );
@@ -86,6 +107,28 @@ UserSchema.methods.generateAuthToken = function () {
         },
         process.env.JWT_SECRET
     );
+};
+
+UserSchema.methods.generateResetToken = function () {
+    return jwt.sign(
+        {
+            _id: this._id,
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: "1h" }
+    );
+};
+
+UserSchema.methods.generateVerificationToken = function () {
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+
+    this.emailVerificationToken = crypto
+        .createHash("sha256")
+        .update(verificationToken)
+        .digest("hex");
+    this.emailVerificationTokenExpires = Date.now() + 24 * 60 * 60 * 1000; // Token valid for 24 hours
+
+    return verificationToken;
 };
 
 export const User = mongoose.model("User", userSchema);
