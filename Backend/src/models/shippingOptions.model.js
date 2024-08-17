@@ -18,7 +18,7 @@ const shippingOptionsSchema = new Schema(
     { timestamps: true }
 );
 
-export const ShippingOptions = mongoose.model(
-    "ShippingOptions",
+export const ShippingOption = mongoose.model(
+    "ShippingOption",
     shippingOptionsSchema
 );
