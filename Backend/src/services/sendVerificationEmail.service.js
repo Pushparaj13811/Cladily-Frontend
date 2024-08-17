@@ -1,4 +1,6 @@
-import sendEmail from "../utils/sendEmail";
+import { HTTP_INTERNAL_SERVER_ERROR, HTTP_OK } from "../httpStatusCode.js";
+import ApiError from "../utils/apiError.js";
+import sendEmail from "../utils/sendEmail.js";
 
 const sendVerificationEmail = async (user, verificationToken) => {
     try {
@@ -18,16 +20,14 @@ const sendVerificationEmail = async (user, verificationToken) => {
         // Send the email
         const emailResult = await sendEmail(user.email, subject, message);
 
-        if (emailResult.accepted.length > 0) {
-            console.log("Verification email sent successfully to:", user.email);
-        } else {
-            console.log("Failed to send verification email to:", user.email);
+        if (!(emailResult.accepted.length > 0)) {
+            throw new ApiError(
+                HTTP_INTERNAL_SERVER_ERROR,
+                "Failed to send verification email."
+            );
         }
     } catch (error) {
-        console.error("Error sending verification email:", error.message);
-        throw new Error(
-            "There was an error sending the verification email. Please try again later."
-        );
+        throw new ApiError(HTTP_INTERNAL_SERVER_ERROR, error.message);
     }
 };
 
