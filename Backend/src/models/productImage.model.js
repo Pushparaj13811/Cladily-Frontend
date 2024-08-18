@@ -18,6 +18,10 @@ const productImageSchema = new Schema(
             ref: "Product",
             required: true,
         },
+        isPrimary: {
+            type: Boolean,
+            default: false,
+        },
     },
     { timestamps: true }
 );
