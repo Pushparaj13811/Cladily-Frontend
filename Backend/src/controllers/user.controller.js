@@ -16,6 +16,7 @@ import sendVerificationEmail from "../services/sendVerificationEmail.service.js"
 import sendWelcomeEmail from "../services/sendWelcomeEmail.services.js";
 import sendResetPasswordEmail from "../services/sendResetPasswordEmail.service.js";
 import mongoose from "mongoose";
+import { SchoppingCart } from "../models/shoppingCart.model.js";
 
 const userNameGenerator = (firstName, lastName) => {
     const random = Math.floor(Math.random() * 1000);
@@ -43,10 +44,15 @@ const cleanUserObject = (user) => {
 
 const registerUser = asyncHandler(async (req, res) => {
     // Get username, email, password, firstName, lastName, gender, phone, dateOfBirth, role from req.body
+    // Get guestCartId from req.body
     // Validate if all data are provided
     // Check if the user already exists in the database
     // If the user exists, throw an error "User already exists"
     // Create a new user
+    // if guestCartId exists, find the cart by the guestCartId
+    // if the cart exists, transfer the cart to the user
+    // Clear the guestCartId cookie
+    // if the cart does not exist, create a new cart for the user
     // Generate an auth token
     // Save the user to the database
     // Send the response with the user and auth token
@@ -54,6 +60,8 @@ const registerUser = asyncHandler(async (req, res) => {
 
     const { email, password, firstName, lastName } = req.body;
     let role = req.body?.role;
+
+    const { guestCartId } = req.cookies;
 
     if (!email || !password || !firstName || !lastName) {
         throw new ApiError(
@@ -82,7 +90,10 @@ const registerUser = asyncHandler(async (req, res) => {
             firstName,
             lastName,
             role,
+            usedCoupons: [],
         });
+
+        console.log(user);
 
         const createdUser = await User.findById(user._id).select(
             "-password -usedCoupons -emailVerificationToken -emailVerificationTokenExpires"
@@ -95,6 +106,18 @@ const registerUser = asyncHandler(async (req, res) => {
             );
         }
 
+        if (guestCartId) {
+            const cart = await SchoppingCart.findOne({ _id: guestCartId });
+            if (cart) {
+                cart.userId = createdUser._id;
+                await cart.save();
+            }
+            res.clearCookie("guestCartId", options);
+        }
+
+        await SchoppingCart.create({
+            userId: createdUser._id,
+        });
         const authToken = createdUser.generateAuthToken();
         createdUser.authToken = authToken;
         await createdUser.save();
