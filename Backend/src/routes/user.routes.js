@@ -12,6 +12,8 @@ import {
     updateUsername,
     updateUserAddress,
     resetPassword,
+    getUserAddress,
+    deleteUserAddress,
 } from "../controllers/user.controller.js";
 import verifyToken from "../middlewares/auth.middleware.js";
 
@@ -24,10 +26,12 @@ router.post("/login", loginUser);
 router.post("/logout", verifyToken, logoutUser);
 router.post("/change-password", verifyToken, changeCurrentPassword);
 router.post("/forgot-password", forgotPassword);
-router.patch("/reset-password",  resetPassword);
+router.patch("/reset-password", resetPassword);
 router.get("/get-user-profile", verifyToken, getUserProfile);
 router.patch("/update-profile", verifyToken, updateUserProfile);
 router.patch("/update-username", verifyToken, updateUsername);
 router.patch("/update-address", verifyToken, updateUserAddress);
+router.get("/get-user-address", verifyToken, getUserAddress);
+router.delete("/delete-address/:addressId", verifyToken, deleteUserAddress);
 
 export default router;
