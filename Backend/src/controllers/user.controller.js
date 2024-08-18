@@ -15,6 +15,7 @@ import { Address } from "../models/address.model.js";
 import sendVerificationEmail from "../services/sendVerificationEmail.service.js";
 import sendWelcomeEmail from "../services/sendWelcomeEmail.services.js";
 import sendResetPasswordEmail from "../services/sendResetPasswordEmail.service.js";
+import mongoose from "mongoose";
 
 const userNameGenerator = (firstName, lastName) => {
     const random = Math.floor(Math.random() * 1000);
@@ -26,6 +27,18 @@ const options = {
     httpOnly: true,
     secure: true,
     sameSite: "None",
+};
+
+const cleanUserObject = (user) => {
+    const userObject = user.toObject();
+    delete userObject.password;
+    delete userObject.usedCoupons;
+    delete userObject.emailVerificationToken;
+    delete userObject.emailVerificationTokenExpires;
+    delete userObject.resetToken;
+    delete userObject.resetTokenExpires;
+
+    return userObject;
 };
 
 const registerUser = asyncHandler(async (req, res) => {
@@ -51,7 +64,6 @@ const registerUser = asyncHandler(async (req, res) => {
     if (!role) {
         role = "user";
     }
-    console.log(role);
     const existedUser = await User.findOne({ email });
 
     if (existedUser) {
@@ -72,21 +84,36 @@ const registerUser = asyncHandler(async (req, res) => {
             role,
         });
 
-        const authToken = user.generateAuthToken();
-        user.authToken = authToken;
-        await user.save();
+        const createdUser = await User.findById(user._id).select(
+            "-password -usedCoupons -emailVerificationToken -emailVerificationTokenExpires"
+        );
 
-        const verificationToken = user.generateVerificationToken();
-        await user.save();
+        if (!createdUser) {
+            throw new ApiError(
+                HTTP_INTERNAL_SERVER_ERROR,
+                "Error creating user"
+            );
+        }
+
+        const authToken = createdUser.generateAuthToken();
+        createdUser.authToken = authToken;
+        await createdUser.save();
+
+        const verificationToken = createdUser.generateVerificationToken();
+        await createdUser.save();
 
         // Send verification email
 
-        await sendVerificationEmail(user, verificationToken);
+        await sendVerificationEmail(createdUser, verificationToken);
 
         return res
             .status(HTTP_CREATED)
             .json(
-                new ApiResponse(HTTP_CREATED, "User created successfully", user)
+                new ApiResponse(
+                    HTTP_CREATED,
+                    "User created successfully",
+                    createdUser
+                )
             );
     } catch (error) {
         throw new ApiError(HTTP_INTERNAL_SERVER_ERROR, error.message);
@@ -117,6 +144,7 @@ const verifyEmail = asyncHandler(async (req, res) => {
         const user = await User.findOneAndUpdate(
             {
                 emailVerificationToken: token,
+                emailVerificationTokenExpires: { $gt: Date.now() },
             },
             {
                 emailVerified: true,
@@ -219,15 +247,17 @@ const loginUser = asyncHandler(async (req, res) => {
         const isPasswordCorrect = await user.isPasswordCorrect(password);
 
         if (!isPasswordCorrect) {
-            throw new ApiError(HTTP_UNAUTHORIZED, "Incorrect password");
+            throw new ApiError(HTTP_UNAUTHORIZED, "Invalid credentials");
         }
+
+        const cleanUser = cleanUserObject(user);
 
         return res
             .status(HTTP_OK)
             .cookie("authToken", user.authToken, options)
             .json(
                 new ApiResponse(HTTP_OK, "User logged in successfully", {
-                    user,
+                    cleanUser,
                 })
             );
     } catch (error) {
@@ -285,7 +315,7 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
         }
 
         user.password = newPassword;
-        await user.save({ validateBeforeSave: false });    
+        await user.save({ validateBeforeSave: false });
 
         return res
             .status(HTTP_OK)
@@ -326,11 +356,12 @@ const forgotPassword = asyncHandler(async (req, res) => {
         const resetToken = user.generateResetToken();
 
         user.resetToken = resetToken;
+        user.resetTokenExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
         await user.save();
 
         // Send email with reset token
 
-        const response = await sendResetPasswordEmail(email, resetToken);
+        await sendResetPasswordEmail(email, resetToken);
 
         return res
             .status(HTTP_OK)
@@ -375,12 +406,15 @@ const resetPassword = asyncHandler(async (req, res) => {
 
     try {
         const user = await User.findOneAndUpdate(
-            { resetToken },
+            {
+                resetToken,
+                resetTokenExpires: { $gt: Date.now() },
+            },
             {
                 resetToken: null,
                 resetTokenExpires: null,
-                password: newPassword,
-            }
+            },
+            { new: true }
         );
 
         if (!user) {
@@ -389,6 +423,9 @@ const resetPassword = asyncHandler(async (req, res) => {
                 "Invalid or expired reset token"
             );
         }
+
+        user.password = newPassword;
+        await user.save({ validateBeforeSave: false });
 
         return res
             .status(HTTP_OK)
@@ -406,7 +443,8 @@ const getUserProfile = asyncHandler(async (req, res) => {
     // Catch any error and pass it to the error handler
 
     try {
-        const user = req.user;
+        const userResponse = req.user;
+        const user = cleanUserObject(userResponse);
         return res
             .status(HTTP_OK)
             .json(new ApiResponse(HTTP_OK, "User profile", user));
@@ -459,10 +497,13 @@ const updateUserProfile = asyncHandler(async (req, res) => {
                 "Not authorized to update user"
             );
         }
+        const resUser = cleanUserObject(user);
 
         return res
             .status(HTTP_OK)
-            .json(new ApiResponse(HTTP_OK, "User updated successfully", user));
+            .json(
+                new ApiResponse(HTTP_OK, "User updated successfully", resUser)
+            );
     } catch (error) {
         throw new ApiError(HTTP_INTERNAL_SERVER_ERROR, error.message);
     }
@@ -517,13 +558,15 @@ const updateUsername = asyncHandler(async (req, res) => {
             );
         }
 
+        const resUser = cleanUserObject(updatedUser);
+
         return res
             .status(HTTP_OK)
             .json(
                 new ApiResponse(
                     HTTP_OK,
                     "Username updated successfully",
-                    updatedUser
+                    resUser
                 )
             );
     } catch (error) {
@@ -558,8 +601,10 @@ const updateUserAddress = asyncHandler(async (req, res) => {
             "Please provide all required fields"
         );
     }
-
     try {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+
         const address = await Address.create(
             [
                 {
@@ -574,19 +619,34 @@ const updateUserAddress = asyncHandler(async (req, res) => {
             { session }
         );
 
-        await User.findByIdAndUpdate(
+        if (!address) {
+            throw new ApiError(
+                HTTP_INTERNAL_SERVER_ERROR,
+                "Error creating address"
+            );
+        }
+
+        const updatedUserDetails = await User.findByIdAndUpdate(
             userId,
-            { addressId: address._id },
-            { new: true, runValidators: true, session }
+            { addressId: address[0]?._id },
+            { new: true, runValidators: true }
         );
 
+        if (!updatedUserDetails) {
+            throw new ApiError(
+                HTTP_INTERNAL_SERVER_ERROR,
+                "Error updating user address"
+            );
+        }
+
         await session.commitTransaction();
+        session.endSession();
 
         const updatedUser = await User.aggregate([
-            { $match: { _id: mongoose.Types.ObjectId(userId) } },
+            { $match: { _id: userId } },
             {
                 $lookup: {
-                    from: "Address",
+                    from: "addresses",
                     localField: "addressId",
                     foreignField: "_id",
                     as: "address",
@@ -598,12 +658,18 @@ const updateUserAddress = asyncHandler(async (req, res) => {
                     _id: 1,
                     username: 1,
                     email: 1,
-                    address: 1,
+                    address: {
+                        street: 1,
+                        city: 1,
+                        state: 1,
+                        postalCode: 1,
+                        country: 1,
+                    },
                 },
             },
         ]);
 
-        if (!updatedUser.length) {
+        if (!(updatedUser.length > 0)) {
             throw new ApiError(HTTP_NOT_FOUND, "User not found");
         }
 
@@ -615,6 +681,87 @@ const updateUserAddress = asyncHandler(async (req, res) => {
                     "User address updated successfully",
                     updatedUser[0]
                 )
+            );
+    } catch (error) {
+        throw new ApiError(HTTP_INTERNAL_SERVER_ERROR, error.message);
+    }
+});
+
+const getUserAddress = asyncHandler(async (req, res) => {
+    // Get the user from req.user
+    // Get the user id from req.user
+    // Query the address table with the user id
+    // Send the response with the user address
+    // Catch any error and pass it to the error handler
+
+    const userId = req.user._id;
+
+    if (!userId) {
+        throw new ApiError(
+            HTTP_UNAUTHORIZED,
+            "You are not authorized to get user address"
+        );
+    }
+
+    try {
+        const userAddress = await Address.find({ userId });
+
+        if (!userAddress) {
+            throw new ApiError(HTTP_NOT_FOUND, "User address not found");
+        }
+
+        return res
+            .status(HTTP_OK)
+            .json(new ApiResponse(HTTP_OK, "User address", userAddress));
+    } catch (error) {
+        throw new ApiError(HTTP_INTERNAL_SERVER_ERROR, error.message);
+    }
+});
+
+const deleteUserAddress = asyncHandler(async (req, res) => {
+    // Get the user id from req.user
+    // Get the address id from req.params
+    // Query the address table with the address id
+    // If the address does not exist, throw an error "Address not found"
+    // if userId is not equal to the user id, throw an error "Not authorized to delete address"
+    // Delete the address
+    // Send the response with the message "Address deleted successfully"
+    // Catch any error and pass it to the error handler
+
+    const userId = req.user._id;
+
+    if (!userId) {
+        throw new ApiError(
+            HTTP_UNAUTHORIZED,
+            "You are not authorized to delete user address"
+        );
+    }
+
+    const { addressId } = req.params;
+
+    const id = new mongoose.Types.ObjectId(addressId);
+
+    if (!addressId) {
+        throw new ApiError(HTTP_BAD_REQUEST, "Address ID is required");
+    }
+
+    try {
+        const address = await Address.findOneAndDelete({
+            _id: id,
+            userId: userId,
+        });
+
+        if (!address) {
+            throw new ApiError(
+                HTTP_NOT_FOUND,
+                "Address not found or unauthorized to delete address"
+            );
+        }
+
+        return res
+            .status(HTTP_OK)
+            .json(
+                new ApiResponse(HTTP_OK, "Address deleted successfully", null)
             );
     } catch (error) {
         throw new ApiError(HTTP_INTERNAL_SERVER_ERROR, error.message);
@@ -634,4 +781,6 @@ export {
     updateUserAddress,
     verifyEmail,
     resendVerificationEmail,
+    getUserAddress,
+    deleteUserAddress,
 };
