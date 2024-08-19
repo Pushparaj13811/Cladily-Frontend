@@ -2,7 +2,15 @@ import mongoose, { Schema } from "mongoose";
 
 const guestSchema = new Schema(
     {
-        sessionId: {
+        userAgent: {
+            type: String,
+            required: true,
+        },
+        ip: {
+            type: String,
+            required: true,
+        },
+        token: {
             type: String,
             required: true,
         },
