@@ -1,5 +1,6 @@
 import ApiResponse from "../utils/apiResponse.js";
 import ApiError from "../utils/apiError.js";
+import asyncHandler from "../utils/asyncHandler.js";
 import { Category } from "../models/category.model.js";
 import {
     HTTP_BAD_REQUEST,
@@ -8,7 +9,7 @@ import {
     HTTP_OK,
 } from "../httpStatusCode.js";
 
-const createCategory = async (req, res, next) => {
+const createCategory = asyncHandler(async (req, res) => {
     // Get the category name and description from the request body
     // Check if the category name and description are provided
     // Check if the category name is unique
@@ -44,8 +45,8 @@ const createCategory = async (req, res, next) => {
     } catch (error) {
         throw new ApiError(HTTP_INTERNAL_SERVER_ERROR, error.message);
     }
-};
-const deleteCategory = async (req, res, next) => {
+});
+const deleteCategory = asyncHandler(async (req, res) => {
     // Get the category id from the request params
     // Check if the category exists
     // Delete the category
@@ -70,8 +71,8 @@ const deleteCategory = async (req, res, next) => {
             error.message || "Internal server error"
         );
     }
-};
-const getCategories = async (req, res, next) => {
+});
+const getCategories = asyncHandler(async (req, res) => {
     // Get all categories
     // Return the categories
     // Handle any errors
@@ -87,6 +88,6 @@ const getCategories = async (req, res, next) => {
             error.message || "Internal server error"
         );
     }
-};
+});
 
 export { createCategory, deleteCategory, getCategories };
