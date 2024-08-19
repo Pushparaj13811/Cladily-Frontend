@@ -10,9 +10,6 @@ const shoppingCartSchema = new Schema(
             type: Schema.Types.ObjectId,
             ref: "Guest",
         },
-        sessionId: {
-            type: String,
-        },
     },
     { timestamps: true }
 );
