@@ -17,13 +17,14 @@ import {
     deleteFromCloudinary,
     uploadOnCloudinary,
 } from "../services/cloudinary.service.js";
+import asyncHandler from "../utils/asyncHandler.js";
 
-const deleteImages = async (uploadedImageUrls) => {
+const deleteImages = asyncHandler(async (uploadedImageUrls) => {
     const publicIds = uploadedImageUrls.map((url) => {
         return url.split("/").pop().split(".")[0];
     });
     await deleteFromCloudinary(publicIds);
-};
+});
 
 const validateProductData = (
     productName,
@@ -87,7 +88,7 @@ const uploadProductImages = async (
     return productImagesData;
 };
 
-const fetchProductDetails = async (productId) => {
+const fetchProductDetails = asyncHandler(async (productId) => {
     return Product.aggregate([
         { $match: { _id: productId } },
         {
@@ -139,9 +140,9 @@ const fetchProductDetails = async (productId) => {
             },
         },
     ]);
-};
+});
 
-const createProduct = async (req, res) => {
+const createProduct = asyncHandler(async (req, res) => {
     // Start a MongoDB session and begin a transaction
     // Extract product details and images from request
     // Validate required fields and data consistency
@@ -256,9 +257,9 @@ const createProduct = async (req, res) => {
             .status(error.statusCode || HTTP_INTERNAL_SERVER_ERROR)
             .json(new ApiResponse(error.statusCode, error.message));
     }
-};
+});
 
-const updateProduct = async (req, res) => {
+const updateProduct = asyncHandler(async (req, res) => {
     // Start a MongoDB session and begin a transaction
     // Extract product details and images from request
     // Validate required fields and data consistency
@@ -350,9 +351,9 @@ const updateProduct = async (req, res) => {
             .status(HTTP_BAD_REQUEST)
             .json(new ApiResponse(HTTP_BAD_REQUEST, "Category not found"));
     }
-};
+});
 
-const deleteProduct = async (req, res) => {
+const deleteProduct = asyncHandler(async (req, res) => {
     // Get the productId from the request
     // Find the product by productId
     // - If the product is not found, return an error response
@@ -408,9 +409,9 @@ const deleteProduct = async (req, res) => {
     } catch (error) {
         throw new ApiError(HTTP_INTERNAL_SERVER_ERROR, error.message);
     }
-};
+});
 
-const fetchAllProducts = async (req, res) => {
+const fetchAllProducts = asyncHandler(async (req, res) => {
     // Get page and limit from the query parameters
     // Find all products with pagination
     // - If no products are found, return an error response
@@ -447,9 +448,9 @@ const fetchAllProducts = async (req, res) => {
     } catch (error) {
         throw new ApiError(HTTP_INTERNAL_SERVER_ERROR, error.message);
     }
-};
+});
 
-const fetchProductById = async (req, res) => {
+const fetchProductById = asyncHandler(async (req, res) => {
     // Get the productId from the request
     // Find the product by productId
     // - If the product is not found, return an error response
@@ -483,7 +484,7 @@ const fetchProductById = async (req, res) => {
     } catch (error) {
         throw new ApiError(HTTP_INTERNAL_SERVER_ERROR, error.message);
     }
-};
+});
 
 export {
     createProduct,
