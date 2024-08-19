@@ -8,7 +8,9 @@ import { ProductVarient } from "../models/productVarient.model.js";
 import {
     HTTP_BAD_REQUEST,
     HTTP_CREATED,
+    HTTP_FORBIDDEN,
     HTTP_INTERNAL_SERVER_ERROR,
+    HTTP_NOT_FOUND,
     HTTP_OK,
 } from "../httpStatusCode.js";
 import {
@@ -164,6 +166,12 @@ const createProduct = async (req, res) => {
     session.startTransaction();
     let uploadedImageUrls = [];
 
+    const userId = req.user?._id;
+
+    if (!userId) {
+        throw new ApiError(HTTP_FORBIDDEN, "Unauthorized request");
+    }
+
     try {
         const {
             productName,
@@ -196,6 +204,7 @@ const createProduct = async (req, res) => {
             productName,
             categoryId,
             productDescription,
+            uploadedBy: userId,
         });
 
         await product.save({ session });
@@ -266,8 +275,15 @@ const updateProduct = async (req, res) => {
     session.startTransaction();
 
     const productId = req.params?.id;
+
+    const userId = req.user?._id;
+
     if (!productId) {
         throw new ApiError(HTTP_BAD_REQUEST, "Product id is required");
+    }
+
+    if (!userId) {
+        throw new ApiError(HTTP_FORBIDDEN, "Unauthorized request");
     }
 
     const {
@@ -290,8 +306,11 @@ const updateProduct = async (req, res) => {
         if (productDescription)
             updateProductFields.description = productDescription;
 
-        const product = await Product.findByIdAndUpdate(
-            productId,
+        const product = await Product.findOneAndUpdate(
+            {
+                _id: productId,
+                uploadedBy: userId,
+            },
             updateProductFields,
             {
                 new: true,
@@ -333,13 +352,138 @@ const updateProduct = async (req, res) => {
     }
 };
 
-const deleteProduct = async (req, res) => {};
+const deleteProduct = async (req, res) => {
+    // Get the productId from the request
+    // Find the product by productId
+    // - If the product is not found, return an error response
+    // - If the uploadedBy field of the product does not match the userId, return an error response
+    // Find the product images by productId
+    // - If images are found, delete them from Cloudinary
+    // Delete the product images from the database
+    // Find the product variants by productId
+    // Delete the product variants from the database
+    // Find the product tags by productId
+    // Delete the product tags from the database
+    // Delete the product from the database
+    // Return a success response
 
-const fetchAllProducts = async (req, res) => {};
+    const productId = req.params?.id;
+    const userId = req.user?._id;
 
-const fetchProductById = async (req, res) => {};
+    if (!productId) {
+        throw new ApiError(HTTP_BAD_REQUEST, "Product id is required");
+    }
 
+    if (!userId) {
+        throw new ApiError(HTTP_FORBIDDEN, "Unauthorized request");
+    }
 
+    const product = await Product.findById(productId);
+
+    if (!product) {
+        throw new ApiError(HTTP_NOT_FOUND, "Product not found");
+    }
+
+    if (product.uploadedBy.toString() !== userId) {
+        throw new ApiError(HTTP_FORBIDDEN, "Unauthorized request");
+    }
+
+    try {
+        const productImages = await ProductImage.find({ productId });
+
+        if (productImages.length > 0) {
+            await deleteImages(productImages.map((image) => image.imageUrl));
+            await ProductImage.deleteMany({ productId });
+        }
+
+        await ProductVarient.deleteMany({ productId });
+
+        await ProductTag.deleteMany({ productId });
+
+        await Product.findByIdAndDelete(productId);
+
+        return res
+            .status(HTTP_OK)
+            .json(new ApiResponse(HTTP_OK, "Product deleted successfully"));
+    } catch (error) {
+        throw new ApiError(HTTP_INTERNAL_SERVER_ERROR, error.message);
+    }
+};
+
+const fetchAllProducts = async (req, res) => {
+    // Get page and limit from the query parameters
+    // Find all products with pagination
+    // - If no products are found, return an error response
+    // Aggregate product details from the database
+    // - Include product images, category, tags, and variants
+    // Return a success response with the product details
+    // Return an error response in case of error
+
+    const page = parseInt(req.query?.page) || 1;
+    const limit = parseInt(req.query?.limit) || 10;
+
+    try {
+        const products = await Product.find()
+            .skip(limit * (page - 1))
+            .limit(limit);
+
+        if (products.length === 0) {
+            throw new ApiError(HTTP_NOT_FOUND, "No products found");
+        }
+
+        const productDetails = await fetchProductDetails(
+            products.map((p) => p._id)
+        );
+
+        return res
+            .status(HTTP_OK)
+            .json(
+                new ApiResponse(
+                    HTTP_OK,
+                    "Products fetched successfully",
+                    productDetails
+                )
+            );
+    } catch (error) {
+        throw new ApiError(HTTP_INTERNAL_SERVER_ERROR, error.message);
+    }
+};
+
+const fetchProductById = async (req, res) => {
+    // Get the productId from the request
+    // Find the product by productId
+    // - If the product is not found, return an error response
+    // pass the product id to fetchProductDetails function
+    // Return a success response with the product details
+
+    const productId = req.params?.id;
+
+    if (!productId) {
+        throw new ApiError(HTTP_BAD_REQUEST, "Product id is required");
+    }
+
+    try {
+        const product = await Product.findById(productId);
+
+        if (!product) {
+            throw new ApiError(HTTP_NOT_FOUND, "Product not found");
+        }
+
+        const productDetails = await fetchProductDetails(productId);
+
+        return res
+            .status(HTTP_OK)
+            .json(
+                new ApiResponse(
+                    HTTP_OK,
+                    "Product details fetched successfully",
+                    productDetails
+                )
+            );
+    } catch (error) {
+        throw new ApiError(HTTP_INTERNAL_SERVER_ERROR, error.message);
+    }
+};
 
 export {
     createProduct,
