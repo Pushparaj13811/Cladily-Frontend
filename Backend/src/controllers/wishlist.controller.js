@@ -9,8 +9,9 @@ import {
     HTTP_OK,
     HTTP_UNAUTHORIZED,
 } from "../httpStatusCode";
+import asyncHandler from "../utils/asyncHandler.js";
 
-const addToWishlist = async (req, res, next) => {
+const addToWishlist = asyncHandler(async (req, res) => {
     // Get the user id from the request object
     // Check if the user exists and throw an error if not
     // Get the product varient id from the request body
@@ -86,9 +87,9 @@ const addToWishlist = async (req, res, next) => {
             error.message || "Internal server error"
         );
     }
-};
+});
 
-const removeFromWishlist = async (req, res, next) => {
+const removeFromWishlist = asyncHandler(async (req, res) => {
     // Get the user id from the request object
     // Check if the user exists and throw an error if not
     // Get the product varient id from the request body
@@ -153,6 +154,6 @@ const removeFromWishlist = async (req, res, next) => {
             error.message || "Internal server error"
         );
     }
-};
+});
 
 export { addToWishlist, removeFromWishlist };
