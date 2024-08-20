@@ -6,6 +6,11 @@ const orderSchema = new Schema(
             type: Number,
             required: true,
         },
+        shippingAddressId: {
+            type: Schema.Types.ObjectId,
+            ref: "Address",
+            required: true,
+        },
         status: {
             type: String,
             required: true,
@@ -19,6 +24,9 @@ const orderSchema = new Schema(
             type: Schema.Types.ObjectId,
             ref: "User",
             required: true,
+        },
+        cancellationReason: {
+            type: String,
         },
     },
     { timestamps: true }

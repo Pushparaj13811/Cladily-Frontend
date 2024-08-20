@@ -20,6 +20,11 @@ const orderItemSchema = new Schema(
             ref: "ProductVarient",
             required: true,
         },
+        status: {
+            type: String,
+            default: "Pending",
+            required: true,
+        },
     },
     { timestamps: true }
 );
