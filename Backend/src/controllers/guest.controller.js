@@ -24,11 +24,15 @@ const createGuestSession = asyncHandler(async (req, res) => {
         const guest = await Guest.findOne({ ip, userAgent });
 
         if (guest) {
-            return res.status(HTTP_OK).json(
-                new ApiResponse(HTTP_OK, "Existing session found", {
-                    token: guest.token,
-                })
-            );
+            return res
+                .status(HTTP_OK)
+                .cookie("guestToken", guest.token, {})
+                .cookie("guestId", guest._id, {})
+                .json(
+                    new ApiResponse(HTTP_OK, "Existing session found", {
+                        token: guest.token,
+                    })
+                );
         }
 
         const token = generateGuestToken();
@@ -41,11 +45,15 @@ const createGuestSession = asyncHandler(async (req, res) => {
 
         await guest.save();
 
-        return res.status(HTTP_CREATED).json(
-            new ApiResponse(HTTP_CREATED, "New guest session created", {
-                token,
-            })
-        );
+        return res
+            .status(HTTP_CREATED)
+            .cookie("guestToken", token, {})
+            .cookie("guestId", guest._id, {})
+            .json(
+                new ApiResponse(HTTP_CREATED, "New guest session created", {
+                    token,
+                })
+            );
     } catch (error) {
         throw new ApiError(HTTP_INTERNAL_SERVER_ERROR, error.message);
     }
