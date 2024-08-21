@@ -9,12 +9,13 @@ cloudinary.config({
 
 const uploadOnCloudinary = async (localFilePath) => {
     try {
-        if (!file) return null;
+        if (!localFilePath) return null;
 
         const response = await cloudinary.uploader.upload(localFilePath, {
             folder: "images",
             resource_type: "image",
         });
+
         fs.unlinkSync(localFilePath);
         return response;
     } catch (error) {
