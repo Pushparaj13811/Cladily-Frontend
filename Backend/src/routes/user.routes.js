@@ -15,10 +15,12 @@ import {
     getUserAddress,
     deleteUserAddress,
 } from "../controllers/user.controller.js";
-import verifyToken from "../middlewares/auth.middleware.js";
+import {verifyToken} from "../middlewares/auth.middleware.js";
+import createGuestSession from "../controllers/guest.controller.js";
 
 const router = Router();
 
+router.get("/",createGuestSession);
 router.post("/register", registerUser);
 router.post("/verify-email", verifyEmail);
 router.post("/resend-verification-email", verifyToken, resendVerificationEmail);

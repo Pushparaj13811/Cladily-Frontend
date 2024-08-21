@@ -6,7 +6,7 @@ import {
     fetchAllProducts,
     fetchProductById,
 } from "../controllers/product.controller.js";
-import verifyToken from "../middlewares/auth.middleware.js";
+import {verifyToken} from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
 
 const router = Router();

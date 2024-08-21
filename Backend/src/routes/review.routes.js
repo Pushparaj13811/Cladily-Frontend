@@ -6,7 +6,7 @@ import {
     updateReview,
     deleteReview,
 } from "../controllers/review.controller.js";
-import verifyToken from "../middlewares/auth.middleware.js";
+import {verifyToken} from "../middlewares/auth.middleware.js";
 
 const router = Router();
 

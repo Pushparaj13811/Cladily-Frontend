@@ -4,7 +4,7 @@ import {
     deleteCategory,
     getCategories,
 } from "../controllers/category.controller.js";
-import verifyToken from "../middlewares/auth.middleware.js";
+import {verifyToken} from "../middlewares/auth.middleware.js";
 
 const router = Router();
 

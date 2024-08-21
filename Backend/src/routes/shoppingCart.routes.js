@@ -6,11 +6,11 @@ import {
     removeFromCart,
     clearCart,
 } from "../controllers/shoppingCart.controller.js";
-import verifyToken from "../middlewares/auth.middleware.js";
+import {verifyToken, optionalVerifyToken} from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-router.route("/").get(verifyToken, getCart);
+router.route("/").get(optionalVerifyToken, getCart);
 router.route("/add").post(verifyToken, addToCart);
 router.route("/update").put(verifyToken, updateCart);
 router.route("/remove").delete(verifyToken, removeFromCart);

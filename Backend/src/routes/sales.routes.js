@@ -4,7 +4,7 @@ import {
     getSales,
     getSaleBySizeAndColor,
 } from "../controllers/sales.controller.js";
-import verifyToken from "../middlewares/auth.middleware.js";
+import {verifyToken} from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
