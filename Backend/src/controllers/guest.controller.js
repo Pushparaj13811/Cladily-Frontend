@@ -21,7 +21,7 @@ const createGuestSession = asyncHandler(async (req, res) => {
     const userAgent = headers["user-agent"];
 
     try {
-        const guest = await Guest.findOne({ ip, userAgent });
+        let guest = await Guest.findOne({ ip, userAgent });
 
         if (guest) {
             return res
@@ -35,7 +35,12 @@ const createGuestSession = asyncHandler(async (req, res) => {
                 );
         }
 
-        const token = generateGuestToken();
+        const token = await generateGuestToken();
+
+        console.log("Token: ", token);
+        console.log("IP: ", ip);
+        console.log("User Agent: ", userAgent);
+        console.log("Headers: ", headers);
 
         guest = new Guest({
             ip,
