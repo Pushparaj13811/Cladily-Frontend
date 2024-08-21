@@ -47,7 +47,7 @@ import orderRoutes from "./routes/order.routes.js";
 import salesRoutes from "./routes/sales.routes.js";
 import shoppingRoutes from "./routes/shoppingCart.routes.js";
 import reviewRoutes from "./routes/review.routes.js";
-import wishlistRoutes from "./routes/wishlist.routes.js";
+import wishlistRoutes from "./routes/wishlists.routes.js";
 
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/products", productRoutes);
