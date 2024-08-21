@@ -16,7 +16,7 @@ import sendVerificationEmail from "../services/sendVerificationEmail.service.js"
 import sendWelcomeEmail from "../services/sendWelcomeEmail.services.js";
 import sendResetPasswordEmail from "../services/sendResetPasswordEmail.service.js";
 import mongoose from "mongoose";
-import { SchoppingCart } from "../models/shoppingCart.model.js";
+import { ShoppingCart } from "../models/shoppingCart.model.js";
 
 const userNameGenerator = (firstName, lastName) => {
     const random = Math.floor(Math.random() * 1000);
