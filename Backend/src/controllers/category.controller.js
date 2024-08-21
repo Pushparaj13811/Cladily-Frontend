@@ -54,8 +54,13 @@ const deleteCategory = asyncHandler(async (req, res) => {
     // Handle any errors
 
     const { categoryId } = req.params;
+    const user = req.user;
 
     try {
+        if (user.role !== "admin") {
+            throw new ApiError(HTTP_BAD_REQUEST, "Unauthorized request");
+        }
+
         const category = await Category.findByIdAndDelete(categoryId);
 
         if (!category) {
