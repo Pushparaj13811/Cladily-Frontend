@@ -1,8 +1,8 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/apiError.js";
 import ApiResponse from "../utils/apiResponse.js";
-import { Order } from "../models/Order.js";
-import { OrderItem } from "../models/OrderItem.js";
+import { Order } from "../models/order.model.js";
+import { OrderItem } from "../models/orderItem.model.js";
 import { ShoppingCart } from "../models/shoppingCart.model.js";
 import { Address } from "../models/address.model.js";
 import { Payment } from "../models/payment.model.js";
