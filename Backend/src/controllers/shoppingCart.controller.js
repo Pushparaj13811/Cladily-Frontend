@@ -8,6 +8,7 @@ import {
     HTTP_OK,
     HTTP_BAD_GATEWAY,
     HTTP_INTERNAL_SERVER_ERROR,
+    HTTP_FORBIDDEN,
 } from "../httpStatusCode.js";
 
 const getCart = asyncHandler(async (req, res) => {
@@ -41,7 +42,7 @@ const getCart = asyncHandler(async (req, res) => {
         },
         {
             $lookup: {
-                from: "cartItems",
+                from: "cartitems",
                 localField: "_id",
                 foreignField: "cartId",
                 as: "items",
@@ -49,21 +50,32 @@ const getCart = asyncHandler(async (req, res) => {
         },
         {
             $lookup: {
-                from: "products",
-                localField: "items.productId",
+                from: "productvarients",
+                localField: "items.productVarientId",
                 foreignField: "_id",
                 as: "products",
             },
+        },
+        {
+            $unwind: { path: "$items", preserveNullAndEmptyArrays: true },
+        },
+        {
+            $unwind: { path: "$products", preserveNullAndEmptyArrays: true },
         },
         {
             $project: {
                 _id: 1,
                 userId: 1,
                 guestId: 1,
-                items: 1,
+                items: {
+                    quantity: 1,
+                    productVarientId: 1,
+                },
                 products: {
                     _id: 1,
-                    name: 1,
+                    productId: 1,
+                    size: 1,
+                    color: 1,
                     price: 1,
                 },
             },
@@ -112,23 +124,28 @@ const addToCart = asyncHandler(async (req, res) => {
     }
 
     try {
-        const [cart, existingItem] = await Promise.all([
-            ShoppingCart.findOneAndUpdate(
-                { $or: [{ userId }, { guestId }] },
-                { $setOnInsert: { userId, guestId } },
-                { new: true, upsert: true }
-            ),
-            CartItem.findOne({
-                $and: [{ cartId: { $exists: true } }, { productVarientId }],
-            }),
-        ]);
+        // Find or create the cart
+        const cart = await ShoppingCart.findOneAndUpdate(
+            { $or: [{ userId }, { guestId }] },
+            { $setOnInsert: { userId, guestId } },
+            { new: true, upsert: true }
+        );
+
+        // Find the existing cart item
+        const existingItem = await CartItem.findOne({
+            cartId: cart._id,
+            productVarientId,
+        });
 
         if (existingItem) {
-            if (existingItem.quantity + quantity <= 5) {
-                existingItem.quantity += quantity;
+            if (existingItem.quantity + parseInt(quantity) <= 5) {
+                existingItem.quantity += parseInt(quantity);
                 await existingItem.save();
+            } else {
+                throw new ApiError(HTTP_FORBIDDEN, "Quantity limit exceeded");
             }
         } else {
+            // Create new cart item
             await CartItem.create({
                 cartId: cart._id,
                 productVarientId,
@@ -138,34 +155,46 @@ const addToCart = asyncHandler(async (req, res) => {
 
         const cartDetails = await ShoppingCart.aggregate([
             { $match: { _id: cart._id } },
+
             {
                 $lookup: {
-                    from: "cartItems",
+                    from: "cartitems",
                     localField: "_id",
                     foreignField: "cartId",
                     as: "items",
                 },
             },
+
+            { $unwind: { path: "$items", preserveNullAndEmptyArrays: true } },
             {
                 $lookup: {
-                    from: "productVarients",
+                    from: "productvarients",
                     localField: "items.productVarientId",
                     foreignField: "_id",
                     as: "products",
                 },
             },
+
+            {
+                $unwind: {
+                    path: "$products",
+                    preserveNullAndEmptyArrays: true,
+                },
+            },
+
             {
                 $project: {
                     _id: 1,
-                    userId: 1,
                     guestId: 1,
-                    items: 1,
+                    createdAt: 1,
+                    updatedAt: 1,
                     products: {
                         _id: 1,
                         name: 1,
                         size: 1,
                         color: 1,
                         price: 1,
+                        StockQuantity: 1,
                     },
                 },
             },
