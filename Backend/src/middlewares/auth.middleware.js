@@ -31,7 +31,7 @@ const verifyToken = asyncHandler(async (req, res, next) => {
 const optionalVerifyToken = (req, res, next) => {
     verifyToken(req, res, (err) => {
         if (err) {
-            console.log("Token verification failed, proceeding without authentication.");
+            return next();
         }
         next();
     });
