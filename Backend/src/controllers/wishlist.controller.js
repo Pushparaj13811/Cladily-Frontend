@@ -8,7 +8,7 @@ import {
     HTTP_NOT_FOUND,
     HTTP_OK,
     HTTP_UNAUTHORIZED,
-} from "../httpStatusCode";
+} from "../httpStatusCode.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
 const addToWishlist = asyncHandler(async (req, res) => {
