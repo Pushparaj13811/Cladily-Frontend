@@ -17,7 +17,7 @@ const verifyToken = asyncHandler(async (req, res, next) => {
         const decodedTokenInfo = jwt.verify(token, process.env.JWT_SECRET);
 
         const user = await User.findById(decodedTokenInfo?._id);
-        
+
         if (!user) {
             throw new ApiError(HTTP_UNAUTHORIZED, "Invalid token");
         }
@@ -28,4 +28,13 @@ const verifyToken = asyncHandler(async (req, res, next) => {
     }
 });
 
-export default verifyToken;
+const optionalVerifyToken = (req, res, next) => {
+    verifyToken(req, res, (err) => {
+        if (err) {
+            console.log("Token verification failed, proceeding without authentication.");
+        }
+        next();
+    });
+};
+
+export { verifyToken, optionalVerifyToken };
