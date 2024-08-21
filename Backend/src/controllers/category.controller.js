@@ -33,7 +33,7 @@ const createCategory = asyncHandler(async (req, res) => {
     }
 
     const category = new Category({
-        name,
+        categoryName:name,
         description,
     });
 
