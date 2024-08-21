@@ -1,8 +1,7 @@
 import crypto from "crypto";
-import asyncHandler from "./asyncHandler.js";
 
-const generateGuestToken = asyncHandler(async () => {
+const generateGuestToken = async () => {
     return crypto.randomBytes(32).toString("hex");
-});
+};
 
 export { generateGuestToken };
