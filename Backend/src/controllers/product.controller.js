@@ -156,7 +156,7 @@ const fetchProductDetails = async (productId) => {
                     isPrimary: 1,
                 },
                 productTags: { tagName: 1 },
-                productVarient: { size: 1, price: 1, color: 1, quantity: 1 },
+                productVarient: {_id:1,  size: 1, price: 1, color: 1, stockQuantity: 1 },
             },
         },
     ]);
@@ -208,7 +208,7 @@ const fetchAllProductDetails = async () => {
                     isPrimary: 1,
                 },
                 productTags: { tagName: 1 },
-                productVarient: { size: 1, price: 1, color: 1, quantity: 1 },
+                productVarient: {_id:1, size: 1, price: 1, color: 1, stockQuantity: 1 },
             },
         },
     ]);
