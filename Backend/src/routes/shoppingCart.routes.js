@@ -11,9 +11,9 @@ import {verifyToken, optionalVerifyToken} from "../middlewares/auth.middleware.j
 const router = Router();
 
 router.route("/").get(optionalVerifyToken, getCart);
-router.route("/add").post(verifyToken, addToCart);
-router.route("/update").put(verifyToken, updateCart);
-router.route("/remove").delete(verifyToken, removeFromCart);
-router.route("/clear").delete(verifyToken, clearCart);
+router.route("/add").post(optionalVerifyToken, addToCart);
+router.route("/update").put(optionalVerifyToken, updateCart);
+router.route("/remove").delete(optionalVerifyToken, removeFromCart);
+router.route("/clear").delete(optionalVerifyToken, clearCart);
 
 export default router;
