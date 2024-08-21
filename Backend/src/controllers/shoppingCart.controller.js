@@ -2,12 +2,13 @@ import ApiError from "../utils/apiError.js";
 import ApiResponse from "../utils/apiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { ShoppingCart } from "../models/shoppingCart.model.js";
-import { HTTP_CREATED, HTTP_OK } from "../utils/httpStatusCodes.js";
 import { CartItem } from "../models/cartItem.model.js";
 import {
+    HTTP_CREATED,
+    HTTP_OK,
     HTTP_BAD_GATEWAY,
     HTTP_INTERNAL_SERVER_ERROR,
-} from "../httpStatusCode";
+} from "../httpStatusCode.js";
 
 const getCart = asyncHandler(async (req, res) => {
     // 1. Check if the user ID or guest ID is available from the request.
