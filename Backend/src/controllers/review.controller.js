@@ -10,7 +10,7 @@ import {
     HTTP_NOT_FOUND,
     HTTP_OK,
 } from "../httpStatusCode.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { uploadOnCloudinary } from "../services/cloudinary.service.js";
 import { ReviewImage } from "../models/reviewImage.model.js";
 import mongoose from "mongoose";
 
