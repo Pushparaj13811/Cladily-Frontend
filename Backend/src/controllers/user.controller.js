@@ -13,10 +13,9 @@ import ApiResponse from "../utils/apiResponse.js";
 import { User } from "../models/user.model.js";
 import { Address } from "../models/address.model.js";
 import sendVerificationEmail from "../services/sendVerificationEmail.service.js";
-import sendWelcomeEmail from "../services/sendWelcomeEmail.services.js";
+import sendWelcomeEmail from "../services/sendWelcomeEmail.service.js";
 import sendResetPasswordEmail from "../services/sendResetPasswordEmail.service.js";
 import mongoose from "mongoose";
-import { ShoppingCart } from "../models/shoppingCart.model.js";
 
 const userNameGenerator = (firstName, lastName) => {
     const random = Math.floor(Math.random() * 1000);
