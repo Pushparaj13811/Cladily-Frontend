@@ -20,8 +20,7 @@ const productVarientSchema = new Schema(
             required: true,
         },
         stockQuantity: {
-            type: Map,
-            of: Number,
+            type: Number,
             required: true,
         },
     },
