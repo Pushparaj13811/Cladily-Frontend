@@ -18,13 +18,16 @@ import {
     uploadOnCloudinary,
 } from "../services/cloudinary.service.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import mongoose from "mongoose";
 
-const deleteImages = asyncHandler(async (uploadedImageUrls) => {
-    const publicIds = uploadedImageUrls.map((url) => {
-        return url.split("/").pop().split(".")[0];
-    });
-    await deleteFromCloudinary(publicIds);
-});
+const deleteImages = async (uploadedImageUrl) => {
+    const publicId = uploadedImageUrl
+        .split("/")
+        .slice(-2)
+        .map((segment) => segment.split(".").shift())
+        .join("/");
+    await deleteFromCloudinary(publicId);
+};
 
 const validateProductData = (
     productName,
@@ -43,7 +46,7 @@ const validateProductData = (
     if (!productImages || productImages.length === 0) {
         throw new ApiError(HTTP_BAD_REQUEST, "Product images are required");
     }
-    if (colors.length !== productImages.length) {
+    if (colors.length !== productImages.image.length) {
         throw new ApiError(
             HTTP_BAD_REQUEST,
             "Mismatch between images and colors"
@@ -58,37 +61,54 @@ const uploadProductImages = async (
     productId,
     productImages,
     colors,
-    isPrimaryFlag,
-    uploadedImageUrls
+    isPrimaryFlag
 ) => {
+    let UploadedImageUrls = [];
     let productImagesData = [];
-    for (let i = 0; i < productImages.length; i++) {
-        const image = productImages[i];
-        const path = image?.path;
-        const color = colors[i];
-        const { secure_url } = await uploadOnCloudinary(path);
+    const imageFiles = productImages.image;
+    const imageLength = imageFiles ? imageFiles.length : 0;
 
-        if (!secure_url) {
+    if (colors.length !== imageLength) {
+        throw new ApiError(
+            HTTP_BAD_REQUEST,
+            "Number of colors does not match the number of images"
+        );
+    }
+
+    for (let i = 0; i < imageLength; i++) {
+        const localFilePath = imageFiles[i].path;
+
+        try {
+            const { secure_url } = await uploadOnCloudinary(localFilePath);
+
+            if (!secure_url) {
+                throw new ApiError(
+                    HTTP_INTERNAL_SERVER_ERROR,
+                    "Product images not uploaded successfully"
+                );
+            }
+
+            UploadedImageUrls.push(secure_url);
+
+            productImagesData.push({
+                productId,
+                imageUrl: secure_url,
+                color: colors[i],
+                altText: imageFiles[i].originalname,
+                isPrimary: isPrimaryFlag === (i === 0 ? "true" : "false"),
+            });
+        } catch (error) {
             throw new ApiError(
-                HTTP_INTERNAL_SERVER_ERROR,
-                "Product images not uploaded successfully"
+                error.statusCode || HTTP_INTERNAL_SERVER_ERROR,
+                error.message || "Error uploading image"
             );
         }
-
-        uploadedImageUrls.push(secure_url);
-
-        productImagesData.push({
-            productId,
-            imageUrl: secure_url,
-            color,
-            altText: image.originalname,
-            isPrimary: isPrimaryFlag === (i === 0 ? "true" : "false"),
-        });
     }
-    return productImagesData;
+
+    return { productImagesData, UploadedImageUrls };
 };
 
-const fetchProductDetails = asyncHandler(async (productId) => {
+const fetchProductDetails = async (productId) => {
     return Product.aggregate([
         { $match: { _id: productId } },
         {
@@ -126,9 +146,9 @@ const fetchProductDetails = asyncHandler(async (productId) => {
         {
             $project: {
                 _id: 1,
-                productName: 1,
-                categoryId: { categoryName: 1 },
-                productDescription: 1,
+                name: 1,
+                category: { categoryName: 1 },
+                description: 1,
                 productImages: {
                     imageUrl: 1,
                     color: 1,
@@ -140,7 +160,59 @@ const fetchProductDetails = asyncHandler(async (productId) => {
             },
         },
     ]);
-});
+};
+const fetchAllProductDetails = async () => {
+    return Product.aggregate([
+        {
+            $lookup: {
+                from: "productimages",
+                localField: "_id",
+                foreignField: "productId",
+                as: "productImages",
+            },
+        },
+        {
+            $lookup: {
+                from: "categories",
+                localField: "categoryId",
+                foreignField: "_id",
+                as: "category",
+            },
+        },
+        {
+            $lookup: {
+                from: "producttags",
+                localField: "_id",
+                foreignField: "productId",
+                as: "productTags",
+            },
+        },
+        {
+            $lookup: {
+                from: "productvarients",
+                localField: "_id",
+                foreignField: "productId",
+                as: "productVarient",
+            },
+        },
+        {
+            $project: {
+                _id: 1,
+                name: 1,
+                category: { categoryName: 1 },
+                description: 1,
+                productImages: {
+                    imageUrl: 1,
+                    color: 1,
+                    altText: 1,
+                    isPrimary: 1,
+                },
+                productTags: { tagName: 1 },
+                productVarient: { size: 1, price: 1, color: 1, quantity: 1 },
+            },
+        },
+    ]);
+};
 
 const createProduct = asyncHandler(async (req, res) => {
     // Start a MongoDB session and begin a transaction
@@ -184,6 +256,7 @@ const createProduct = asyncHandler(async (req, res) => {
             colors,
         } = req.body;
 
+        let parsedColors = JSON.parse(colors);
         const productImages = req.files;
 
         validateProductData(
@@ -191,41 +264,53 @@ const createProduct = asyncHandler(async (req, res) => {
             categoryId,
             productDescription,
             productImages,
-            colors,
+            parsedColors,
             productVarient
         );
 
+        const parsedProductVarient = JSON.parse(productVarient);
+        const parsedProductTag = JSON.parse(productTag);
         const category = await Category.findById(categoryId).session(session);
 
         if (!category) {
             throw new ApiError(HTTP_BAD_REQUEST, "Category not found");
         }
-
         const product = new Product({
-            productName,
+            name: productName,
             categoryId,
-            productDescription,
+            description: productDescription,
             uploadedBy: userId,
         });
 
         await product.save({ session });
 
         const productId = product._id;
-        const productImagesData = await uploadProductImages(
-            productId,
-            productImages,
-            colors,
-            isPrimary,
-            uploadedImageUrls
-        );
+        const { productImagesData, UploadedImageUrls } =
+            await uploadProductImages(
+                productId,
+                productImages,
+                parsedColors,
+                isPrimary
+            );
+
+        for (let i = 0; i < UploadedImageUrls.length; i++) {
+            uploadedImageUrls.push(UploadedImageUrls[i]);
+        }
+
+        if (productImagesData.length === 0) {
+            throw new ApiError(
+                HTTP_INTERNAL_SERVER_ERROR,
+                "Product images not uploaded successfully"
+            );
+        }
 
         await ProductImage.insertMany(productImagesData, { session });
         await ProductVarient.insertMany(
-            productVarient.map((v) => ({ productId, ...v })),
+            parsedProductVarient.map((v) => ({ productId, ...v })),
             { session }
         );
         await ProductTag.insertMany(
-            productTag.map((tag) => ({ productId, tag })),
+            parsedProductTag.map((tag) => ({ productId, tagName: tag })),
             { session }
         );
 
@@ -297,29 +382,40 @@ const updateProduct = asyncHandler(async (req, res) => {
 
     try {
         const category = await Category.findById(categoryId).session(session);
-        if (!category) {
-            throw new ApiError(HTTP_BAD_REQUEST, "Category not found");
-        }
+        // if (!category) {
+        //     throw new ApiError(HTTP_BAD_REQUEST, "Category not found");
+        // }
 
         const updateProductFields = {};
 
-        if (productName) updateProductFields.name = productName;
-        if (productDescription)
+        if (
+            productName !== "" ||
+            productName !== null ||
+            productName !== undefined
+        )
+            updateProductFields.name = productName;
+        if (
+            productDescription !== "" ||
+            productDescription !== null ||
+            productDescription !== undefined
+        )
             updateProductFields.description = productDescription;
 
-        const product = await Product.findOneAndUpdate(
-            {
-                _id: productId,
-                uploadedBy: userId,
-            },
-            updateProductFields,
-            {
-                new: true,
-            }
-        ).session(session);
+        if (Object.keys(updateProductFields).length !== 0) {
+            const product = await Product.findOneAndUpdate(
+                {
+                    _id: productId,
+                    uploadedBy: userId,
+                },
+                updateProductFields,
+                {
+                    new: true,
+                }
+            ).session(session);
 
-        if (!product) {
-            throw new ApiError(HTTP_BAD_REQUEST, "Product not found");
+            if (!product) {
+                throw new ApiError(HTTP_BAD_REQUEST, "Product not found");
+            }
         }
 
         // Update product variants if provided
@@ -343,6 +439,19 @@ const updateProduct = asyncHandler(async (req, res) => {
         // Commit the transaction
         await session.commitTransaction();
         session.endSession();
+
+        const id = new mongoose.Types.ObjectId(productId);
+        const respone = await fetchProductDetails(id);
+
+        return res
+            .status(HTTP_OK)
+            .json(
+                new ApiResponse(
+                    HTTP_OK,
+                    "Product updated successfully",
+                    respone
+                )
+            );
     } catch (error) {
         await session.abortTransaction();
         session.endSession();
@@ -379,23 +488,29 @@ const deleteProduct = asyncHandler(async (req, res) => {
         throw new ApiError(HTTP_FORBIDDEN, "Unauthorized request");
     }
 
-    const product = await Product.findById(productId);
+    const id = new mongoose.Types.ObjectId(productId);
 
+    const product = await Product.findById(id);
     if (!product) {
         throw new ApiError(HTTP_NOT_FOUND, "Product not found");
     }
 
-    if (product.uploadedBy.toString() !== userId) {
+    if (product.uploadedBy.toString() !== userId.toString()) {
         throw new ApiError(HTTP_FORBIDDEN, "Unauthorized request");
     }
 
     try {
         const productImages = await ProductImage.find({ productId });
+        console.log(productImages.length);
+        console.log(productImages);
 
         if (productImages.length > 0) {
-            await deleteImages(productImages.map((image) => image.imageUrl));
-            await ProductImage.deleteMany({ productId });
+            for (let i = 0; i < productImages.length; i++) {
+                console.log(productImages[i].imageUrl);
+                await deleteImages(productImages[i].imageUrl);
+            }
         }
+        await ProductImage.deleteMany({ productId });
 
         await ProductVarient.deleteMany({ productId });
 
@@ -428,23 +543,19 @@ const fetchAllProducts = asyncHandler(async (req, res) => {
             .skip(limit * (page - 1))
             .limit(limit);
 
+        let message = "Products fetched successfully";
+
         if (products.length === 0) {
-            throw new ApiError(HTTP_NOT_FOUND, "No products found");
+            message = "There are no products available";
         }
 
-        const productDetails = await fetchProductDetails(
-            products.map((p) => p._id)
-        );
+        const productDetails = await fetchAllProductDetails();
+
+        console.log(productDetails);
 
         return res
             .status(HTTP_OK)
-            .json(
-                new ApiResponse(
-                    HTTP_OK,
-                    "Products fetched successfully",
-                    productDetails
-                )
-            );
+            .json(new ApiResponse(HTTP_OK, message, productDetails));
     } catch (error) {
         throw new ApiError(HTTP_INTERNAL_SERVER_ERROR, error.message);
     }
@@ -470,7 +581,7 @@ const fetchProductById = asyncHandler(async (req, res) => {
             throw new ApiError(HTTP_NOT_FOUND, "Product not found");
         }
 
-        const productDetails = await fetchProductDetails(productId);
+        const productDetails = await fetchProductDetails(product._id);
 
         return res
             .status(HTTP_OK)
