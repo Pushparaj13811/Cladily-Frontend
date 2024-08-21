@@ -33,6 +33,12 @@ const createOrder = asyncHandler(async (req, res) => {
     const userId = req.user?._id;
     const { paymentMethod } = req.body;
 
+    const isUserVerified = req.user?.emailVerified;
+
+    if (!isUserVerified) {
+        redirectUrl = `${process.env.CLIENT_URL}/verify-email`; // This is just a reference URL
+        throw new ApiError(HTTP_UNAUTHORIZED, "Please verify your email");
+    }
     if (!userId) {
         throw new ApiError(HTTP_UNAUTHORIZED, "Please login to continue");
     }
@@ -337,4 +343,10 @@ const cancelOrderItems = asyncHandler(async (req, res) => {
         })
     );
 });
-export { createOrder, getOrders, updateOrderStatus, cancelOrder };
+export {
+    createOrder,
+    getOrders,
+    updateOrderStatus,
+    cancelOrder,
+    cancelOrderItems,
+};
