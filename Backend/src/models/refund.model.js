@@ -22,6 +22,4 @@ const refundSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-const Refund = mongoose.model("Refund", refundSchema);
-
-export default Refund;
+export const Refund = mongoose.model("Refund", refundSchema);
