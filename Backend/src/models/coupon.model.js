@@ -23,6 +23,10 @@ const couponSchema = new Schema(
             type: Boolean,
             default: true,
         },
+        createdBy: {
+            type: Schema.Types.ObjectId,
+            ref: "User",
+        },
     },
     { timestamps: true }
 );
