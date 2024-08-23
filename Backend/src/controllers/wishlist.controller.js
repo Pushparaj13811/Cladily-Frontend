@@ -1,5 +1,6 @@
 import ApiError from "../utils/apiError.js";
 import ApiResponse from "../utils/apiResponse.js";
+import redisClient from "../utils/redisClient.js";
 import { Wishlist } from "../models/wishlist.model.js";
 import { ProductVarient } from "../models/productVarient.model.js";
 import {
@@ -10,6 +11,51 @@ import {
     HTTP_UNAUTHORIZED,
 } from "../httpStatusCode.js";
 import asyncHandler from "../utils/asyncHandler.js";
+
+const getItemsFromWishlist = asyncHandler(async (req, res) => {
+    // Get the user id from the request object
+    // Check if the user exists and throw an error if not
+    // Get the wishlist items for the user
+    // Return the wishlist items
+    // Handle any errors
+
+    const userId = req.user?._id;
+    if (!userId) {
+        throw new ApiError(
+            HTTP_UNAUTHORIZED,
+            "Unauthorized: You must be logged in to view wishlist"
+        );
+    }
+
+    try {
+        const wishlists = await redisClient.get(`wishlist:${userId}`);
+        let wishlistItems;
+        if (wishlists) {
+            wishlistItems = JSON.parse(wishlists);
+        } else {
+            wishlistItems = await Wishlist.find({ userId });
+            redisClient.set(
+                `wishlist:${userId}`,
+                JSON.stringify(wishlistItems)
+            );
+        }
+
+        return res
+            .status(HTTP_OK)
+            .json(
+                new ApiResponse(
+                    HTTP_OK,
+                    "Wishlist items retrieved",
+                    wishlistItems
+                )
+            );
+    } catch (error) {
+        throw new ApiError(
+            error.statusCode || HTTP_INTERNAL_SERVER_ERROR,
+            error.message || "Internal server error"
+        );
+    }
+});
 
 const addToWishlist = asyncHandler(async (req, res) => {
     // Get the user id from the request object
@@ -156,4 +202,4 @@ const removeFromWishlist = asyncHandler(async (req, res) => {
     }
 });
 
-export { addToWishlist, removeFromWishlist };
+export { addToWishlist, removeFromWishlist, getItemsFromWishlist };
