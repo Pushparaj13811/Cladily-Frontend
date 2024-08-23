@@ -86,6 +86,7 @@
   "dependencies": {
     "bcrypt": "^5.1.1",
     "cloudinary": "^2.4.0",
+    "connect-redis": "^7.1.1",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
@@ -102,6 +103,7 @@
     "passport": "^0.7.0",
     "passport-google-oauth": "^2.0.0",
     "passport-google-oauth20": "^2.0.0",
-    "razorpay": "^2.9.4"
+    "razorpay": "^2.9.4",
+    "redis": "^4.7.0"
   }
 }
