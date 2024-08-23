@@ -1,5 +1,6 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/apiError.js";
+import redisClient from "../utils/redisClient.js";
 import {
     HTTP_UNAUTHORIZED,
     HTTP_OK,
@@ -465,8 +466,17 @@ const getUserProfile = asyncHandler(async (req, res) => {
     // Catch any error and pass it to the error handler
 
     try {
-        const userResponse = req.user;
-        const user = cleanUserObject(userResponse);
+        const userDetails = redisClient.get("user");
+        let user;
+        if (userDetails) {
+            user = JSON.parse(userDetails);
+        }
+        {
+            const userResponse = req.user;
+            user = cleanUserObject(userResponse);
+            redisClient.set("user", JSON.stringify(user));
+        }
+
         return res
             .status(HTTP_OK)
             .json(new ApiResponse(HTTP_OK, "User profile", user));
