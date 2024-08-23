@@ -1,5 +1,6 @@
 import ApiResponse from "../utils/apiResponse.js";
 import ApiError from "../utils/apiError.js";
+import redisClient from "../utils/redisClient.js";
 import { Product } from "../models/product.model.js";
 import { Category } from "../models/category.model.js";
 import { ProductImage } from "../models/productImage.model.js";
@@ -109,7 +110,13 @@ const uploadProductImages = async (
 };
 
 const fetchProductDetails = async (productId) => {
-    return Product.aggregate([
+    const cacheKey = `product:${productId}`;
+    const cachedProduct = await redisClient.get(cacheKey);
+    if (cachedProduct) {
+        return JSON.parse(cachedProduct);
+    }
+
+    const productDetails = Product.aggregate([
         { $match: { _id: productId } },
         {
             $lookup: {
@@ -156,13 +163,29 @@ const fetchProductDetails = async (productId) => {
                     isPrimary: 1,
                 },
                 productTags: { tagName: 1 },
-                productVarient: {_id:1,  size: 1, price: 1, color: 1, stockQuantity: 1 },
+                productVarient: {
+                    _id: 1,
+                    size: 1,
+                    price: 1,
+                    color: 1,
+                    stockQuantity: 1,
+                },
             },
         },
     ]);
+
+    redisClient.setEx(cacheKey, 3600, JSON.stringify(productDetails));
+
+    return productDetails;
 };
 const fetchAllProductDetails = async () => {
-    return Product.aggregate([
+    const cacheKey = "products";
+    const cachedProducts = await redisClient.get(cacheKey);
+    if (cachedProducts) {
+        return JSON.parse(cachedProducts);
+    }
+
+    const products = Product.aggregate([
         {
             $lookup: {
                 from: "productimages",
@@ -208,10 +231,19 @@ const fetchAllProductDetails = async () => {
                     isPrimary: 1,
                 },
                 productTags: { tagName: 1 },
-                productVarient: {_id:1, size: 1, price: 1, color: 1, stockQuantity: 1 },
+                productVarient: {
+                    _id: 1,
+                    size: 1,
+                    price: 1,
+                    color: 1,
+                    stockQuantity: 1,
+                },
             },
         },
     ]);
+
+    await redisClient.set(cacheKey, JSON.stringify(products), "EX", 3600);
+    return products;
 };
 
 const createProduct = asyncHandler(async (req, res) => {
@@ -440,6 +472,10 @@ const updateProduct = asyncHandler(async (req, res) => {
         await session.commitTransaction();
         session.endSession();
 
+        // Delete product details from cache
+        const cacheKey = `product:${productId}`;
+        await redisClient.del(cacheKey);
+
         const id = new mongoose.Types.ObjectId(productId);
         const respone = await fetchProductDetails(id);
 
@@ -517,6 +553,10 @@ const deleteProduct = asyncHandler(async (req, res) => {
         await ProductTag.deleteMany({ productId });
 
         await Product.findByIdAndDelete(productId);
+
+        // Delete product details from cache
+        const cacheKey = `product:${productId}`;
+        await redisClient.del(cacheKey);
 
         return res
             .status(HTTP_OK)
