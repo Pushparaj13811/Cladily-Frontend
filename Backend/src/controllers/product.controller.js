@@ -30,7 +30,7 @@ const deleteImages = async (uploadedImageUrl) => {
     await deleteFromCloudinary(publicId);
 };
 
-const validateProductData = (
+const validateProductData = async (
     productName,
     categoryId,
     productDescription,
@@ -110,12 +110,6 @@ const uploadProductImages = async (
 };
 
 const fetchProductDetails = async (productId) => {
-    const cacheKey = `product:${productId}`;
-    const cachedProduct = await redisClient.get(cacheKey);
-    if (cachedProduct) {
-        return JSON.parse(cachedProduct);
-    }
-
     const productDetails = Product.aggregate([
         { $match: { _id: productId } },
         {
@@ -174,17 +168,9 @@ const fetchProductDetails = async (productId) => {
         },
     ]);
 
-    redisClient.setEx(cacheKey, 3600, JSON.stringify(productDetails));
-
     return productDetails;
 };
 const fetchAllProductDetails = async () => {
-    const cacheKey = "products";
-    const cachedProducts = await redisClient.get(cacheKey);
-    if (cachedProducts) {
-        return JSON.parse(cachedProducts);
-    }
-
     const products = Product.aggregate([
         {
             $lookup: {
@@ -242,7 +228,6 @@ const fetchAllProductDetails = async () => {
         },
     ]);
 
-    await redisClient.set(cacheKey, JSON.stringify(products), "EX", 3600);
     return products;
 };
 
@@ -291,7 +276,7 @@ const createProduct = asyncHandler(async (req, res) => {
         let parsedColors = JSON.parse(colors);
         const productImages = req.files;
 
-        validateProductData(
+        await validateProductData(
             productName,
             categoryId,
             productDescription,
@@ -349,6 +334,9 @@ const createProduct = asyncHandler(async (req, res) => {
         await session.commitTransaction();
         session.endSession();
 
+        const cacheKey = "products";
+        await redisClient.del(cacheKey);
+
         // get product details using aggregate
 
         const productDetails = await fetchProductDetails(productId);
@@ -377,77 +365,58 @@ const createProduct = asyncHandler(async (req, res) => {
 });
 
 const updateProduct = asyncHandler(async (req, res) => {
-    // Start a MongoDB session and begin a transaction
-    // Extract product details and images from request
-    // Validate required fields and data consistency
-    // - Product name, categoryId, and product description are required
-    // Find the category by categoryId and validate its existence
-    // Find the product by productId and validate its existence
-    // Update the product with the provided details
-    // - if Product variants is provided
-    // find the product variants by productId and update them with the provided details
-    // - if Product tags is provided
-    // find the product tags by productId and update them with the provided details
-
     const session = await mongoose.startSession();
     session.startTransaction();
 
-    const productId = req.params?.id;
-
-    const userId = req.user?._id;
-
-    if (!productId) {
-        throw new ApiError(HTTP_BAD_REQUEST, "Product id is required");
-    }
-
-    if (!userId) {
-        throw new ApiError(HTTP_FORBIDDEN, "Unauthorized request");
-    }
-
-    const {
-        productName,
-        categoryId,
-        productDescription,
-        productTags,
-        productVarient,
-    } = req.body;
-
     try {
-        const category = await Category.findById(categoryId).session(session);
-        // if (!category) {
-        //     throw new ApiError(HTTP_BAD_REQUEST, "Category not found");
-        // }
+        const productId = new mongoose.Types.ObjectId(req.params?.id);
+        console.log(productId);
+        const userId = req.user?._id;
 
+        if (!productId) {
+            throw new ApiError(HTTP_BAD_REQUEST, "Product id is required");
+        }
+
+        if (!userId) {
+            throw new ApiError(HTTP_FORBIDDEN, "Unauthorized request");
+        }
+
+        const {
+            productName,
+            categoryId,
+            productDescription,
+            productTags,
+            productVarient,
+        } = req.body;
+
+        const product = await Product.findOne({
+            _id: productId,
+            uploadedBy: userId,
+        }).session(session);
+        if (!product) {
+            throw new ApiError(HTTP_BAD_REQUEST, "Product not found");
+        }
+
+        // Update product details if provided
         const updateProductFields = {};
-
-        if (
-            productName !== "" ||
-            productName !== null ||
-            productName !== undefined
-        )
-            updateProductFields.name = productName;
-        if (
-            productDescription !== "" ||
-            productDescription !== null ||
-            productDescription !== undefined
-        )
+        if (productName) updateProductFields.name = productName;
+        if (productDescription)
             updateProductFields.description = productDescription;
-
-        if (Object.keys(updateProductFields).length !== 0) {
-            const product = await Product.findOneAndUpdate(
-                {
-                    _id: productId,
-                    uploadedBy: userId,
-                },
-                updateProductFields,
-                {
-                    new: true,
-                }
-            ).session(session);
-
-            if (!product) {
-                throw new ApiError(HTTP_BAD_REQUEST, "Product not found");
+        if (categoryId) {
+            const categoryExists = await Category.exists({
+                _id: categoryId,
+            }).session(session);
+            if (!categoryExists) {
+                throw new ApiError(HTTP_BAD_REQUEST, "Invalid category ID");
             }
+            updateProductFields.categoryId = categoryId;
+        }
+
+        if (Object.keys(updateProductFields).length > 0) {
+            await Product.updateOne(
+                { _id: productId },
+                { $set: updateProductFields }
+            ).session(session);
         }
 
         // Update product variants if provided
@@ -470,14 +439,13 @@ const updateProduct = asyncHandler(async (req, res) => {
 
         // Commit the transaction
         await session.commitTransaction();
-        session.endSession();
 
-        // Delete product details from cache
+        // Clear product details from cache
         const cacheKey = `product:${productId}`;
         await redisClient.del(cacheKey);
 
-        const id = new mongoose.Types.ObjectId(productId);
-        const respone = await fetchProductDetails(id);
+        // Fetch updated product details
+        const response = await fetchProductDetails(productId);
 
         return res
             .status(HTTP_OK)
@@ -485,16 +453,16 @@ const updateProduct = asyncHandler(async (req, res) => {
                 new ApiResponse(
                     HTTP_OK,
                     "Product updated successfully",
-                    respone
+                    response
                 )
             );
     } catch (error) {
         await session.abortTransaction();
-        session.endSession();
-
         return res
             .status(HTTP_BAD_REQUEST)
-            .json(new ApiResponse(HTTP_BAD_REQUEST, "Category not found"));
+            .json(new ApiResponse(HTTP_BAD_REQUEST, error.message));
+    } finally {
+        session.endSession();
     }
 });
 
@@ -537,8 +505,6 @@ const deleteProduct = asyncHandler(async (req, res) => {
 
     try {
         const productImages = await ProductImage.find({ productId });
-        console.log(productImages.length);
-        console.log(productImages);
 
         if (productImages.length > 0) {
             for (let i = 0; i < productImages.length; i++) {
@@ -555,7 +521,7 @@ const deleteProduct = asyncHandler(async (req, res) => {
         await Product.findByIdAndDelete(productId);
 
         // Delete product details from cache
-        const cacheKey = `product:${productId}`;
+        const cacheKey = "products";
         await redisClient.del(cacheKey);
 
         return res
@@ -589,9 +555,21 @@ const fetchAllProducts = asyncHandler(async (req, res) => {
             message = "There are no products available";
         }
 
-        const productDetails = await fetchAllProductDetails();
+        const cacheKey = "products";
+        const cachedProducts = await redisClient.get(cacheKey);
+        let productDetails;
 
-        console.log(productDetails);
+        if (cachedProducts) {
+            productDetails = JSON.parse(cachedProducts);
+        } else {
+            productDetails = await fetchAllProductDetails();
+            await redisClient.set(
+                cacheKey,
+                JSON.stringify(productDetails),
+                "EX",
+                5
+            );
+        }
 
         return res
             .status(HTTP_OK)
@@ -620,8 +598,16 @@ const fetchProductById = asyncHandler(async (req, res) => {
         if (!product) {
             throw new ApiError(HTTP_NOT_FOUND, "Product not found");
         }
+        const cacheKey = `product:${productId}`;
+        const cachedProduct = await redisClient.get(cacheKey);
+        let productDetails;
 
-        const productDetails = await fetchProductDetails(product._id);
+        if (cachedProduct) {
+            productDetails = JSON.parse(cachedProduct);
+        } else {
+            productDetails = await fetchProductDetails(product._id);
+            redisClient.setEx(cacheKey, 3600, JSON.stringify(productDetails));
+        }
 
         return res
             .status(HTTP_OK)
