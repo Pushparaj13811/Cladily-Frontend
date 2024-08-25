@@ -18,6 +18,11 @@ const createCategory = asyncHandler(async (req, res) => {
     // Handle any errors
 
     const { name, description } = req.body;
+    const user = req.user;
+
+    if (user.role !== "admin") {
+        throw new ApiError(HTTP_BAD_REQUEST, "Unauthorized request");
+    }
 
     if (!name || (!name.trim() && !description) || !description.trim()) {
         throw new ApiError(
@@ -33,7 +38,7 @@ const createCategory = asyncHandler(async (req, res) => {
     }
 
     const category = new Category({
-        categoryName:name,
+        categoryName: name,
         description,
     });
 
