@@ -15,7 +15,7 @@ const sendWelcomeEmail = async (user) => {
                 <ul>
                     <li><a href="https://www.cladily.com/new-arrivals" style="color: #d44638;">New Arrivals</a></li>
                     <li><a href="https://www.cladily.com/best-sellers" style="color: #d44638;">Best Sellers</a></li>
-                    <li><a href="https://www.cladily.com/sale" style="color: #d44638;">Sale</a></li>
+                    <li><a href="https://www.cladily.com/latest-trends" style="color: #d44638;">Latest Trends</a></li>
                 </ul>
                 
                 <p>If you have any questions or need styling advice, our team is here to help! Feel free to reach out to us at <a href="mailto:support@cladily.com" style="color: #d44638;">support@cladily.com</a>.</p>
