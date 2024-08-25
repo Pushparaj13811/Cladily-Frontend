@@ -8,7 +8,7 @@ import {
     HTTP_BAD_REQUEST,
     HTTP_FORBIDDEN,
     HTTP_NOT_FOUND,
-    HTTP_INTERNAL_SERVER_ERROR,
+    HTTP_INTERNAL_SERVER_ERROR,       
 } from "../httpStatusCode.js";
 import ApiResponse from "../utils/apiResponse.js";
 import { User } from "../models/user.model.js";
