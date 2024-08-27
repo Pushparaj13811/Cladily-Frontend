@@ -2,7 +2,7 @@ import ApiError from "../utils/apiError.js";
 import ApiResponse from "../utils/apiResponse.js";
 import { Guest } from "../models/guest.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
-import { generateGuestToken } from "../utils/tokenGenerator.js"; // Assuming you have a token generator utility
+import { generateGuestToken } from "../utils/tokenGenerator.js";
 import {
     HTTP_CREATED,
     HTTP_INTERNAL_SERVER_ERROR,
