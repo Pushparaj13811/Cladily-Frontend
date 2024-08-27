@@ -114,6 +114,14 @@ const fetchProductDetails = async (productId) => {
         { $match: { _id: productId } },
         {
             $lookup: {
+                from: "users",
+                localField: "uploadedBy",
+                foreignField: "_id",
+                as: "uploadedBy",
+            },
+        },
+        {
+            $lookup: {
                 from: "productimages",
                 localField: "_id",
                 foreignField: "productId",
@@ -148,6 +156,12 @@ const fetchProductDetails = async (productId) => {
             $project: {
                 _id: 1,
                 name: 1,
+                uploadedBy: {
+                    _id: 1,
+                    username: 1,
+                    firstName: 1,
+                    lastName: 1,
+                },
                 category: { categoryName: 1 },
                 description: 1,
                 productImages: {
@@ -174,6 +188,14 @@ const fetchAllProductDetails = async () => {
     const products = Product.aggregate([
         {
             $lookup: {
+                from: "users",
+                localField: "uploadedBy",
+                foreignField: "_id",
+                as: "uploadedBy",
+            },
+        },
+        {
+            $lookup: {
                 from: "productimages",
                 localField: "_id",
                 foreignField: "productId",
@@ -208,6 +230,12 @@ const fetchAllProductDetails = async () => {
             $project: {
                 _id: 1,
                 name: 1,
+                uploadedBy: {
+                    _id: 1,
+                    username: 1,
+                    firstName: 1,
+                    lastName: 1,
+                },
                 category: { categoryName: 1 },
                 description: 1,
                 productImages: {
