@@ -57,10 +57,44 @@ const getCart = asyncHandler(async (req, res) => {
             },
         },
         {
+            $lookup: {
+                from: "productimages",
+                let: { products: "$products" },
+
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    {
+                                        $eq: [
+                                            "$productId",
+                                            "$$products.productId",
+                                        ],
+                                    },
+                                    { $eq: ["$color", "$$products.color"] },
+                                ],
+                            },
+                        },
+                    },
+                    {
+                        $project: { _id: 0, imageUrl: 1 }, // Ensure field names are correct
+                    },
+                ],
+                as: "productImages",
+            },
+        },
+        {
             $unwind: { path: "$items", preserveNullAndEmptyArrays: true },
         },
         {
             $unwind: { path: "$products", preserveNullAndEmptyArrays: true },
+        },
+        {
+            $unwind: {
+                path: "$productImages",
+                preserveNullAndEmptyArrays: true,
+            },
         },
         {
             $project: {
@@ -77,6 +111,9 @@ const getCart = asyncHandler(async (req, res) => {
                     size: 1,
                     color: 1,
                     price: 1,
+                },
+                productImages: {
+                    imageUrl: 1, // Ensure field names are correct
                 },
             },
         },
@@ -100,7 +137,7 @@ const getCart = asyncHandler(async (req, res) => {
 
     return res
         .status(HTTP_OK)
-        .json(new ApiResponse(HTTP_OK, "Cart retrieved successfully", cart[0]));
+        .json(new ApiResponse(HTTP_OK, "Cart retrieved successfully", cart));
 });
 
 const addToCart = asyncHandler(async (req, res) => {
