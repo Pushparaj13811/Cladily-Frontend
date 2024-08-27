@@ -36,7 +36,7 @@ const createOrder = asyncHandler(async (req, res) => {
     const isUserVerified = req.user?.emailVerified;
 
     if (!isUserVerified) {
-        redirectUrl = `${process.env.CLIENT_URL}/verify-email`; // This is just a reference URL
+        redirectUrl = `${process.env.CLIENT_URL}/verify-email`;
         throw new ApiError(HTTP_UNAUTHORIZED, "Please verify your email");
     }
     if (!userId) {
@@ -78,11 +78,11 @@ const createOrder = asyncHandler(async (req, res) => {
 
     if (paymentMethod !== "Cash On Delivery") {
         try {
-            const paymentOrder = await createPaymentOrder(
+            const paymentOrder =  createPaymentOrder(
                 order._id,
                 cart.totalAmount
             );
-            const capturedPayment = await capturePayment(
+            const capturedPayment =  capturePayment(
                 paymentOrder.id,
                 cart.totalAmount
             );
