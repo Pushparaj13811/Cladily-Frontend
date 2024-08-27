@@ -33,7 +33,38 @@ const createReview = asyncHandler(async (req, res) => {
 
     const userId = req.user._id;
 
-    const product = await Product.findById(productId);
+    const orderItem = Product.aggregate([
+        { $match: { _id: productId } },
+        {
+            $lookup: {
+                from: "order",
+                localField: "userId",
+                foreignField: "userId",
+                as: "order",
+            },
+        },
+        {
+            $lookup: {
+                from: "orderItem",
+                localField: "_id",
+                foreignField: "orderId",
+                as: "orderItem",
+            },
+        },
+        {
+            $project: {
+                _id: 1,
+                status: 1,
+            },
+        },
+    ]);
+
+    if (orderItem.status !== "Delivered") {
+        throw new ApiError(
+            HTTP_NOT_FOUND,
+            "You are not allowed to review a product you haven't bought"
+        );
+    }
 
     if (!product) {
         throw new ApiError(HTTP_NOT_FOUND, "Product not found");
