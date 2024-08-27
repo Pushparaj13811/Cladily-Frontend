@@ -2,34 +2,3 @@
 @tailwind components;
 @tailwind utilities;
 
-/* slick-carousel CSS */
-@import "~slick-carousel/slick/slick.css";
-@import "~slick-carousel/slick/slick-theme.css";
-
-/* Add this CSS to your stylesheet */
-.slick-prev,
-.slick-next {
-  width: 30px;
-  height: 30px;
-  background-color: #285c3f;
-  border-radius: 50%;
-  color: white;
-  font-size: 16px;
-  line-height: 30px;
-  text-align: center;
-  opacity: 0.8;
-  transition: opacity 0.3s ease;
-}
-
-.slick-prev:hover,
-.slick-next:hover {
-  opacity: 1;
-}
-
-.slick-prev {
-  left: 10px;
-}
-
-.slick-next {
-  right: 10px;
-}
