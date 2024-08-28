@@ -17,9 +17,9 @@ const productNavLink = [
 
 const products = [
   {
-    id: 1,
+    id: "1",
     name: "Classic White T-Shirt",
-    price: "1,564 INR",
+    price: "1,564",
     imageUrls: [
       "https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcT4BqVULnk8jq-y5kIzr23mJ2jDVxORXzi6vVHE8YifS5k1qRH_Kcitwt5SPIYVVpgE8DfPEWM-BeADe_Mkn_4nBVZEkFm8wFxBmjWXi2_dsG1-gJIHowhH",
       "https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcS2g_krORgbbQy7rzRLFzTgTrypoeQe1lJIphy8QUrxdizE_xl4R8gr0rzK6CkdY-kxd1xxYNUrEy_2So8veXtVmdte5xGwrcUlP5Df9vIKVwvZVY8o7Ixm-Q",
@@ -28,9 +28,9 @@ const products = [
     sizes: ["S", "M", "L", "XL"],
   },
   {
-    id: 2,
+    id: "2",
     name: "Summer Floral Dress",
-    price: "2,999 INR",
+    price: "2,999 ",
     imageUrls: [
       "https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcTn9NEV8crfwl6MbZjO5Ku4js1bdnPJpOQslVXlH1nHjnCkqA6lm0tc2lJsL6U4anSkPHNTQ2O1_lzyxgNPQd153DIW07s3EVQ4PL3mvBQ",
       "https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcTzzfJrIUnhjTBVMNMr7Eg7GoV0LLFgyb1r-Ic0x64NaNkTV0MvSjOe_5a3Mg9ioMf6x5ilT5P6_xmHazfbUN_Pf4e917jetW1c9SpdCG4p",
@@ -40,9 +40,9 @@ const products = [
     sizes: ["M", "L"],
   },
   {
-    id: 3,
+    id: "3",
     name: "Denim Jacket",
-    price: "2,599 INR",
+    price: "2,599 ",
     imageUrls: [
       "https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcQ0nBEd2AsxHRqZLf8o3nckyZGn8QpoyXReIqxGwJTyehi_uzbqOOdjww82Om8OhjEJTxqCyaBJq-SK1PoFSMHyduQgYcQslaHPP3b_58o",
       "https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcQ7X5O2XIc1IdZYiEEFxXcW3rL4xOCH8KLTdiL0xBH_o9gEBNQ7o0LHdlPEcQKYO1F0dKmXxiNYIkV_05X5PT9aO6lDIcSP-auYgd-j-AO9b5fm3QAbWwUK",
@@ -51,9 +51,9 @@ const products = [
     sizes: ["S", "L", "XL"],
   },
   {
-    id: 4,
+    id: "4",
     name: "Cozy Knit Sweater",
-    price: "2,879 INR",
+    price: "2,879 ",
     imageUrls: [
       "https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcTvDOPTdII1i3sPSX_cXuN-iRpF8k9lxR6xVcWBm7gcUzWlP3k3Ud-FTN_Eae18lTdDX2HWZaVYh2wV8rF_0NiAr62K5EiHBkTk_CCMj3M",
       "https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcS4sO5I78savGhAiIonQczAV-qZpeArfmL-E2a3Gi2-eQ6ERh8bFwNhlFR3g0xcjTWd1nfb8aAIbv8d1bJix7CWh2QYxZHbZ3jIbicduwmpecYetgdYBKBy",
@@ -63,9 +63,9 @@ const products = [
     sizes: ["S", "M", "XL"],
   },
   {
-    id: 5,
+    id: "5",
     name: "Formal Black Pants",
-    price: "2,976 INR",
+    price: "2,976 ",
     imageUrls: [
       "https://static.zara.net/assets/public/b435/c974/bbb04b3c9259/8946526c9f70/06861441800-e1/06861441800-e1.jpg?ts=1704788324552&w=1126",
       "https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcTEvkkYQ4CXVwIbo5FQRMjM-LvUtXYgnnJ0-w4qj7kRVpwSl5jPYhBBZ7nNodPaaNHnVsoxeS_LkDqduC0o5UYajyaDXmAJ6xXELQ9ZJzpBZulak-F_mCaq",
@@ -74,9 +74,9 @@ const products = [
     sizes: ["M", "L", "XL"],
   },
   {
-    id: 6,
+    id: "6",
     name: "Casual Polo Shirt",
-    price: "1,799 INR",
+    price: "1,799 ",
     imageUrls: [
       "https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcRWFB8uyqww57QwH1MZtt-6x8wGdyeoSpKklICoLteB083fURwP0orCSCObE3k5djEzJmGORUeTE7xeLu-418-4fFbTg7V5U9Lh-IrST0M",
       "https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcTJuEdmPyzYa3BU2TZU32r2aF1LHqcaYMMer_fDM7aExulq9wcXaEtWXQktuLDGZ3CLGC17_UNDGzpx-mh3jRv4seNi2GC29-5D9ifPhV0",
@@ -85,9 +85,9 @@ const products = [
     sizes: ["S", "M", "L"],
   },
   {
-    id: 7,
+    id: "7",
     name: "Striped Maxi Dress",
-    price: "3,249 INR",
+    price: "3,249 ",
     imageUrls: [
       "https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcSCoGWTBRb-_DpBF31ySvtbQuh_q8dHSOPkDTbyrz96MTsw4UGAgJD9sEBO93eWog0LGTvjGGoy6tn5nIJN7I3wirDoG7HCFatIJ-Og_Gw",
       "https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcSFIIJvvUdBdm7kqomf672CHeZ5PScWfwWC9E2BV4MWBhx6xaAF2me67bWCpneKTK4DdnpCZ-SDBJSuMswkoFaJEmfMlytAdCchSk_jsQEp",
@@ -98,9 +98,9 @@ const products = [
     sizes: ["M", "L"],
   },
   {
-    id: 8,
+    id: "8",
     name: "Leather Biker Jacket",
-    price: "4,299 INR",
+    price: "4,299 ",
     imageUrls: [
       "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcTv10AvuVee5CJ5Zr4Z4LzKOkuKaIbwtNmkmhV0VXdIJakGcWgzMTQlJvK5LL2kS8w3GogSByjU3zLYBnYxLeHcCoJsQXNU08YPaCmtDiA",
       "https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcRzD0tQiLdyAX-l-SHUhQz3D8cybsBfWPNgHiDocxPAcHWGQPoNbXED6acfjox_jD_lVb7VPtskqeTDYCTRnzh_V5MEZs8_5OF-nsQnr1b7Ytz9cJFApTa7",
@@ -109,9 +109,9 @@ const products = [
     sizes: ["S", "M", "L"],
   },
   {
-    id: 9,
+    id: "9",
     name: "Chino Shorts",
-    price: "1,899 INR",
+    price: "1,899 ",
     imageUrls: [
       "https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcTmA-jNUHelZ-L0NG_8sDPnH3N-XtucxPc8uCMKt9HCifh_avLKZDjH28N1qqq3y6eYUJoG0MpWNdRntslwiuiFz71_XAfU7vLduofpN3ND",
       "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcQugX1KnGs1pSGXXAdLo5GW-sQgc2Hc4Vdn-hgc10Au2LKRPtLQrakhOiXBifKT7QwV9XjaqmMM9wOJeCVpbYTuXZxBLv-j1Q",
