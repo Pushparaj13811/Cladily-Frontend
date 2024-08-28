@@ -16,7 +16,7 @@ import {
 
 const Footer = () => {
     return (
-            <footer className="bg-[#285c3f] text-[#c8f1d9] py-8">
+            <footer className="bg-secondarytext-primary bg-secondary text-primary py-8">
             <div className="container mx-auto px-4 lg:px-6">
                 <div className="flex flex-wrap gap-6 justify-between items-start">
                     {/* About Section */}
@@ -51,16 +51,16 @@ const Footer = () => {
                     <div className="w-full lg:w-1/4 mb-6">
                         <h3 className="text-lg font-bold font-heading mb-4">Follow Us</h3>
                         <div className="flex gap-4">
-                            <a href={facebookUrl} className="text-[#c8f1d9] hover:text-white" aria-label="Facebook">
+                            <a href={facebookUrl} className="text-primary hover:text-tertery" aria-label="Facebook">
                                 <FaFacebookF size={20} />
                             </a>
-                            <a href={twitterUrl} className="text-[#c8f1d9] hover:text-white" aria-label="Twitter">
+                            <a href={twitterUrl} className="text-primary hover:text-tertery" aria-label="Twitter">
                                 <FaTwitter size={20} />
                             </a>
-                            <a href={instagramUrl} className="text-[#c8f1d9] hover:text-white" aria-label="Instagram">
+                            <a href={instagramUrl} className="text-primary hover:text-tertery" aria-label="Instagram">
                                 <FaInstagram size={20} />
                             </a>
-                            <a href={linkedinUrl} className="text-[#c8f1d9] hover:text-white" aria-label="LinkedIn">
+                            <a href={linkedinUrl} className="text-primary hover:text-tertery" aria-label="LinkedIn">
                                 <FaLinkedinIn size={20} />
                             </a>
                         </div>
@@ -68,7 +68,7 @@ const Footer = () => {
                 </div>
 
                 {/* Bottom Section */}
-                <div className="border-t font-heading border-[#c8f1d9] pt-4 mt-8 text-center">
+                <div className="border-t font-heading border-primary pt-4 mt-8 text-center">
                     <p className="text-sm">&copy; {new Date().getFullYear()} {companyName}. All rights reserved.</p>
                 </div>
             </div>
