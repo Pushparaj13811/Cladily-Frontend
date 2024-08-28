@@ -2,11 +2,11 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import SliderComponent from './SliderComponent';
 
-function ProductCard({ productName, price, imageUrls, sizes, currency }) {
+function ProductCard({ productName, price, imageUrls, sizes, currency ="INR",id }) {
     return (
         <div className="bg-white overflow-hidden">
             {/* Product Image Carousel */}
-            <div className="relative w-full h-80 md:h-96 mb-12">
+            <div className="relative w-full h-80 md:h-96 mb-12 xl:h-[26rem]  ">
                 <SliderComponent imageUrls={imageUrls} />
             </div>
 
@@ -18,7 +18,7 @@ function ProductCard({ productName, price, imageUrls, sizes, currency }) {
                 <div className="flex flex-wrap gap-2">
                     {sizes && sizes.map((size) => (
                         <Link
-                            to={`/products/${size}`}
+                            to={`/products/${id}`}
                             key={size}
                             className="text-secondary hover:text-tertery text-sm rounded-lg"
                         >
