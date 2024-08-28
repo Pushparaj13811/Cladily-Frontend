@@ -285,8 +285,9 @@ const createProduct = asyncHandler(async (req, res) => {
     let uploadedImageUrls = [];
 
     const user = req.user;
+    const userId = user?._id;
 
-    if (user._id || user.role !== "admin") {
+    if (userId || user.role !== "admin") {
         throw new ApiError(HTTP_FORBIDDEN, "Unauthorized request");
     }
 
