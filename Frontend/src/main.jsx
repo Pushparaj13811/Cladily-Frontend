@@ -6,13 +6,15 @@ import Layout from './Layout.jsx'
 import NotFound from './pages/NotFound.jsx'
 import Home from './pages/Home.jsx'
 import Product from './pages/Product.jsx'
+import SingleProduct from './pages/SingleProduct.jsx'
 
 
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path='/' element={<Layout />}>
       <Route path='' element={<Home />} />
-      <Route path='products' element={<Product />} />
+      <Route path='products/' element={<Product />} />
+      <Route path='products/:productId' element={<SingleProduct />} />
       <Route path='*' element={<NotFound />} />
     </Route>
   )
