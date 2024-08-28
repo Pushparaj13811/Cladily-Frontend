@@ -6,11 +6,11 @@ const Header = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     return (
-        <header className="bg-[#c8f1d9] font-heading sticky z-50 top-0 text-[#285c3f]">
+        <header className="bg-primaryBackground font-heading sticky z-50 top-0 bg-primary">
             <nav className="px-4 lg:px-6 py-2.5">
                 <div className="flex flex-wrap justify-between items-center mx-auto max-w-screen-xl">
                     {/* Logo */}
-                    <Link to="/" className="flex items-center text-[#285c3f] font-bold text-2xl">
+                    <Link to="/" className="flex items-center text-secondary font-bold text-2xl">
                         Logo
                     </Link>
 
@@ -19,7 +19,7 @@ const Header = () => {
                         <NavLink
                             to="/"
                             className={({ isActive }) =>
-                                `py-2 px-4 text-[#285c3f] ${isActive ? "text-[#285c4f]" : "hover:text-[#285e4f]"}`
+                                `py-2 px-4 text-secondary ${isActive ? "text-tertery" : "hover:text-tertery"}`
                             }
                         >
                             Home
@@ -27,7 +27,7 @@ const Header = () => {
                         <NavLink
                             to="/products"
                             className={({ isActive }) =>
-                                `py-2 px-4 text-[#285c3f] ${isActive ? "text-[#285e4f]" : "hover:text-[#285e4f]"}`
+                                `py-2 px-4 text-secondary ${isActive ? "text-tertery" : "hover:text-tertery"}`
                             }
                         >
                             Products
@@ -35,7 +35,7 @@ const Header = () => {
                         <NavLink
                             to="/categories"
                             className={({ isActive }) =>
-                                `py-2 px-4 text-[#285c3f] ${isActive ? "text-[#285e4f]" : "hover:text-[#285e4f]"}`
+                                `py-2 px-4 text-secondary ${isActive ? "text-tertery" : "hover:text-tertery"}`
                             }
                         >
                             Categories
@@ -43,7 +43,7 @@ const Header = () => {
                         <NavLink
                             to="/about"
                             className={({ isActive }) =>
-                                `py-2 px-4 text-[#285c3f] ${isActive ? "text-[#285e4f]" : "hover:text-[#285e4f]"}`
+                                `py-2 px-4 text-secondary ${isActive ? "text-tertery" : "hover:text-tertery"}`
                             }
                         >
                             About
@@ -51,7 +51,7 @@ const Header = () => {
                         <NavLink
                             to="/contact"
                             className={({ isActive }) =>
-                                `py-2 px-4 text-[#285c3f] ${isActive ? "text-[#285e4f]" : "hover:text-[#285e4f]"}`
+                                `py-2 px-4 text-secondary ${isActive ? "text-tertery" : "hover:text-tertery"}`
                             }
                         >
                             Contact
@@ -64,9 +64,9 @@ const Header = () => {
                             <input
                                 type="text"
                                 placeholder="Search..."
-                                className="w-full py-2 px-4 rounded-lg border border-[#285c3f] focus:outline-none focus:ring-2 focus:ring-[#c8f1d9]"
+                                className="w-full py-2 px-4 rounded-lg border border-secondaryBackground focus:outline-none focus:ring-2 focus:ring-[#c8f1d9]"
                             />
-                            <button className="absolute right-2 top-1/2 transform -translate-y-1/2 text-[#285c3f]">
+                            <button className="absolute right-2 top-1/2 transform -translate-y-1/2 text-secondary">
                                 <FaSearch />
                             </button>
                         </div>
@@ -74,14 +74,14 @@ const Header = () => {
 
                     {/* Action Links */}
                     <div className="flex items-center space-x-4 lg:space-x-6 lg:order-2">
-                        <Link to="/profile" className="text-[#285c3f] hover:text-[#c8f1d9]">
+                        <Link to="/profile" className="text-secondary hover:text-tertery">
                             <FaUser size={20} />
-                            
+
                         </Link>
-                        <Link to="/wishlist" className="text-[#285c3f] hover:text-[#c8f1d9]">
+                        <Link to="/wishlist" className="text-secondary hover:text-tertery">
                             <FaHeart size={20} />
                         </Link>
-                        <Link to="/cart" className="text-[#285c3f] hover:text-[#c8f1d9]">
+                        <Link to="/cart" className="text-secondary hover:text-tertery">
                             <FaShoppingCart size={20} />
                         </Link>
                     </div>
@@ -90,7 +90,7 @@ const Header = () => {
                     <div className="lg:hidden">
                         <button
                             type="button"
-                            className="inline-flex items-center p-2 text-sm text-[#285c3f] rounded-lg hover:bg-[#285c3f] focus:outline-none focus:ring-2 focus:ring-[#c8f1d9]"
+                            className="inline-flex items-center p-2 text-sm text-secondary rounded-lg hover:text-tertery focus:outline-none focus:ring-2 focus:ring-terteryText"
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
                         >
                             <span className="sr-only">Open main menu</span>
@@ -119,7 +119,7 @@ const Header = () => {
                             <NavLink
                                 to="/"
                                 className={({ isActive }) =>
-                                    `block py-2 pr-4 pl-3 text-[#285c3f] ${isActive ? "text-[#c8f1d9]" : "hover:bg-[#285c3f]"}`
+                                    `block py-2 pr-4 pl-3 text-secondary ${isActive ? "text-tertery" : "hover:text-tertery"}`
                                 }
                                 onClick={() => setIsMenuOpen(false)}
                             >
@@ -130,7 +130,7 @@ const Header = () => {
                             <NavLink
                                 to="/products"
                                 className={({ isActive }) =>
-                                    `block py-2 pr-4 pl-3 text-[#285c3f] ${isActive ? "text-[#c8f1d9]" : "hover:bg-[#285c3f]"}`
+                                    `block py-2 pr-4 pl-3 text-secondary ${isActive ? "text-tertery" : "hover:text-tertery"}`
                                 }
                                 onClick={() => setIsMenuOpen(false)}
                             >
@@ -141,7 +141,7 @@ const Header = () => {
                             <NavLink
                                 to="/categories"
                                 className={({ isActive }) =>
-                                    `block py-2 pr-4 pl-3 text-[#285c3f] ${isActive ? "text-[#c8f1d9]" : "hover:bg-[#285c3f]"}`
+                                    `block py-2 pr-4 pl-3 text-secondary ${isActive ? "text-tertery" : "hover:text-tertery"}`
                                 }
                                 onClick={() => setIsMenuOpen(false)}
                             >
@@ -152,7 +152,7 @@ const Header = () => {
                             <NavLink
                                 to="/about"
                                 className={({ isActive }) =>
-                                    `block py-2 pr-4 pl-3 text-[#285c3f] ${isActive ? "text-[#c8f1d9]" : "hover:bg-[#285c3f]"}`
+                                    `block py-2 pr-4 pl-3 text-secondary ${isActive ? "text-tertery" : "hover:text-tertery"}`
                                 }
                                 onClick={() => setIsMenuOpen(false)}
                             >
@@ -163,7 +163,7 @@ const Header = () => {
                             <NavLink
                                 to="/contact"
                                 className={({ isActive }) =>
-                                    `block py-2 pr-4 pl-3 text-[#285c3f] ${isActive ? "text-[#c8f1d9]" : "hover:bg-[#285c3f]"}`
+                                    `block py-2 pr-4 pl-3 text-secondary ${isActive ? "text-tertery" : "hover:text-tertery"}`
                                 }
                                 onClick={() => setIsMenuOpen(false)}
                             >
