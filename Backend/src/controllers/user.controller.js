@@ -8,7 +8,7 @@ import {
     HTTP_BAD_REQUEST,
     HTTP_FORBIDDEN,
     HTTP_NOT_FOUND,
-    HTTP_INTERNAL_SERVER_ERROR,       
+    HTTP_INTERNAL_SERVER_ERROR,
 } from "../httpStatusCode.js";
 import ApiResponse from "../utils/apiResponse.js";
 import { User } from "../models/user.model.js";
@@ -17,6 +17,7 @@ import sendVerificationEmail from "../services/sendVerificationEmail.service.js"
 import sendWelcomeEmail from "../services/sendWelcomeEmail.service.js";
 import sendResetPasswordEmail from "../services/sendResetPasswordEmail.service.js";
 import mongoose from "mongoose";
+import sendVerificationCode from "../services/sendVerificationCode.service.js";
 
 const userNameGenerator = (firstName, lastName) => {
     const random = Math.floor(Math.random() * 1000);
@@ -58,12 +59,12 @@ const registerUser = asyncHandler(async (req, res) => {
     // Send the response with the user and auth token
     // Catch any error and pass it to the error handler
 
-    const { email, password, firstName, lastName } = req.body;
+    const { email, password, firstName, lastName, mobile } = req.body;
     let role = req.body?.role;
 
     const { guestCartId } = req.cookies;
 
-    if (!email || !password || !firstName || !lastName) {
+    if (!email || !password || !firstName || !lastName || !mobile) {
         throw new ApiError(
             HTTP_BAD_REQUEST,
             "Please provide all required fields"
@@ -90,6 +91,7 @@ const registerUser = asyncHandler(async (req, res) => {
             firstName,
             lastName,
             role,
+            phone: mobile,
             usedCoupons: [],
         });
 
@@ -126,6 +128,7 @@ const registerUser = asyncHandler(async (req, res) => {
         await createdUser.save();
 
         // Send verification email
+        await sendVerificationCode(createdUser.phone);
 
         await sendVerificationEmail(createdUser, verificationToken);
 
@@ -305,6 +308,54 @@ const logoutUser = asyncHandler(async (req, res) => {
     }
 });
 
+const resendVerificationCode = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+
+    if (!userId) {
+        throw new ApiError(
+            HTTP_INTERNAL_SERVER_ERROR,
+            "User not authenticated"
+        );
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+        throw new ApiError(HTTP_INTERNAL_SERVER_ERROR, "User not found");
+    }
+
+    const { phone } = user;
+
+    if (!phone) {
+        throw new ApiError(
+            HTTP_INTERNAL_SERVER_ERROR,
+            "Phone number not available"
+        );
+    }
+
+    try {
+        const response = await sendVerificationCode(phone);
+
+        if (!response) {
+            throw new ApiError(
+                HTTP_INTERNAL_SERVER_ERROR,
+                "Error sending verification code"
+            );
+        }
+
+        return res
+            .status(HTTP_OK)
+            .json(
+                new ApiResponse(
+                    HTTP_OK,
+                    "Verification code sent successfully",
+                    response
+                )
+            );
+    } catch (error) {
+        throw new ApiError(HTTP_INTERNAL_SERVER_ERROR, error.message);
+    }
+});
 const changeCurrentPassword = asyncHandler(async (req, res) => {
     // Get current password, new password, and confirm new password from req.body
     // Validate and sanitize all data provided
@@ -807,6 +858,7 @@ export {
     changeCurrentPassword,
     forgotPassword,
     resetPassword,
+    resendVerificationCode,
     getUserProfile,
     updateUserProfile,
     updateUsername,
