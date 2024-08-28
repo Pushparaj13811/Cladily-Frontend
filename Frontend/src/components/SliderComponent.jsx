@@ -27,7 +27,7 @@ const SliderComponent = ({ imageUrls }) => {
                             <img
                                 src={url}
                                 alt={`Slide ${index}`}
-                                className="object-cover w-full h-80 md:h-96 mb-8"
+                                className="object-cover w-full h-80 md:h-96 mb-8 xl:h-[26rem]"
                             />
                         </div>
                     ))}
