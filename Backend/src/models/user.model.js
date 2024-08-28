@@ -40,6 +40,7 @@ const userSchema = new Schema(
         },
         phone: {
             type: Number,
+            required: true,
         },
         dateOfBirth: {
             type: Date,
@@ -69,6 +70,13 @@ const userSchema = new Schema(
             type: Boolean,
             default: false,
         },
+        phoneVerified: {
+            type: Boolean,
+            default: false,
+        },
+        phoneVerificationCode: {
+            type: Number,
+        },
         emailVerificationToken: {
             type: String,
         },
@@ -86,7 +94,6 @@ const userSchema = new Schema(
 );
 
 userSchema.plugin(mongooseAggregatePaginate);
-
 
 userSchema.pre("save", async function (next) {
     if (!this.isModified("password")) return next();
