@@ -1,7 +1,7 @@
 // src/components/Footer.jsx
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn } from 'react-icons/fa';
 import {
     companyName,
@@ -15,8 +15,15 @@ import {
 } from '../../constants/constants';
 
 const Footer = () => {
+
+    const location = useLocation();
+    let hide = "block"
+    if (location.pathname.split("/")[1] === "products") {
+        hide = "hidden sm:block"
+    }
+
     return (
-            <footer className="bg-secondarytext-primary bg-secondary text-primary py-8">
+        <footer className={`bg-secondarytext-primary bg-secondary text-primary py-8 ${hide}`}>
             <div className="container mx-auto px-4 lg:px-6">
                 <div className="flex flex-wrap gap-6 justify-between items-start">
                     {/* About Section */}
