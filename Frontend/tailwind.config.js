@@ -7,6 +7,11 @@ export default {
         heading: ["Playfair Display", "serif"],
         body: ["Montserrat", "sans-serif"],
       },
+      colors: {
+        primary: "#c8f1d9",
+        secondary: "#285c3f",
+        tertery: "#000",
+      },
     },
   },
   plugins: [],
