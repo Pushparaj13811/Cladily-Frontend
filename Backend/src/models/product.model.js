@@ -16,6 +16,22 @@ const productSchema = new Schema(
             type: String,
             required: true,
         },
+        GarmentType: {
+            type: String,
+            required: true,
+        },
+        specification: [
+            {
+                key: {
+                    type: String,
+                    required: true,
+                },
+                value: {
+                    type: String,
+                    required: true,
+                },
+            },
+        ],
         uploadedBy: {
             type: Schema.Types.ObjectId,
             ref: "User",
