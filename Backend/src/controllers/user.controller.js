@@ -278,6 +278,9 @@ const loginUser = asyncHandler(async (req, res) => {
 
         const cleanUser = cleanUserObject(user);
 
+        const cacheKey = `user:${user._id}`;
+        await redisClient.set(cacheKey, JSON.stringify(cleanUser));
+
         return res
             .status(HTTP_OK)
             .cookie("authToken", user.authToken, options)
@@ -517,14 +520,15 @@ const getUserProfile = asyncHandler(async (req, res) => {
     // Catch any error and pass it to the error handler
 
     try {
-        const userDetails = redisClient.get("user");
+        const userDetails = await redisClient.get("user");
         let user;
+
         if (userDetails) {
             user = JSON.parse(userDetails);
-        }
-        {
+        } else {
             const userResponse = req.user;
-            user = cleanUserObject(userResponse);
+            user = await cleanUserObject(userResponse);
+            
             redisClient.set("user", JSON.stringify(user));
         }
 
