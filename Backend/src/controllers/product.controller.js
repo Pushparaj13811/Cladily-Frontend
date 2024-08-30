@@ -9,9 +9,9 @@ import { ProductVarient } from "../models/productVarient.model.js";
 import {
     HTTP_BAD_REQUEST,
     HTTP_CREATED,
-    HTTP_FORBIDDEN,
     HTTP_INTERNAL_SERVER_ERROR,
     HTTP_NOT_FOUND,
+    HTTP_FORBIDDEN,
     HTTP_OK,
 } from "../httpStatusCode.js";
 import {
@@ -31,12 +31,11 @@ const deleteImages = async (uploadedImageUrl) => {
 };
 
 const validateProductData = async (
-    productName,
     categoryId,
+    productName,
     productDescription,
-    productImages,
-    colors,
-    productVarient
+    GarmentType,
+    specification
 ) => {
     if (!productName || !categoryId || !productDescription) {
         throw new ApiError(
@@ -44,17 +43,60 @@ const validateProductData = async (
             "Product name, category id, and product description are required"
         );
     }
-    if (!productImages || productImages.length === 0) {
-        throw new ApiError(HTTP_BAD_REQUEST, "Product images are required");
-    }
-    if (colors.length !== productImages.image.length) {
+
+    if (!GarmentType || !specification) {
         throw new ApiError(
             HTTP_BAD_REQUEST,
-            "Mismatch between images and colors"
+            "Garment type and specification are required"
         );
     }
+};
+
+const validateProductVarientData = async (productVarient) => {
     if (!productVarient || productVarient.length === 0) {
-        throw new ApiError(HTTP_BAD_REQUEST, "Product variants are required");
+        throw new ApiError(
+            HTTP_BAD_REQUEST,
+            "Product variant details are required."
+        );
+    }
+
+    for (let i = 0; i < productVarient.length; i++) {
+        const { size, fit, color, mrp, stockQuantity } = productVarient[i];
+
+        if (!size) {
+            throw new ApiError(
+                HTTP_BAD_REQUEST,
+                `Size is required for variant at index ${i}.`
+            );
+        }
+
+        if (!fit) {
+            throw new ApiError(
+                HTTP_BAD_REQUEST,
+                `Fit is required for variant at index ${i}.`
+            );
+        }
+
+        if (!color) {
+            throw new ApiError(
+                HTTP_BAD_REQUEST,
+                `Color is required for variant at index ${i}.`
+            );
+        }
+
+        if (typeof mrp !== "number" || mrp <= 0) {
+            throw new ApiError(
+                HTTP_BAD_REQUEST,
+                `MRP should be a positive number for variant at index ${i}.`
+            );
+        }
+
+        if (typeof stockQuantity !== "number" || stockQuantity < 0) {
+            throw new ApiError(
+                HTTP_BAD_REQUEST,
+                `Stock Quantity should be a non-negative number for variant at index ${i}.`
+            );
+        }
     }
 };
 
@@ -64,49 +106,51 @@ const uploadProductImages = async (
     colors,
     isPrimaryFlag
 ) => {
-    let UploadedImageUrls = [];
+    let uploadedImageUrls = [];
     let productImagesData = [];
-    const imageFiles = productImages.image;
-    const imageLength = imageFiles ? imageFiles.length : 0;
 
-    if (colors.length !== imageLength) {
+    if (colors.length !== productImages.length) {
         throw new ApiError(
             HTTP_BAD_REQUEST,
-            "Number of colors does not match the number of images"
+            "Number of colors does not match the number of image sets"
         );
     }
 
-    for (let i = 0; i < imageLength; i++) {
-        const localFilePath = imageFiles[i].path;
+    for (let i = 0; i < colors.length; i++) {
+        const imageFiles = productImages[i];
 
-        try {
-            const { secure_url } = await uploadOnCloudinary(localFilePath);
+        for (let j = 0; j < imageFiles.length; j++) {
+            const localFilePath = imageFiles[j].path;
 
-            if (!secure_url) {
+            try {
+                const { secure_url } = await uploadOnCloudinary(localFilePath);
+
+                if (!secure_url) {
+                    throw new ApiError(
+                        HTTP_INTERNAL_SERVER_ERROR,
+                        "Product images not uploaded successfully"
+                    );
+                }
+
+                uploadedImageUrls.push(secure_url);
+
+                productImagesData.push({
+                    productId,
+                    imageUrl: secure_url,
+                    color: colors[i],
+                    altText: imageFiles[j].originalname,
+                    isPrimary: isPrimaryFlag[i] === true && j === 0,
+                });
+            } catch (error) {
                 throw new ApiError(
-                    HTTP_INTERNAL_SERVER_ERROR,
-                    "Product images not uploaded successfully"
+                    error.statusCode || HTTP_INTERNAL_SERVER_ERROR,
+                    error.message || "Error uploading image"
                 );
             }
-
-            UploadedImageUrls.push(secure_url);
-
-            productImagesData.push({
-                productId,
-                imageUrl: secure_url,
-                color: colors[i],
-                altText: imageFiles[i].originalname,
-                isPrimary: isPrimaryFlag === (i === 0 ? "true" : "false"),
-            });
-        } catch (error) {
-            throw new ApiError(
-                error.statusCode || HTTP_INTERNAL_SERVER_ERROR,
-                error.message || "Error uploading image"
-            );
         }
     }
 
-    return { productImagesData, UploadedImageUrls };
+    return { productImagesData, uploadedImageUrls };
 };
 
 const fetchProductDetails = async (productId) => {
@@ -174,7 +218,8 @@ const fetchProductDetails = async (productId) => {
                 productVarient: {
                     _id: 1,
                     size: 1,
-                    price: 1,
+                    fit: 1,
+                    mrp: 1,
                     color: 1,
                     stockQuantity: 1,
                 },
@@ -248,7 +293,8 @@ const fetchAllProductDetails = async () => {
                 productVarient: {
                     _id: 1,
                     size: 1,
-                    price: 1,
+                    fit: 1,
+                    mrp: 1,
                     color: 1,
                     stockQuantity: 1,
                 },
@@ -260,136 +306,96 @@ const fetchAllProductDetails = async () => {
 };
 
 const createProduct = asyncHandler(async (req, res) => {
-    // Start a MongoDB session and begin a transaction
-    // Extract product details and images from request
-    // Validate required fields and data consistency
-    // - Product name, categoryId, and product description are required
-    // - Product images must be provided and should match colors length
-    // - Product variants must be provided
-    // Find the category by categoryId and validate its existence
-    // Create and save a new product with the provided details
-    // Upload each product image to Cloudinary and collect image data
-    // - Handle errors in image upload and roll back changes if necessary
-    // Save product images data to the database
-    // Create and save product variants to the database
-    // Create and save product tags to the database
-    // Commit the transaction and end the session
-    // Aggregate product details from the database
-    // - Include product images, category, tags, and variants
-    // Return a success response with the created product details
-    // Abort the transaction and end the session in case of error=
-    // Return an error response
-
-    const session = await mongoose.startSession();
-    session.startTransaction();
-    let uploadedImageUrls = [];
-
     const user = req.user;
-    const userId = user?._id;
 
-    if (userId || user.role !== "admin") {
+    if (!user || user.role !== "admin") {
         throw new ApiError(HTTP_FORBIDDEN, "Unauthorized request");
     }
 
+    const {
+        categoryId,
+        productName,
+        description,
+        garmentType,
+        care,
+        specification,
+        productTags,
+        productVarient,
+        colors,
+        isPrimary,
+    } = req.body;
+
+    await validateProductData(
+        categoryId,
+        productName,
+        description,
+        garmentType,
+        specification
+    );
+
+    const categoryExists = await Category.exists({ _id: categoryId });
+    if (!categoryExists) {
+        throw new ApiError(HTTP_BAD_REQUEST, "Invalid category ID");
+    }
+
+    const productImages = req.files?.productImages;
+
+    const product = new Product({
+        categoryId,
+        name: productName,
+        description,
+        uploadedBy: user._id,
+        garmentType,
+        care,
+        specification,
+    });
+
+    const newProduct = await product.save();
+    const productId = newProduct._id;
+    let alreadyUploadedImages;
+
     try {
-        const {
-            productName,
-            categoryId,
-            productDescription,
-            productTag,
-            productVarient,
-            isPrimary,
-            colors,
-        } = req.body;
-
-        let parsedColors = JSON.parse(colors);
-        const productImages = req.files;
-
-        await validateProductData(
-            productName,
-            categoryId,
-            productDescription,
-            productImages,
-            parsedColors,
-            productVarient
-        );
-
-        const parsedProductVarient = JSON.parse(productVarient);
-        const parsedProductTag = JSON.parse(productTag);
-        const category = await Category.findById(categoryId).session(session);
-
-        if (!category) {
-            throw new ApiError(HTTP_BAD_REQUEST, "Category not found");
-        }
-        const product = new Product({
-            name: productName,
-            categoryId,
-            description: productDescription,
-            uploadedBy: userId,
-        });
-
-        await product.save({ session });
-
-        const productId = product._id;
-        const { productImagesData, UploadedImageUrls } =
+        const { productImagesData, uploadedImageUrls } =
             await uploadProductImages(
                 productId,
                 productImages,
-                parsedColors,
+                colors,
                 isPrimary
             );
 
-        for (let i = 0; i < UploadedImageUrls.length; i++) {
-            uploadedImageUrls.push(UploadedImageUrls[i]);
-        }
+        alreadyUploadedImages = uploadedImageUrls;
+        await validateProductVarientData(productVarient);
 
-        if (productImagesData.length === 0) {
-            throw new ApiError(
-                HTTP_INTERNAL_SERVER_ERROR,
-                "Product images not uploaded successfully"
-            );
-        }
+        // Insert related product data in parallel
+        await Promise.all([
+            ProductImage.insertMany(productImagesData),
+            ProductTag.insertMany(
+                productTags.map((tag) => ({ productId, tag }))
+            ),
+            ProductVarient.insertMany(
+                productVarient.map((v) => ({ productId, ...v }))
+            ),
+        ]);
 
-        await ProductImage.insertMany(productImagesData, { session });
-        await ProductVarient.insertMany(
-            parsedProductVarient.map((v) => ({ productId, ...v })),
-            { session }
-        );
-        await ProductTag.insertMany(
-            parsedProductTag.map((tag) => ({ productId, tagName: tag })),
-            { session }
-        );
-
-        await session.commitTransaction();
-        session.endSession();
-
-        const cacheKey = "products";
-        await redisClient.del(cacheKey);
-
-        // get product details using aggregate
-
-        const productDetails = await fetchProductDetails(productId);
+        const response = await fetchProductDetails(productId);
 
         return res
-            .status(HTTP_OK)
+            .status(HTTP_CREATED)
             .json(
                 new ApiResponse(
                     HTTP_CREATED,
                     "Product created successfully",
-                    productDetails
+                    response
                 )
             );
     } catch (error) {
-        await session.abortTransaction();
-        session.endSession();
-
-        if (uploadedImageUrls.length > 0) {
-            await deleteImages(uploadedImageUrls);
+        await Product.findByIdAndDelete(productId);
+        if (alreadyUploadedImages) {
+            for (let i = 0; i < alreadyUploadedImages.length; i++) {
+                await deleteImages(alreadyUploadedImages[i]);
+            }
         }
-
-        return res
-            .status(error.statusCode || HTTP_INTERNAL_SERVER_ERROR)
-            .json(new ApiResponse(error.statusCode, error.message));
+        throw new ApiError(HTTP_INTERNAL_SERVER_ERROR, error.message);
     }
 });
 
@@ -399,7 +405,6 @@ const updateProduct = asyncHandler(async (req, res) => {
 
     try {
         const productId = new mongoose.Types.ObjectId(req.params?.id);
-        console.log(productId);
         const userId = req.user?._id;
 
         if (!productId) {
