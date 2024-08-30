@@ -9,7 +9,8 @@ const productVarientSchema = new Schema(
         },
         size: {
             type: String,
-            required: true,
+            required: [true, "Size is required"],
+            enum: ["S", "M", "L", "XL"],
         },
         fit: {
             type: String,
@@ -17,15 +18,17 @@ const productVarientSchema = new Schema(
         },
         color: {
             type: String,
-            required: true,
+            required: [true, "Color is required"],
         },
         mrp: {
             type: Number,
-            required: true,
+            required: [true, "Price is required"],
+            min: [0, "Price must be a positive number"],
         },
         stockQuantity: {
             type: Number,
-            required: true,
+            required: [true, "Stock quantity is required"],
+            min: [0, "Stock must be a positive number"],
         },
     },
     { timestamps: true }
