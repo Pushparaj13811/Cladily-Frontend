@@ -16,7 +16,11 @@ const productSchema = new Schema(
             type: String,
             required: true,
         },
-        GarmentType: {
+        garmentType: {
+            type: String,
+            required: true,
+        },
+        care: {
             type: String,
             required: true,
         },
