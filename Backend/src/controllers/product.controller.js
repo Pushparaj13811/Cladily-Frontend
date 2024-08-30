@@ -20,6 +20,7 @@ import {
 } from "../services/cloudinary.service.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import mongoose from "mongoose";
+import fs from "fs";
 
 const deleteImages = async (uploadedImageUrl) => {
     const publicId = uploadedImageUrl
@@ -100,16 +101,13 @@ const validateProductVarientData = async (productVarient) => {
     }
 };
 
-const uploadProductImages = async (
-    productId,
-    productImages,
-    colors,
-    isPrimaryFlag
-) => {
+const uploadProductImages = async (productId, productImages, colors) => {
     let uploadedImageUrls = [];
     let productImagesData = [];
 
-    if (colors.length !== productImages.length) {
+    const length = Object.keys(productImages).length;
+
+    if (colors.length !== length) {
         throw new ApiError(
             HTTP_BAD_REQUEST,
             "Number of colors does not match the number of image sets"
@@ -120,7 +118,7 @@ const uploadProductImages = async (
         const imageFiles = productImages[i];
 
         for (let j = 0; j < imageFiles.length; j++) {
-            const localFilePath = imageFiles[j].path;
+            const localFilePath = imageFiles[j];
 
             try {
                 const { secure_url } = await uploadOnCloudinary(localFilePath);
@@ -139,9 +137,14 @@ const uploadProductImages = async (
                     imageUrl: secure_url,
                     color: colors[i],
                     altText: imageFiles[j].originalname,
-                    isPrimary: isPrimaryFlag[i] === true && j === 0,
+                    isPrimary: j === 0,
                 });
             } catch (error) {
+                if (productImages) {
+                    for (let i = 0; i < productImages.length; i++) {
+                        fs.unlinkSync(productImages[i].path);
+                    }
+                }
                 throw new ApiError(
                     error.statusCode || HTTP_INTERNAL_SERVER_ERROR,
                     error.message || "Error uploading image"
@@ -319,11 +322,11 @@ const createProduct = asyncHandler(async (req, res) => {
         garmentType,
         care,
         specification,
-        productTags,
-        productVarient,
+
         colors,
-        isPrimary,
     } = req.body;
+
+    let { productTags, productVarient } = req.body;
 
     await validateProductData(
         categoryId,
@@ -332,13 +335,37 @@ const createProduct = asyncHandler(async (req, res) => {
         garmentType,
         specification
     );
+    const parsedValue = JSON.parse(specification);
+    productVarient = JSON.parse(productVarient);
+    productTags = JSON.parse(productTags);
+
+    console.log("Product tags : ", productTags);
+    console.log("Type of product tags  :", typeof productTags);
 
     const categoryExists = await Category.exists({ _id: categoryId });
     if (!categoryExists) {
         throw new ApiError(HTTP_BAD_REQUEST, "Invalid category ID");
     }
 
-    const productImages = req.files?.productImages;
+    const images = req.files;
+    const productImages = {};
+
+    Object.keys(images).forEach((image) => {
+        const fileArray = images[image];
+        const index = parseInt(fileArray.fieldname.match(/\d+/)[0], 10);
+
+        if (!productImages[index]) {
+            productImages[index] = [];
+        }
+
+        if (Array.isArray(fileArray)) {
+            fileArray.forEach((file) => {
+                productImages[index].push(file.path);
+            });
+        } else {
+            productImages[index].push(fileArray.path); // Correct usage
+        }
+    });
 
     const product = new Product({
         categoryId,
@@ -347,7 +374,7 @@ const createProduct = asyncHandler(async (req, res) => {
         uploadedBy: user._id,
         garmentType,
         care,
-        specification,
+        specification: parsedValue,
     });
 
     const newProduct = await product.save();
@@ -356,12 +383,7 @@ const createProduct = asyncHandler(async (req, res) => {
 
     try {
         const { productImagesData, uploadedImageUrls } =
-            await uploadProductImages(
-                productId,
-                productImages,
-                colors,
-                isPrimary
-            );
+            await uploadProductImages(productId, productImages, colors);
 
         alreadyUploadedImages = uploadedImageUrls;
         await validateProductVarientData(productVarient);
@@ -370,7 +392,7 @@ const createProduct = asyncHandler(async (req, res) => {
         await Promise.all([
             ProductImage.insertMany(productImagesData),
             ProductTag.insertMany(
-                productTags.map((tag) => ({ productId, tag }))
+                productTags.map((tagName) => ({ productId, tagName }))
             ),
             ProductVarient.insertMany(
                 productVarient.map((v) => ({ productId, ...v }))
@@ -378,6 +400,10 @@ const createProduct = asyncHandler(async (req, res) => {
         ]);
 
         const response = await fetchProductDetails(productId);
+
+        const cacheKey = `product:${productId}`;
+
+        await redisClient.set(cacheKey, JSON.stringify(response), "EX", 3600);
 
         return res
             .status(HTTP_CREATED)
@@ -389,6 +415,9 @@ const createProduct = asyncHandler(async (req, res) => {
                 )
             );
     } catch (error) {
+        for (let i = 0; i < images.length; i++) {
+            fs.unlinkSync(images[i].path);
+        }
         await Product.findByIdAndDelete(productId);
         if (alreadyUploadedImages) {
             for (let i = 0; i < alreadyUploadedImages.length; i++) {
@@ -597,6 +626,7 @@ const fetchAllProducts = asyncHandler(async (req, res) => {
             productDetails = JSON.parse(cachedProducts);
         } else {
             productDetails = await fetchAllProductDetails();
+
             await redisClient.set(
                 cacheKey,
                 JSON.stringify(productDetails),
