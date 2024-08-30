@@ -110,7 +110,7 @@ const getCart = asyncHandler(async (req, res) => {
                     productId: 1,
                     size: 1,
                     color: 1,
-                    price: 1,
+                    mrp: 1,
                 },
                 productImages: {
                     imageUrl: 1, // Ensure field names are correct
