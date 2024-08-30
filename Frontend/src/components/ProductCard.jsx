@@ -2,11 +2,11 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import SliderComponent from './SliderComponent';
 
-function ProductCard({ productName, price, imageUrls, sizes, currency ="INR",id }) {
+function ProductCard({ productName, price, imageUrls, sizes, currency = "INR", id }) {
     return (
         <div className="bg-white overflow-hidden">
             {/* Product Image Carousel */}
-            <div className="relative w-full h-80 md:h-96 mb-12 xl:h-[26rem]  ">
+            <div className="relative w-full mx-2 h-96 md:h-96 mb-12 xl:h-[26rem]  ">
                 <SliderComponent imageUrls={imageUrls} />
             </div>
 
