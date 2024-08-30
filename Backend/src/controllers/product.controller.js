@@ -278,6 +278,9 @@ const fetchAllProductDetails = async () => {
             $project: {
                 _id: 1,
                 name: 1,
+                description:1,
+                garmentType:1,
+                care:1,
                 uploadedBy: {
                     _id: 1,
                     username: 1,
@@ -285,7 +288,6 @@ const fetchAllProductDetails = async () => {
                     lastName: 1,
                 },
                 category: { categoryName: 1 },
-                description: 1,
                 productImages: {
                     imageUrl: 1,
                     color: 1,
