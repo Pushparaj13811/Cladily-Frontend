@@ -10,7 +10,7 @@ const productVarientSchema = new Schema(
         size: {
             type: String,
             required: [true, "Size is required"],
-            enum: ["S", "M", "L", "XL"],
+            enum: ["S", "M", "L", "X" ,"XL", "XXL"],
         },
         fit: {
             type: String,
