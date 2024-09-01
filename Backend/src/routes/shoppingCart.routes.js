@@ -6,7 +6,7 @@ import {
     removeFromCart,
     clearCart,
 } from "../controllers/shoppingCart.controller.js";
-import {verifyToken, optionalVerifyToken} from "../middlewares/auth.middleware.js";
+import { optionalVerifyToken} from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
