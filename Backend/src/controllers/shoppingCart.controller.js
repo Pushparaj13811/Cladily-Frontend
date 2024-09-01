@@ -3,12 +3,14 @@ import ApiResponse from "../utils/apiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { ShoppingCart } from "../models/shoppingCart.model.js";
 import { CartItem } from "../models/cartItem.model.js";
+import { ProductVarient } from "../models/productVarient.model.js";
 import {
     HTTP_CREATED,
     HTTP_OK,
     HTTP_BAD_GATEWAY,
     HTTP_INTERNAL_SERVER_ERROR,
-    HTTP_FORBIDDEN,
+    HTTP_BAD_REQUEST,
+    HTTP_NOT_FOUND,
 } from "../httpStatusCode.js";
 
 const getCart = asyncHandler(async (req, res) => {
@@ -34,90 +36,9 @@ const getCart = asyncHandler(async (req, res) => {
         throw new ApiError(400, "User or guest ID not found");
     }
 
-    const cart = await ShoppingCart.aggregate([
-        {
-            $match: {
-                $or: [{ userId: userId }, { guestId: guestId }],
-            },
-        },
-        {
-            $lookup: {
-                from: "cartitems",
-                localField: "_id",
-                foreignField: "cartId",
-                as: "items",
-            },
-        },
-        {
-            $lookup: {
-                from: "productvarients",
-                localField: "items.productVarientId",
-                foreignField: "_id",
-                as: "products",
-            },
-        },
-        {
-            $lookup: {
-                from: "productimages",
-                let: { products: "$products" },
-
-                pipeline: [
-                    {
-                        $match: {
-                            $expr: {
-                                $and: [
-                                    {
-                                        $eq: [
-                                            "$productId",
-                                            "$$products.productId",
-                                        ],
-                                    },
-                                    { $eq: ["$color", "$$products.color"] },
-                                ],
-                            },
-                        },
-                    },
-                    {
-                        $project: { _id: 0, imageUrl: 1 }, // Ensure field names are correct
-                    },
-                ],
-                as: "productImages",
-            },
-        },
-        {
-            $unwind: { path: "$items", preserveNullAndEmptyArrays: true },
-        },
-        {
-            $unwind: { path: "$products", preserveNullAndEmptyArrays: true },
-        },
-        {
-            $unwind: {
-                path: "$productImages",
-                preserveNullAndEmptyArrays: true,
-            },
-        },
-        {
-            $project: {
-                _id: 1,
-                userId: 1,
-                guestId: 1,
-                items: {
-                    quantity: 1,
-                    productVarientId: 1,
-                },
-                products: {
-                    _id: 1,
-                    productId: 1,
-                    size: 1,
-                    color: 1,
-                    mrp: 1,
-                },
-                productImages: {
-                    imageUrl: 1, // Ensure field names are correct
-                },
-            },
-        },
-    ]);
+    const cart = await ShoppingCart.findOne({
+        $or: [{ userId }, { guestId }],
+    });
 
     if (!cart || cart.length === 0) {
         const newCart = new ShoppingCart({
@@ -135,117 +56,186 @@ const getCart = asyncHandler(async (req, res) => {
             );
     }
 
+    const cartDetails = await ShoppingCart.aggregate([
+        { $match: { _id: cart._id } },
+        {
+            $lookup: {
+                from: "cartitems",
+                localField: "_id",
+                foreignField: "cartId",
+                as: "items",
+            },
+        },
+        {
+            $unwind: { path: "$items", preserveNullAndEmptyArrays: true },
+        },
+        {
+            $lookup: {
+                from: "productvarients",
+                localField: "items.productVarientId",
+                foreignField: "_id",
+                as: "productsDetails",
+            },
+        },
+        {
+            $unwind: {
+                path: "$productsDetails",
+                preserveNullAndEmptyArrays: true,
+            },
+        },
+        {
+            $lookup: {
+                from: "products",
+                localField: "productsDetails.productId",
+                foreignField: "_id",
+                as: "product",
+            },
+        },
+        {
+            $unwind: {
+                path: "$product",
+                preserveNullAndEmptyArrays: true,
+            },
+        },
+        {
+            $lookup: {
+                from: "productimages",
+                let: {
+                    productId: "$product._id",
+                    itemColor: "$productsDetails.color",
+                },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    { $eq: ["$productId", "$$productId"] },
+                                    { $eq: ["$color", "$$itemColor"] },
+                                ],
+                            },
+                        },
+                    },
+                    {
+                        $project: {
+                            imageUrl: 1,
+                            color: 1,
+                            _id: 0,
+                        },
+                    },
+                ],
+                as: "product.images",
+            },
+        },
+        {
+            $addFields: {
+                "items.totalPrice": {
+                    $multiply: ["$productsDetails.mrp", "$items.quantity"],
+                },
+                "items.imageUrl": {
+                    $arrayElemAt: ["$product.images.imageUrl", 0],
+                },
+                "items.imageColor": {
+                    $arrayElemAt: ["$product.images.color", 0],
+                },
+                "items.productVarientId": "$productsDetails._id",
+                "items.name": "$product.name",
+                "items.size": "$productsDetails.size",
+                "items.color": "$productsDetails.color",
+                "items.mrp": "$productsDetails.mrp",
+            },
+        },
+        {
+            $group: {
+                _id: "$_id",
+                cartId: { $first: "$_id" },
+                userId: { $first: "$userId" },
+                guestId: { $first: "$guestId" },
+                items: {
+                    $push: {
+                        productVarientId: "$items.productVarientId",
+                        name: "$items.name",
+                        size: "$items.size",
+                        color: "$items.color",
+                        quantity: "$items.quantity",
+                        totalPrice: "$items.totalPrice",
+                        mrp: "$items.mrp",
+                        imageUrl: "$items.imageUrl",
+                        imageColor: "$items.imageColor",
+                    },
+                },
+            },
+        },
+        {
+            $project: {
+                _id: 0,
+                cartId: 1,
+                userId: 1,
+                guestId: 1,
+                items: 1,
+            },
+        },
+    ]);
+
     return res
         .status(HTTP_OK)
-        .json(new ApiResponse(HTTP_OK, "Cart retrieved successfully", cart));
+        .json(
+            new ApiResponse(HTTP_OK, "Cart retrieved successfully", cartDetails)
+        );
 });
 
 const addToCart = asyncHandler(async (req, res) => {
-    // 1. Check if the user ID or guest ID is available from the request.
-    // 2. Check if the product ID and quantity are available in the request body.
-    // 3. Find or create the cart and update or add the cart item
-    // 4. Update existing item or create a new one
-    // 5. Aggregate cart details with items and products
+    // Check product variant availability
+    // Find or create the cart and update the item
+    // Update or create the cart item
+    // Respond with a success message and product variant ID
 
     const userId = req.user?._id;
     const guestId = req.cookies.guestId;
 
     if (!userId && !guestId) {
-        throw new ApiError(400, "User or guest ID not found");
+        throw new ApiError(HTTP_BAD_REQUEST, "User or guest ID not found");
     }
 
     const { productVarientId, quantity } = req.body;
 
     if (!productVarientId || !quantity) {
-        throw new ApiError(400, "Product ID and quantity are required");
+        throw new ApiError(
+            HTTP_BAD_REQUEST,
+            "Product ID and quantity are required"
+        );
     }
 
+    const quantityInt = parseInt(quantity);
+
     try {
-        // Find or create the cart
+        const productVarient = await ProductVarient.findById(productVarientId);
+        if (!productVarient) {
+            throw new ApiError(HTTP_BAD_GATEWAY, "Product not found");
+        }
+        if (productVarient.StockQuantity < quantityInt) {
+            throw new ApiError(
+                HTTP_BAD_GATEWAY,
+                "Sorry, we don't have enough stock"
+            );
+        }
+
         const cart = await ShoppingCart.findOneAndUpdate(
             { $or: [{ userId }, { guestId }] },
             { $setOnInsert: { userId, guestId } },
             { new: true, upsert: true }
         );
 
-        // Find the existing cart item
-        const existingItem = await CartItem.findOne({
-            cartId: cart._id,
+        await CartItem.findOneAndUpdate(
+            { cartId: cart._id, productVarientId },
+            { $inc: { quantity: quantityInt } },
+            { upsert: true, new: true }
+        );
+
+        return res.status(HTTP_OK).json({
+            statusCode: HTTP_OK,
+            message: "Item successfully added to cart",
             productVarientId,
         });
-
-        if (existingItem) {
-            if (existingItem.quantity + parseInt(quantity) <= 5) {
-                existingItem.quantity += parseInt(quantity);
-                await existingItem.save();
-            } else {
-                throw new ApiError(HTTP_FORBIDDEN, "Quantity limit exceeded");
-            }
-        } else {
-            // Create new cart item
-            await CartItem.create({
-                cartId: cart._id,
-                productVarientId,
-                quantity,
-            });
-        }
-
-        const cartDetails = await ShoppingCart.aggregate([
-            { $match: { _id: cart._id } },
-
-            {
-                $lookup: {
-                    from: "cartitems",
-                    localField: "_id",
-                    foreignField: "cartId",
-                    as: "items",
-                },
-            },
-
-            { $unwind: { path: "$items", preserveNullAndEmptyArrays: true } },
-            {
-                $lookup: {
-                    from: "productvarients",
-                    localField: "items.productVarientId",
-                    foreignField: "_id",
-                    as: "products",
-                },
-            },
-
-            {
-                $unwind: {
-                    path: "$products",
-                    preserveNullAndEmptyArrays: true,
-                },
-            },
-
-            {
-                $project: {
-                    _id: 1,
-                    guestId: 1,
-                    createdAt: 1,
-                    updatedAt: 1,
-                    products: {
-                        _id: 1,
-                        name: 1,
-                        size: 1,
-                        color: 1,
-                        price: 1,
-                        StockQuantity: 1,
-                    },
-                },
-            },
-        ]);
-
-        return res
-            .status(HTTP_OK)
-            .json(
-                new ApiResponse(
-                    HTTP_OK,
-                    "Item added to cart successfully",
-                    cartDetails
-                )
-            );
     } catch (error) {
         throw new ApiError(
             error.statusCode || HTTP_INTERNAL_SERVER_ERROR,
@@ -255,37 +245,34 @@ const addToCart = asyncHandler(async (req, res) => {
 });
 
 const updateCart = asyncHandler(async (req, res) => {
-    // 1. Check if the user ID or guest ID is available from the request.
-    // 2. Check if the product ID and quantity are available in the request body.
-    // 3. Find the cart based on the user ID or guest ID.
-    // 4. Find the cart item based on the product ID and cart ID.
-    // 5. Update the quantity of the cart item.
-    // 6. Return the updated cart details.
-    // 7. Handle any errors that occur during the process.
-
     const userId = req.user?._id;
     const guestId = req.cookies?.guestId;
 
     if (!userId && !guestId) {
-        throw new ApiError(HTTP_BAD_GATEWAY, "User or guest ID not found");
+        throw new ApiError(HTTP_BAD_REQUEST, "User or guest ID not found");
     }
 
     const { productVarientId, quantity } = req.body;
 
-    if (!productVarientId || !quantity) {
+    if (!productVarientId || quantity === undefined) {
         throw new ApiError(
-            HTTP_BAD_GATEWAY,
+            HTTP_BAD_REQUEST,
             "Product ID and quantity are required"
         );
     }
 
     try {
+        const quantityInt = parseInt(quantity);
+        if (isNaN(quantityInt)) {
+            throw new ApiError(HTTP_BAD_REQUEST, "Quantity must be a number");
+        }
+
         const cart = await ShoppingCart.findOne({
             $or: [{ userId }, { guestId }],
         });
 
         if (!cart) {
-            throw new ApiError(HTTP_BAD_GATEWAY, "Cart not found");
+            throw new ApiError(HTTP_NOT_FOUND, "Cart not found");
         }
 
         const cartItem = await CartItem.findOne({
@@ -294,67 +281,51 @@ const updateCart = asyncHandler(async (req, res) => {
         });
 
         if (!cartItem) {
-            throw new ApiError(HTTP_BAD_GATEWAY, "Product not found in cart");
+            throw new ApiError(HTTP_NOT_FOUND, "Product not found in cart");
         }
 
-        if (quantity <= 0) {
-            await cartItem.remove();
-            return res
-                .status(HTTP_OK)
-                .json(new ApiResponse(HTTP_OK, "Product removed from cart"));
+        // Handle removal
+        if (quantityInt <= 0) {
+            if (cartItem.quantity === 1 && quantityInt === -1) {
+                await CartItem.deleteOne({
+                    cartId: cart._id,
+                    productVarientId,
+                });
+                return res
+                    .status(HTTP_OK)
+                    .json(
+                        new ApiResponse(HTTP_OK, "Product removed from cart")
+                    );
+            } else if (quantityInt < 0 && cartItem.quantity > -quantityInt) {
+                cartItem.quantity += quantityInt;
+                if (cartItem.quantity <= 0) {
+                    await CartItem.deleteOne({
+                        cartId: cart._id,
+                        productVarientId,
+                    });
+                    return res
+                        .status(HTTP_OK)
+                        .json(
+                            new ApiResponse(
+                                HTTP_OK,
+                                "Product removed from cart"
+                            )
+                        );
+                }
+                await cartItem.save();
+            }
+        } else {
+            // Handle addition
+            if (cartItem.quantity + quantityInt > 5) {
+                throw new ApiError(HTTP_BAD_REQUEST, "Quantity limit exceeded");
+            }
+            cartItem.quantity += quantityInt;
+            await cartItem.save();
         }
-
-        if (quantity > 5 || cartItem.quantity + quantity > 5) {
-            throw new ApiError(HTTP_BAD_GATEWAY, "Quantity limit exceeded");
-        }
-
-        cartItem.quantity = quantity;
-        await cartItem.save();
-
-        const cartDetails = await ShoppingCart.aggregate([
-            { $match: { _id: cart._id } },
-            {
-                $lookup: {
-                    from: "cartItems",
-                    localField: "_id",
-                    foreignField: "cartId",
-                    as: "items",
-                },
-            },
-            {
-                $lookup: {
-                    from: "productVarients",
-                    localField: "items.productVarientId",
-                    foreignField: "_id",
-                    as: "products",
-                },
-            },
-            {
-                $project: {
-                    _id: 1,
-                    userId: 1,
-                    guestId: 1,
-                    items: 1,
-                    products: {
-                        _id: 1,
-                        name: 1,
-                        size: 1,
-                        color: 1,
-                        price: 1,
-                    },
-                },
-            },
-        ]);
 
         return res
             .status(HTTP_OK)
-            .json(
-                new ApiResponse(
-                    HTTP_OK,
-                    "Cart updated successfully",
-                    cartDetails
-                )
-            );
+            .json(new ApiResponse(HTTP_OK, "Cart updated", productVarientId));
     } catch (error) {
         throw new ApiError(
             error.statusCode || HTTP_INTERNAL_SERVER_ERROR,
@@ -403,7 +374,7 @@ const removeFromCart = asyncHandler(async (req, res) => {
             throw new ApiError(HTTP_BAD_GATEWAY, "Product not found in cart");
         }
 
-        await cartItem.remove();
+        await cartItem.deleteOne({ _id: cartItem._id });
 
         return res
             .status(HTTP_OK)
