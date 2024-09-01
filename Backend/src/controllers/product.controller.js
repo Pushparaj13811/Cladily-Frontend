@@ -278,9 +278,9 @@ const fetchAllProductDetails = async () => {
             $project: {
                 _id: 1,
                 name: 1,
-                description:1,
-                garmentType:1,
-                care:1,
+                description: 1,
+                garmentType: 1,
+                care: 1,
                 uploadedBy: {
                     _id: 1,
                     username: 1,
@@ -340,9 +340,6 @@ const createProduct = asyncHandler(async (req, res) => {
     const parsedValue = JSON.parse(specification);
     productVarient = JSON.parse(productVarient);
     productTags = JSON.parse(productTags);
-
-    console.log("Product tags : ", productTags);
-    console.log("Type of product tags  :", typeof productTags);
 
     const categoryExists = await Category.exists({ _id: categoryId });
     if (!categoryExists) {
