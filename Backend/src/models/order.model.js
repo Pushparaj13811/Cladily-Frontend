@@ -28,6 +28,18 @@ const orderSchema = new Schema(
         cancellationReason: {
             type: String,
         },
+        statusHistory: [
+            {
+                status: {
+                    type: String,
+                    required: true,
+                },
+                date: {
+                    type: Date,
+                    required: true,
+                },
+            },
+        ],
     },
     { timestamps: true }
 );
