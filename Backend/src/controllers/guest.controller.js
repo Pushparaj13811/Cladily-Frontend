@@ -37,11 +37,6 @@ const createGuestSession = asyncHandler(async (req, res) => {
 
         const token = await generateGuestToken();
 
-        console.log("Token: ", token);
-        console.log("IP: ", ip);
-        console.log("User Agent: ", userAgent);
-        console.log("Headers: ", headers);
-
         guest = new Guest({
             ip,
             userAgent,
