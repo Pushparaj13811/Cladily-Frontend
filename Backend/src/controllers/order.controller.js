@@ -33,11 +33,16 @@ const createOrder = asyncHandler(async (req, res) => {
     const userId = req.user?._id;
     const { paymentMethod } = req.body;
 
-    const isUserVerified = req.user?.emailVerified;
+    const isUserVerified = req.user?.emailVerified && req.user?.phoneVerified;
 
     if (!isUserVerified) {
-        redirectUrl = `${process.env.CLIENT_URL}/verify-email`;
-        throw new ApiError(HTTP_UNAUTHORIZED, "Please verify your email");
+        if (!req.user?.emailVerified) {
+            req.session.redirectUrl = `${process.env.CLIENT_URL}/verify-email`;
+            throw new ApiError(HTTP_UNAUTHORIZED, "Please verify your email");
+        } else if (!req.user?.phoneVerified) {
+            req.session.redirectUrl = `${process.env.CLIENT_URL}/verify-phone`;
+            throw new ApiError(HTTP_UNAUTHORIZED, "Please verify your email");
+        }
     }
     if (!userId) {
         throw new ApiError(HTTP_UNAUTHORIZED, "Please login to continue");
@@ -78,11 +83,11 @@ const createOrder = asyncHandler(async (req, res) => {
 
     if (paymentMethod !== "Cash On Delivery") {
         try {
-            const paymentOrder =  createPaymentOrder(
+            const paymentOrder = createPaymentOrder(
                 order._id,
                 cart.totalAmount
             );
-            const capturedPayment =  capturePayment(
+            const capturedPayment = capturePayment(
                 paymentOrder.id,
                 cart.totalAmount
             );
@@ -110,7 +115,18 @@ const createOrder = asyncHandler(async (req, res) => {
                 `Payment processing failed: ${error.message}`
             );
         }
+    }else if(paymentMethod === "Cash On Delivery"){
+        const payment = new Payment({
+            orderId: order._id,
+            amount: cart.totalAmount,
+            status: "Pending",
+            paymentGatewayOrderId: null,
+            paymentGatewayPaymentId: null,
+        });
+        
+        await payment.save();
     }
+
 
     await ShoppingCart.findByIdAndUpdate(cart._id, { $set: { items: [] } });
 
