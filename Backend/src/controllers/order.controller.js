@@ -16,6 +16,9 @@ import {
 import {
     capturePayment,
     createPaymentOrder,
+    processBankRefund,
+    processRazorpayRefund,
+    processWalletRefund,
 } from "../services/payment.service.js";
 
 const createOrder = asyncHandler(async (req, res) => {
@@ -37,10 +40,8 @@ const createOrder = asyncHandler(async (req, res) => {
 
     if (!isUserVerified) {
         if (!req.user?.emailVerified) {
-            req.session.redirectUrl = `${process.env.CLIENT_URL}/verify-email`;
             throw new ApiError(HTTP_UNAUTHORIZED, "Please verify your email");
         } else if (!req.user?.phoneVerified) {
-            req.session.redirectUrl = `${process.env.CLIENT_URL}/verify-phone`;
             throw new ApiError(HTTP_UNAUTHORIZED, "Please verify your email");
         }
     }
@@ -83,11 +84,11 @@ const createOrder = asyncHandler(async (req, res) => {
 
     if (paymentMethod !== "Cash On Delivery") {
         try {
-            const paymentOrder = createPaymentOrder(
+            const paymentOrder = await createPaymentOrder(
                 order._id,
                 cart.totalAmount
             );
-            const capturedPayment = capturePayment(
+            const capturedPayment = await capturePayment(
                 paymentOrder.id,
                 cart.totalAmount
             );
@@ -115,7 +116,7 @@ const createOrder = asyncHandler(async (req, res) => {
                 `Payment processing failed: ${error.message}`
             );
         }
-    }else if(paymentMethod === "Cash On Delivery"){
+    } else if (paymentMethod === "Cash On Delivery") {
         const payment = new Payment({
             orderId: order._id,
             amount: cart.totalAmount,
@@ -123,10 +124,9 @@ const createOrder = asyncHandler(async (req, res) => {
             paymentGatewayOrderId: null,
             paymentGatewayPaymentId: null,
         });
-        
+
         await payment.save();
     }
-
 
     await ShoppingCart.findByIdAndUpdate(cart._id, { $set: { items: [] } });
 
@@ -359,10 +359,106 @@ const cancelOrderItems = asyncHandler(async (req, res) => {
         })
     );
 });
+
+const returnProduct = asyncHandler(async (req, res) => {
+    const userId = req.user?._id;
+
+    if (!userId) {
+        throw new ApiError(HTTP_UNAUTHORIZED, "Please login to continue");
+    }
+
+    const {
+        productVarientId,
+        reason,
+        orderId,
+        refundMethod,
+        refundType,
+        bankDetails,
+    } = req.body;
+
+    // Validate input fields
+    if (!productVarientId || !reason || !orderId || !refundMethod) {
+        throw new ApiError(
+            HTTP_BAD_REQUEST,
+            "Product variant ID, reason, order ID, and refund method are required"
+        );
+    }
+
+    // Fetch the order item and validate it
+    const orderItem = await OrderItem.findOne({
+        orderId,
+        productVarientId,
+        status: "Delivered",
+        updatedAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }, // Delivered within the last 7 days
+    });
+
+    if (!orderItem) {
+        throw new ApiError(
+            HTTP_NOT_FOUND,
+            "Order item not found or not eligible for return"
+        );
+    }
+
+    let responseMessage;
+
+    // Process the return based on the refund method
+    if (refundMethod === "refund") {
+        switch (refundType) {
+            case "razorpay":
+                try {
+                    const paymentId = orderItem.paymentId;
+                    await processRazorpayRefund(paymentId, orderItem.price);
+                    responseMessage = "Refund processed via Razorpay.";
+                } catch (error) {
+                    throw new ApiError(
+                        HTTP_INTERNAL_SERVER_ERROR,
+                        `Razorpay refund failed: ${error.message}`
+                    );
+                }
+                break;
+            case "bank":
+                if (!bankDetails || !bankDetails.upiId) {
+                    throw new ApiError(
+                        HTTP_BAD_REQUEST,
+                        "UPI ID is required for bank transfer"
+                    );
+                }
+                await processBankRefund(userId, orderItem, bankDetails);
+                responseMessage = "Refund processed via UPI bank transfer.";
+                break;
+            case "wallet":
+                await processWalletRefund(userId, orderItem);
+                responseMessage = "Refund processed to wallet.";
+                break;
+            default:
+                throw new ApiError(
+                    HTTP_BAD_REQUEST,
+                    "Invalid refund type specified"
+                );
+        }
+    } else if (refundMethod === "replacement") {
+        // Placeholder for replacement logic
+        // Example: await processReplacement(orderItem);
+        responseMessage = "Replacement processed.";
+    } else {
+        throw new ApiError(HTTP_BAD_REQUEST, "Invalid refund method specified");
+    }
+
+    // Update the order item status to Returned
+    orderItem.status = "Returned";
+    await orderItem.save();
+
+    // Send the response
+    return res
+        .status(HTTP_OK)
+        .json(new ApiResponse(HTTP_OK, responseMessage, orderItem));
+});
+
 export {
     createOrder,
     getOrders,
     updateOrderStatus,
     cancelOrder,
     cancelOrderItems,
+    returnProduct,
 };
