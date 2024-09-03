@@ -95,7 +95,6 @@ const capturePayment = async (paymentId, amount) => {
     }
 };
 
-// Process Bank Refund (UPI)
 const processBankRefund = async (userId, orderItem, bankDetails) => {
     if (!bankDetails || !bankDetails.upiId) {
         throw new ApiError(
@@ -133,7 +132,6 @@ const processBankRefund = async (userId, orderItem, bankDetails) => {
     }
 };
 
-// Process Wallet Refund (Razorpay Wallet)
 const processWalletRefund = async (userId, orderItem) => {
     try {
         const refund = await razorpayInstance.refunds.create({
@@ -150,7 +148,6 @@ const processWalletRefund = async (userId, orderItem) => {
     }
 };
 
-// Process Razorpay Refund
 const processRazorpayRefund = async (paymentId, amount) => {
     try {
         const refund = await razorpayInstance.payments.refund(paymentId, {
