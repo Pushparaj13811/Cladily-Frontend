@@ -59,15 +59,15 @@ const createReview = asyncHandler(async (req, res) => {
         },
     ]);
 
+    if (!orderItem) {
+        throw new ApiError(HTTP_NOT_FOUND, "Product not found");
+    }
+
     if (orderItem.status !== "Delivered") {
         throw new ApiError(
             HTTP_NOT_FOUND,
             "You are not allowed to review a product you haven't bought"
         );
-    }
-
-    if (!product) {
-        throw new ApiError(HTTP_NOT_FOUND, "Product not found");
     }
 
     if (!rating || rating < 1 || rating > 5) {
