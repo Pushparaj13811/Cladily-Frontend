@@ -21,7 +21,7 @@ const createPaymentOrder = async (orderId, totalAmount) => {
 
     try {
         // Create the payment order using Razorpay
-        const paymentOrder = await razorpayInstance.orders.create({
+        const paymentOrder = razorpayInstance.orders.create({
             amount: amountInPaise,
             currency: "INR",
             receipt: orderId.toString(),
