@@ -27,9 +27,11 @@ import {
   CardHeader,
   CardTitle,
 } from '@app/components/ui/card';
+import { PRODUCTS } from '@shared/constants/products';
+import { Order } from '@shared/types/order';
 
-// Mock orders data
-const MOCK_ORDERS = [
+// Generate orders based on product data
+const MOCK_ORDERS: Order[] = [
   {
     id: 'ORD-1001',
     user: {
@@ -40,8 +42,18 @@ const MOCK_ORDERS = [
     status: 'pending',
     total: 299900,
     items: [
-      { id: 'P1001', name: 'Classic White T-shirt', price: 199900, quantity: 1 },
-      { id: 'P1002', name: 'Blue Jeans', price: 100000, quantity: 1 },
+      { 
+        id: PRODUCTS.FEATURED[0].id.toString(), 
+        name: PRODUCTS.FEATURED[0].name, 
+        price: parseInt(PRODUCTS.FEATURED[0].price.replace('₹', '')), 
+        quantity: 1 
+      },
+      { 
+        id: PRODUCTS.FEATURED[1].id.toString(), 
+        name: PRODUCTS.FEATURED[1].name, 
+        price: parseInt(PRODUCTS.FEATURED[1].price.replace('₹', '')), 
+        quantity: 1 
+      },
     ],
     paymentMethod: 'credit_card',
     createdAt: '2023-11-25T09:24:00',
@@ -63,8 +75,18 @@ const MOCK_ORDERS = [
     status: 'processing',
     total: 499900,
     items: [
-      { id: 'P1003', name: 'Premium Hoodie', price: 299900, quantity: 1 },
-      { id: 'P1004', name: 'Slim Fit Chinos', price: 200000, quantity: 1 },
+      { 
+        id: PRODUCTS.FEATURED[2].id.toString(), 
+        name: PRODUCTS.FEATURED[2].name, 
+        price: parseInt(PRODUCTS.FEATURED[2].price.replace('₹', '')), 
+        quantity: 1 
+      },
+      { 
+        id: PRODUCTS.FEATURED[3].id.toString(), 
+        name: PRODUCTS.FEATURED[3].name, 
+        price: parseInt(PRODUCTS.FEATURED[3].price.replace('₹', '')), 
+        quantity: 1 
+      },
     ],
     paymentMethod: 'upi',
     createdAt: '2023-11-24T14:35:00',
@@ -86,8 +108,18 @@ const MOCK_ORDERS = [
     status: 'shipped',
     total: 799900,
     items: [
-      { id: 'P1005', name: 'Winter Jacket', price: 599900, quantity: 1 },
-      { id: 'P1006', name: 'Wool Socks', price: 100000, quantity: 2 },
+      { 
+        id: PRODUCTS.RELATED[0].id.toString(), 
+        name: PRODUCTS.RELATED[0].name, 
+        price: parseInt(PRODUCTS.RELATED[0].price.replace('₹', '')), 
+        quantity: 1 
+      },
+      { 
+        id: PRODUCTS.RELATED[1].id.toString(), 
+        name: PRODUCTS.RELATED[1].name, 
+        price: parseInt(PRODUCTS.RELATED[1].price.replace('₹', '')), 
+        quantity: 2 
+      },
     ],
     paymentMethod: 'credit_card',
     createdAt: '2023-11-23T11:12:00',
@@ -109,8 +141,18 @@ const MOCK_ORDERS = [
     status: 'delivered',
     total: 349900,
     items: [
-      { id: 'P1007', name: 'Graphic T-shirt', price: 199900, quantity: 1 },
-      { id: 'P1008', name: 'Baseball Cap', price: 150000, quantity: 1 },
+      { 
+        id: PRODUCTS.RELATED[2].id.toString(), 
+        name: PRODUCTS.RELATED[2].name, 
+        price: parseInt(PRODUCTS.RELATED[2].price.replace('₹', '')), 
+        quantity: 1 
+      },
+      { 
+        id: PRODUCTS.RELATED[3].id.toString(), 
+        name: PRODUCTS.RELATED[3].name, 
+        price: parseInt(PRODUCTS.RELATED[3].price.replace('₹', '')), 
+        quantity: 1 
+      },
     ],
     paymentMethod: 'cash_on_delivery',
     createdAt: '2023-11-20T16:45:00',
@@ -132,7 +174,12 @@ const MOCK_ORDERS = [
     status: 'cancelled',
     total: 899900,
     items: [
-      { id: 'P1009', name: 'Designer Dress', price: 899900, quantity: 1 },
+      { 
+        id: PRODUCTS.RELATED[4].id.toString(), 
+        name: PRODUCTS.RELATED[4].name, 
+        price: parseInt(PRODUCTS.RELATED[4].price.replace('₹', '')), 
+        quantity: 1 
+      },
     ],
     paymentMethod: 'net_banking',
     createdAt: '2023-11-19T10:30:00',
@@ -145,8 +192,6 @@ const MOCK_ORDERS = [
     },
   },
 ];
-
-type Order = typeof MOCK_ORDERS[0];
 
 // Status badge mapping for visual representation
 const getStatusBadge = (status: string) => {
