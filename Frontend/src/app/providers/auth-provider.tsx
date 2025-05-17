@@ -79,12 +79,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 500));
     
+    console.log('Login attempt:', { email });
     const foundUser = MOCK_USERS.find(u => u.email === email && u.password === password);
     
     if (!foundUser) {
+      console.log('Login failed: Invalid credentials');
       setIsLoading(false);
-      throw new Error("Invalid credentials");
+      // For demo purposes, add the valid credentials to the error message
+      throw new Error("Invalid credentials. For testing, use: user@example.com/user123 or admin@example.com/admin123");
     }
+    
+    console.log('Login successful:', foundUser.name);
     
     // Create user object without password
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

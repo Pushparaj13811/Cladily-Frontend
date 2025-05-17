@@ -1,3 +1,4 @@
+import  { Fragment } from 'react';
 import { Route } from 'react-router-dom';
 import { 
   LoginPage, 
@@ -11,12 +12,12 @@ import {
  */
 export const AuthRoutes = () => {
   return (
-    <>
+    <Fragment>
       {/* Auth Pages */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
-    </>
+    </Fragment>
   );
 }; 

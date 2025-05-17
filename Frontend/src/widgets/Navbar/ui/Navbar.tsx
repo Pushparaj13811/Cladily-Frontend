@@ -1,22 +1,40 @@
 import { useTheme } from "@app/providers/theme-provider";
+import { useAuth } from "@app/providers/auth-provider";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from "@app/components/ui/navigation-menu";
 import { Button } from "@app/components/ui/button";
 import { Input } from "@app/components/ui/input";
-import { ShoppingBag, Heart, Search, User, Sun, Moon } from "lucide-react";
+import { ShoppingBag, Heart, Search, User, Sun, Moon, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@app/lib/utils";
 import { COMPANY, NAVIGATION } from "@shared/constants";
 import { useCart } from "@features/cart";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@app/components/ui/dropdown-menu";
+import { useNavigate } from "react-router-dom";
 
 export function MainNavbar() {
     const { theme, setTheme } = useTheme();
     const { itemCount } = useCart();
+    const { user, isAuthenticated, logout } = useAuth();
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        logout();
+        navigate("/");
+    };
 
     return (
         <header className="border-b border-border">
-            <div className="bg-primary text-primary-foreground text-center py-2 text-sm">
-                <Link to={NAVIGATION.AUTH.MEMBERS.href}>{NAVIGATION.AUTH.MEMBERS.name}</Link>
-            </div>
+            {/* Only show the login message if not authenticated */}
+            {!isAuthenticated && (
+                <div className="bg-primary text-primary-foreground text-center py-2 text-sm">
+                    <Link to={NAVIGATION.AUTH.MEMBERS.href}>{NAVIGATION.AUTH.MEMBERS.name}</Link>
+                </div>
+            )}
             <div className="container mx-auto py-4 px-4 flex items-center justify-between">
                 <div className="flex items-center space-x-6">
                     <NavigationMenu>
@@ -49,13 +67,60 @@ export function MainNavbar() {
                             <Sun className="h-5 w-5" />
                         )}
                     </Button>
+                    
+                    {/* User menu based on authentication state */}
+                    {isAuthenticated ? (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="relative">
+                                    <User className="h-5 w-5" />
+                                    <span className="sr-only">User menu</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                                <div className="px-2 py-1.5 text-sm font-medium border-b mb-1">
+                                    Hello, {user?.name || 'User'}
+                                </div>
+                                <DropdownMenuItem asChild>
+                                    <Link to="/account" className="w-full cursor-pointer">
+                                        My Account
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <Link to="/account/orders" className="w-full cursor-pointer">
+                                        My Orders
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <Link to="/account/wishlist" className="w-full cursor-pointer">
+                                        My Wishlist
+                                    </Link>
+                                </DropdownMenuItem>
+                                {user?.role === 'admin' && (
+                                    <DropdownMenuItem asChild>
+                                        <Link to="/admin" className="w-full cursor-pointer">
+                                            Admin Dashboard
+                                        </Link>
+                                    </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
+                                    <LogOut className="h-4 w-4 mr-2" />
+                                    Logout
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    ) : (
+                        <Button variant="ghost" size="icon" asChild>
+                            <Link to="/login">
+                                <User className="h-5 w-5" />
+                            </Link>
+                        </Button>
+                    )}
+                    
                     <Button variant="ghost" size="icon" asChild>
-                        <Link to="/login">
-                            <User className="h-5 w-5" />
+                        <Link to={isAuthenticated ? "/account/wishlist" : "/login"}>
+                            <Heart className="h-5 w-5" />
                         </Link>
-                    </Button>
-                    <Button variant="ghost" size="icon">
-                        <Heart className="h-5 w-5" />
                     </Button>
                     <Button variant="ghost" size="icon" asChild className="relative">
                         <Link to="/cart">

@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { Route } from 'react-router-dom';
 import { UserRoute } from '@app/components/ProtectedRoute';
 import { 
@@ -13,7 +14,7 @@ import {
  */
 export const UserRoutes = () => {
   return (
-    <>
+    <Fragment>
       {/* User Account Pages - Protected Routes */}
       <Route 
         path="/account" 
@@ -47,6 +48,6 @@ export const UserRoutes = () => {
           </UserRoute>
         } 
       />
-    </>
+    </Fragment>
   );
 }; 

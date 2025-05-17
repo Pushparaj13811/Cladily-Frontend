@@ -1,3 +1,4 @@
+import  { Fragment } from 'react';
 import { Route } from 'react-router-dom';
 import { AdminRoute } from '@app/components/ProtectedRoute';
 import { AdminDashboardPage } from '@pages/Account';
@@ -8,7 +9,7 @@ import { AdminDashboardPage } from '@pages/Account';
  */
 export const AdminRoutes = () => {
   return (
-    <>
+    <Fragment>
       {/* Admin Pages - Protected Routes */}
       <Route 
         path="/admin" 
@@ -50,6 +51,6 @@ export const AdminRoutes = () => {
           </AdminRoute>
         } 
       />
-    </>
+    </Fragment>
   );
 }; 

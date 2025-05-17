@@ -1,12 +1,17 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@app/components/ui/button";
 import { Input } from "@app/components/ui/input";
 import { Checkbox } from "@app/components/ui/checkbox";
 import { Link } from "react-router-dom";
 import { COMPANY } from "@shared/constants";
 import { Eye, EyeOff } from "lucide-react";
+import { useAuth } from "@app/providers/auth-provider";
+import { LoginHelper } from "./components";
 
 export default function LoginPage() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -19,17 +24,16 @@ export default function LoginPage() {
     setError(null);
     setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      if (email === "test@example.com" && password === "password") {
-        // Success case - in a real app, this would navigate to dashboard
-        console.log("Login successful");
-      } else {
-        // Error case
-        setError("Invalid email or password");
-      }
+    try {
+      await login(email, password);
+      // Redirect to the appropriate dashboard based on user role
+      navigate("/account");
+    } catch (err) {
+      console.error("Login error:", err);
+      setError(err instanceof Error ? err.message : "An error occurred during login");
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -44,7 +48,7 @@ export default function LoginPage() {
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded-md">
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded-md text-sm">
             {error}
           </div>
         )}
@@ -138,6 +142,9 @@ export default function LoginPage() {
             </p>
           </div>
         </form>
+
+        {/* Demo Credentials Helper */}
+        <LoginHelper />
 
         <div className="mt-8 pt-8 border-t">
           <div className="flex items-center justify-center space-x-4">

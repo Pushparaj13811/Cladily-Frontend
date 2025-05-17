@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { Route } from 'react-router-dom';
 import { HomePage } from '@pages/Home';
 import { ProductsPage } from '@pages/Products';
@@ -11,7 +12,7 @@ import { ThankYouPage } from '@pages/ThankYou';
  */
 export const MainRoutes = () => {
   return (
-    <>
+    <Fragment>
       {/* Main Pages */}
       <Route path="/" element={<HomePage />} />
       <Route path="/products" element={<ProductsPage />} />
@@ -27,6 +28,6 @@ export const MainRoutes = () => {
       <Route path="/womenswear/:category" element={<ProductsPage />} />
       <Route path="/kidswear" element={<ProductsPage />} />
       <Route path="/kidswear/:category" element={<ProductsPage />} />
-    </>
+    </Fragment>
   );
 }; 
