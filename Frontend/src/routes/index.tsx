@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { HomePage } from '@pages/Home';
 import { ProductsPage } from '@pages/Products';
 import { ProductDetailPage } from '@pages/ProductDetail';
@@ -20,6 +20,7 @@ import {
 import { useAuth } from '@app/providers/auth-provider';
 import { AdminDashboardPage } from '@pages/Admin/Dashboard';
 import DashboardPage from '@pages/Account/ui/DashboardPage';
+import { PageTransition } from '@app/components/ui/motion';
 
 // Admin pages imports
 import ProductsManagementPage from '@pages/Admin/Products/ui/ProductsManagementPage';
@@ -54,159 +55,163 @@ const AnonymousRoute = ({ children }: { children: React.ReactNode }) => {
  * AppRoutes - Main component containing all application routes
  */
 export const AppRoutes = () => {
+  const location = useLocation();
+  
   return (
-    <Routes>
-      {/* Main Pages */}
-      <Route path="/" element={<HomePage />} />
-      <Route path="/products" element={<ProductsPage />} />
-      <Route path="/products/:id" element={<ProductDetailPage />} />
-      <Route path="/cart" element={<CartPage />} />
-      <Route path="/checkout" element={<CheckoutPage />} />
-      <Route path="/thank-you" element={<ThankYouPage />} />
-      
-      {/* Category Pages */}
-      <Route path="/menswear" element={<ProductsPage />} />
-      <Route path="/menswear/:category" element={<ProductsPage />} />
-      <Route path="/womenswear" element={<ProductsPage />} />
-      <Route path="/womenswear/:category" element={<ProductsPage />} />
-      <Route path="/kidswear" element={<ProductsPage />} />
-      <Route path="/kidswear/:category" element={<ProductsPage />} />
+    <PageTransition>
+      <Routes location={location} key={location.pathname}>
+        {/* Main Pages */}
+        <Route path="/" element={<HomePage />} />
+        <Route path="/products" element={<ProductsPage />} />
+        <Route path="/products/:id" element={<ProductDetailPage />} />
+        <Route path="/cart" element={<CartPage />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/thank-you" element={<ThankYouPage />} />
+        
+        {/* Category Pages */}
+        <Route path="/menswear" element={<ProductsPage />} />
+        <Route path="/menswear/:category" element={<ProductsPage />} />
+        <Route path="/womenswear" element={<ProductsPage />} />
+        <Route path="/womenswear/:category" element={<ProductsPage />} />
+        <Route path="/kidswear" element={<ProductsPage />} />
+        <Route path="/kidswear/:category" element={<ProductsPage />} />
 
-      {/* Auth Pages - Only accessible if not logged in */}
-      <Route 
-        path="/login" 
-        element={
-          <AnonymousRoute>
-            <LoginPage />
-          </AnonymousRoute>
-        } 
-      />
-      <Route 
-        path="/signup" 
-        element={
-          <AnonymousRoute>
-            <SignupPage />
-          </AnonymousRoute>
-        } 
-      />
-      <Route 
-        path="/forgot-password" 
-        element={
-          <AnonymousRoute>
-            <ForgotPasswordPage />
-          </AnonymousRoute>
-        } 
-      />
-      <Route 
-        path="/reset-password" 
-        element={
-          <AnonymousRoute>
-            <ResetPasswordPage />
-          </AnonymousRoute>
-        } 
-      />
-      
-      {/* User Account Pages - Protected Routes */}
-      <Route 
-        path="/account" 
-        element={
-          <UserRoute>
-            <Outlet />
-          </UserRoute>
-        }
-      >
-        <Route index element={<DashboardPage />} />
-        <Route path="profile" element={<ProfilePage />} />
-        <Route path="orders" element={<OrdersPage />} />
-        <Route path="wishlist" element={<WishlistPage />} />
-        <Route path="credits" element={<CreditsPage />} />
-        <Route path="details" element={<DetailsPage />} />
-        <Route path="addresses" element={<AddressBookPage />} />
-        <Route path="shopping-preferences" element={<ShoppingPreferencesPage />} />
-        <Route path="communication-preferences" element={<CommunicationPreferencesPage />} />
-      </Route>
-      
-      {/* Admin Pages - Protected Routes */}
-      <Route 
-        path="/admin" 
-        element={
-          <AdminRoute>
-            <AdminDashboardPage />
-          </AdminRoute>
-        } 
-      />
-      <Route 
-        path="/admin/dashboard" 
-        element={
-          <AdminRoute>
-            <AdminDashboardPage />
-          </AdminRoute>
-        } 
-      />
-      <Route 
-        path="/admin/products" 
-        element={
-          <AdminRoute>
-            <ProductsManagementPage />
-          </AdminRoute>
-        } 
-      />
-      <Route 
-        path="/admin/products/new" 
-        element={
-          <AdminRoute>
-            <ProductEditPage />
-          </AdminRoute>
-        } 
-      />
-      <Route 
-        path="/admin/products/:id" 
-        element={
-          <AdminRoute>
-            <ProductEditPage />
-          </AdminRoute>
-        } 
-      />
-      <Route 
-        path="/admin/categories" 
-        element={
-          <AdminRoute>
-            <CategoriesManagementPage />
-          </AdminRoute>
-        } 
-      />
-      <Route 
-        path="/admin/categories/new" 
-        element={
-          <AdminRoute>
-            <CategoryEditPage />
-          </AdminRoute>
-        } 
-      />
-      <Route 
-        path="/admin/categories/:id" 
-        element={
-          <AdminRoute>
-            <CategoryEditPage />
-          </AdminRoute>
-        } 
-      />
-      <Route 
-        path="/admin/orders" 
-        element={
-          <AdminRoute>
-            <OrdersManagementPage />
-          </AdminRoute>
-        } 
-      />
-      <Route 
-        path="/admin/orders/:id" 
-        element={
-          <AdminRoute>
-            <OrderDetailPage />
-          </AdminRoute>
-        } 
-      />
-    </Routes>
+        {/* Auth Pages - Only accessible if not logged in */}
+        <Route 
+          path="/login" 
+          element={
+            <AnonymousRoute>
+              <LoginPage />
+            </AnonymousRoute>
+          } 
+        />
+        <Route 
+          path="/signup" 
+          element={
+            <AnonymousRoute>
+              <SignupPage />
+            </AnonymousRoute>
+          } 
+        />
+        <Route 
+          path="/forgot-password" 
+          element={
+            <AnonymousRoute>
+              <ForgotPasswordPage />
+            </AnonymousRoute>
+          } 
+        />
+        <Route 
+          path="/reset-password" 
+          element={
+            <AnonymousRoute>
+              <ResetPasswordPage />
+            </AnonymousRoute>
+          } 
+        />
+        
+        {/* User Account Pages - Protected Routes */}
+        <Route 
+          path="/account" 
+          element={
+            <UserRoute>
+              <Outlet />
+            </UserRoute>
+          }
+        >
+          <Route index element={<DashboardPage />} />
+          <Route path="profile" element={<ProfilePage />} />
+          <Route path="orders" element={<OrdersPage />} />
+          <Route path="wishlist" element={<WishlistPage />} />
+          <Route path="credits" element={<CreditsPage />} />
+          <Route path="details" element={<DetailsPage />} />
+          <Route path="addresses" element={<AddressBookPage />} />
+          <Route path="shopping-preferences" element={<ShoppingPreferencesPage />} />
+          <Route path="communication-preferences" element={<CommunicationPreferencesPage />} />
+        </Route>
+        
+        {/* Admin Pages - Protected Routes */}
+        <Route 
+          path="/admin" 
+          element={
+            <AdminRoute>
+              <AdminDashboardPage />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/dashboard" 
+          element={
+            <AdminRoute>
+              <AdminDashboardPage />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/products" 
+          element={
+            <AdminRoute>
+              <ProductsManagementPage />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/products/new" 
+          element={
+            <AdminRoute>
+              <ProductEditPage />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/products/:id" 
+          element={
+            <AdminRoute>
+              <ProductEditPage />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/categories" 
+          element={
+            <AdminRoute>
+              <CategoriesManagementPage />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/categories/new" 
+          element={
+            <AdminRoute>
+              <CategoryEditPage />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/categories/:id" 
+          element={
+            <AdminRoute>
+              <CategoryEditPage />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/orders" 
+          element={
+            <AdminRoute>
+              <OrdersManagementPage />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/orders/:id" 
+          element={
+            <AdminRoute>
+              <OrderDetailPage />
+            </AdminRoute>
+          } 
+        />
+      </Routes>
+    </PageTransition>
   );
 }; 
