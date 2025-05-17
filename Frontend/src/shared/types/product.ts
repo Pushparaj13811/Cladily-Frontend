@@ -40,6 +40,7 @@ export interface ProductCardProps {
   discount?: string;
   image: string;
   isNew?: boolean;
+  rating?: number;
 }
 
 /**

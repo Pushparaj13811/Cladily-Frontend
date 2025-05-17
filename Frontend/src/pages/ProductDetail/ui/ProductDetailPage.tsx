@@ -294,6 +294,7 @@ const ProductDetailPage: React.FC = () => {
               discount={relatedProduct.discount || undefined}
               image={relatedProduct.image}
               isNew={false}
+              rating={relatedProduct.rating}
             />
           ))}
         </div>
