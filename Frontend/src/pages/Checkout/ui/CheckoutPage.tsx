@@ -103,8 +103,13 @@ const CheckoutPage: React.FC = () => {
     // Clear cart
     clearCart();
     
-    // Redirect to confirmation page (would be created in a real implementation)
-    navigate('/');
+    // Navigate to thank you page with order details
+    navigate('/thank-you', { 
+      state: { 
+        orderId,
+        total 
+      } 
+    });
   };
   
   // Render current step
