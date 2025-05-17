@@ -19,6 +19,7 @@ import {
   ProfilePage,
 } from '@pages/Account';
 import { useAuth } from '@app/providers/auth-provider';
+import { AdminDashboardPage } from '@pages/Admin/Dashboard';
 
 // Admin pages imports
 import ProductsManagementPage from '@pages/Admin/Products/ui/ProductsManagementPage';
@@ -27,7 +28,7 @@ import CategoriesManagementPage from '@pages/Admin/Categories/ui/CategoriesManag
 import CategoryEditPage from '@pages/Admin/Categories/ui/CategoryEditPage';
 import OrdersManagementPage from '@pages/Admin/Orders/ui/OrdersManagementPage';
 import OrderDetailPage from '@pages/Admin/Orders/ui/OrderDetailPage';
-import { AdminDashboardPage } from '@pages/Admin/Dashboard';
+
 /**
  * AnonymousRoute - Component to prevent authenticated users from accessing pages like login
  * Redirects to account page if user is already authenticated
