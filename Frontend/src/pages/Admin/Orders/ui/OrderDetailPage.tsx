@@ -29,6 +29,7 @@ import { Textarea } from '@app/components/ui/textarea';
 import { Badge } from '@app/components/ui/badge';
 import { PRODUCTS } from '@shared/constants/products';
 import { Order } from '@shared/types/order';
+import { OrderStatus, TimelineEventType, ShippingCarrier } from '@shared/types/admin';
 
 // Mock orders based on product data
 const MOCK_ORDERS: Order[] = [
@@ -179,8 +180,8 @@ const MOCK_ORDERS: Order[] = [
 ];
 
 // Status icon mapping
-const getStatusIcon = (status: string) => {
-  const iconMap: Record<string, React.ReactNode> = {
+const getStatusIcon = (status: OrderStatus) => {
+  const iconMap: Record<OrderStatus, React.ReactNode> = {
     pending: <Clock className="h-5 w-5 text-amber-500" />,
     processing: <Package className="h-5 w-5 text-blue-500" />,
     shipped: <Truck className="h-5 w-5 text-indigo-500" />,
@@ -192,8 +193,8 @@ const getStatusIcon = (status: string) => {
 };
 
 // Event icon mapping
-const getEventIcon = (status: string) => {
-  const iconMap: Record<string, React.ReactNode> = {
+const getEventIcon = (status: TimelineEventType) => {
+  const iconMap: Record<TimelineEventType, React.ReactNode> = {
     order_placed: <Package className="h-4 w-4 text-blue-500" />,
     payment_received: <CreditCard className="h-4 w-4 text-green-500" />,
     processing: <Package className="h-4 w-4 text-amber-500" />,
@@ -224,9 +225,9 @@ const OrderDetailPage: React.FC = () => {
   const order = MOCK_ORDERS.find(o => o.id === orderId);
   
   // States for editing
-  const [orderStatus, setOrderStatus] = useState<string>(order?.status || '');
+  const [orderStatus, setOrderStatus] = useState<OrderStatus>(order?.status as OrderStatus || 'pending');
   const [trackingNumber, setTrackingNumber] = useState<string>(order?.trackingNumber || '');
-  const [carrier, setCarrier] = useState<string>(order?.carrier || '');
+  const [carrier, setCarrier] = useState<ShippingCarrier | ''>(order?.carrier as ShippingCarrier || '');
   const [orderNotes, setOrderNotes] = useState<string>(order?.notes || '');
   
   // If order doesn't exist, show a message
@@ -283,7 +284,7 @@ const OrderDetailPage: React.FC = () => {
           <h1 className="text-3xl font-bold mt-2">Order {order.id}</h1>
           <div className="flex items-center gap-2 mt-1">
             <div className="flex items-center">
-              {getStatusIcon(order.status)}
+              {getStatusIcon(order.status as OrderStatus)}
               <span className="ml-2 text-muted-foreground capitalize">{order.status}</span>
             </div>
             <span className="text-muted-foreground mx-2">•</span>
@@ -382,7 +383,7 @@ const OrderDetailPage: React.FC = () => {
                   <label className="text-sm font-medium">Status</label>
                   <Select
                     value={orderStatus}
-                    onValueChange={setOrderStatus}
+                    onValueChange={(value) => setOrderStatus(value as OrderStatus)}
                   >
                     <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Select status" />
@@ -414,7 +415,7 @@ const OrderDetailPage: React.FC = () => {
                       <label className="text-sm font-medium">Carrier</label>
                       <Select
                         value={carrier}
-                        onValueChange={setCarrier}
+                        onValueChange={(value) => setCarrier(value as ShippingCarrier)}
                       >
                         <SelectTrigger className="mt-1">
                           <SelectValue placeholder="Select carrier" />
@@ -543,7 +544,7 @@ const OrderDetailPage: React.FC = () => {
                     <div key={index} className="flex">
                       <div className="mr-4 flex flex-col items-center">
                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
-                          {getEventIcon(event.status)}
+                          {getEventIcon(event.status as TimelineEventType)}
                         </div>
                         {index < order.timeline!.length - 1 && (
                           <div className="h-full w-px bg-muted"></div>

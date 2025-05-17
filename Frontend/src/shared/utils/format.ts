@@ -1,44 +1,53 @@
 /**
- * Format a number as currency (USD by default)
+ * Formats a number as currency with the specified locale and currency code
+ * @param amount - The amount to format
+ * @param locale - The locale to use for formatting (default: 'en-US')
+ * @param currencyCode - The currency code to use (default: 'USD')
+ * @returns Formatted currency string
  */
 export const formatCurrency = (
   amount: number, 
-  currencyCode = 'INR', 
-  locale = 'en-IN'
+  locale: string = 'en-US', 
+  currencyCode: string = 'USD'
 ): string => {
   return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: currencyCode,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(amount);
 };
 
 /**
- * Format a date to a readable string
+ * Formats a date string to a localized date format
+ * @param dateString - The date string to format
+ * @param locale - The locale to use for formatting (default: 'en-US')
+ * @returns Formatted date string
  */
 export const formatDate = (
-  date: Date | string | number,
-  options: Intl.DateTimeFormatOptions = { 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  },
-  locale = 'en-US'
+  dateString: string,
+  locale: string = 'en-US'
 ): string => {
-  const dateObj = typeof date === 'string' || typeof date === 'number'
-    ? new Date(date)
-    : date;
-    
-  return new Intl.DateTimeFormat(locale, options).format(dateObj);
+  const date = new Date(dateString);
+  return date.toLocaleDateString(locale, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
 };
 
 /**
- * Truncate a string to a specified length and add ellipsis
+ * Truncates text to the specified length and adds an ellipsis if needed
+ * @param text - The text to truncate
+ * @param maxLength - The maximum length of the text (default: 100)
+ * @returns Truncated text with ellipsis if needed
  */
 export const truncateText = (
   text: string,
-  maxLength: number,
-  ellipsis = '...'
+  maxLength: number = 100
 ): string => {
-  if (text.length <= maxLength) return text;
-  return `${text.slice(0, maxLength)}${ellipsis}`;
+  if (text.length <= maxLength) {
+    return text;
+  }
+  return text.slice(0, maxLength) + '...';
 }; 

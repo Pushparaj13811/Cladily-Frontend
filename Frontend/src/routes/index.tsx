@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { HomePage } from '@pages/Home';
 import { ProductsPage } from '@pages/Products';
 import { ProductDetailPage } from '@pages/ProductDetail';
@@ -13,7 +13,6 @@ import {
 } from '@pages/Auth';
 import { UserRoute, AdminRoute } from '@app/components/ProtectedRoute';
 import { 
-  UserDashboardPage,
   WishlistPage,
   OrdersPage,
   ProfilePage,
@@ -28,6 +27,13 @@ import CategoriesManagementPage from '@pages/Admin/Categories/ui/CategoriesManag
 import CategoryEditPage from '@pages/Admin/Categories/ui/CategoryEditPage';
 import OrdersManagementPage from '@pages/Admin/Orders/ui/OrdersManagementPage';
 import OrderDetailPage from '@pages/Admin/Orders/ui/OrderDetailPage';
+
+// Account page imports
+import CreditsPage from '@pages/Account/Credits/ui/CreditsPage';
+import DetailsPage from '@pages/Account/Details/ui/DetailsPage';
+import AddressBookPage from '@pages/Account/AddressBook/ui/AddressBookPage';
+import ShoppingPreferencesPage from '@pages/Account/ShoppingPreferences/ui/ShoppingPreferencesPage';
+import CommunicationPreferencesPage from '@pages/Account/Communication/ui/CommunicationPreferencesPage';
 
 /**
  * AnonymousRoute - Component to prevent authenticated users from accessing pages like login
@@ -104,7 +110,7 @@ export const AppRoutes = () => {
         path="/account" 
         element={
           <UserRoute>
-            <UserDashboardPage />
+            <Outlet />
           </UserRoute>
         } 
       />
@@ -129,6 +135,46 @@ export const AppRoutes = () => {
         element={
           <UserRoute>
             <WishlistPage />
+          </UserRoute>
+        } 
+      />
+      <Route 
+        path="/account/credits" 
+        element={
+          <UserRoute>
+            <CreditsPage />
+          </UserRoute>
+        } 
+      />
+      <Route 
+        path="/account/details" 
+        element={
+          <UserRoute>
+            <DetailsPage />
+          </UserRoute>
+        } 
+      />
+      <Route 
+        path="/account/addresses" 
+        element={
+          <UserRoute>
+            <AddressBookPage />
+          </UserRoute>
+        } 
+      />
+      <Route 
+        path="/account/shopping-preferences" 
+        element={
+          <UserRoute>
+            <ShoppingPreferencesPage />
+          </UserRoute>
+        } 
+      />
+      <Route 
+        path="/account/communication-preferences" 
+        element={
+          <UserRoute>
+            <CommunicationPreferencesPage />
           </UserRoute>
         } 
       />

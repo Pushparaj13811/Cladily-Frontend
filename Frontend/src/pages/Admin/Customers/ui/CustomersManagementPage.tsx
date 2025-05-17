@@ -35,16 +35,10 @@ import {
   DropdownMenuTrigger,
 } from '@app/components/ui/dropdown-menu';
 import { Badge } from '@app/components/ui/badge';
-import { User } from '@shared/types/order';
+import { Customer } from '@shared/types/customer';
 
 // Mock customers data
-const MOCK_CUSTOMERS: Array<User & {
-  status: 'active' | 'inactive';
-  registeredDate: string;
-  totalOrders: number;
-  totalSpent: number;
-  lastOrderDate: string | null;
-}> = [
+const MOCK_CUSTOMERS: Customer[] = [
   {
     id: 'USR-101',
     name: 'John Smith',
@@ -119,7 +113,7 @@ const CustomersManagementPage: React.FC = () => {
   // State
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [sortColumn, setSortColumn] = useState<string>('registeredDate');
+  const [sortColumn, setSortColumn] = useState<keyof Customer | 'email' | 'status' | 'lastOrderDate'>('registeredDate');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   
   // Filter customers based on search query and filters
@@ -183,7 +177,7 @@ const CustomersManagementPage: React.FC = () => {
   });
   
   // Handle column sort
-  const handleSort = (column: string) => {
+  const handleSort = (column: keyof Customer | 'email' | 'status' | 'lastOrderDate') => {
     if (sortColumn === column) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {

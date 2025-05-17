@@ -29,6 +29,7 @@ import {
 } from '@app/components/ui/card';
 import { PRODUCTS } from '@shared/constants/products';
 import { Order } from '@shared/types/order';
+import { StatusBadgeInfo, PaymentMethod, OrderStatus } from '@shared/types/admin';
 
 // Generate orders based on product data
 const MOCK_ORDERS: Order[] = [
@@ -194,8 +195,8 @@ const MOCK_ORDERS: Order[] = [
 ];
 
 // Status badge mapping for visual representation
-const getStatusBadge = (status: string) => {
-  const statusMap: Record<string, { variant: 'default' | 'outline' | 'secondary' | 'destructive'; label: string }> = {
+const getStatusBadge = (status: OrderStatus) => {
+  const statusMap: Record<OrderStatus, StatusBadgeInfo> = {
     pending: { variant: 'outline', label: 'Pending' },
     processing: { variant: 'secondary', label: 'Processing' },
     shipped: { variant: 'default', label: 'Shipped' },
@@ -213,8 +214,8 @@ const getStatusBadge = (status: string) => {
 };
 
 // Payment method formatting
-const formatPaymentMethod = (method: string) => {
-  const methodMap: Record<string, string> = {
+const formatPaymentMethod = (method: PaymentMethod): string => {
+  const methodMap: Record<PaymentMethod, string> = {
     credit_card: 'Credit Card',
     debit_card: 'Debit Card',
     upi: 'UPI',

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 export function MainFooter() {
   return (
-    <footer className="border-t border-border py-8 mt-16">
+    <footer className="border-t border-border py-8 mt-16 bg-[#e6e6e6]">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-4">
           <div className="space-y-4">
@@ -62,7 +62,7 @@ export function MainFooter() {
             </div>
           </div>
         </div>
-        <div className="mt-8 border-t border-border pt-8 text-center text-xs text-muted-foreground">
+        <div className="mt-8 border-t border-border pt-8 border-white text-center text-xs text-muted-foreground">
           <p>{COMPANY.COPYRIGHT}</p>
         </div>
       </div>

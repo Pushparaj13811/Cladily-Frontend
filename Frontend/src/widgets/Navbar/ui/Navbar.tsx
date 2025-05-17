@@ -3,24 +3,26 @@ import { useAuth } from "@app/providers/auth-provider";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from "@app/components/ui/navigation-menu";
 import { Button } from "@app/components/ui/button";
 import { Input } from "@app/components/ui/input";
-import { ShoppingBag, Heart, Search, User, Sun, Moon, LogOut } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ShoppingBag, Heart, Search, User, Sun, Moon, X } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@app/lib/utils";
 import { COMPANY, NAVIGATION } from "@shared/constants";
+import { ACCOUNT_NAVIGATION, MOCK_USER_PROFILE } from "@shared/constants/account";
 import { useCart } from "@features/cart";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
 } from "@app/components/ui/dropdown-menu";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 export function MainNavbar() {
     const { theme, setTheme } = useTheme();
     const { itemCount } = useCart();
     const { user, isAuthenticated, logout } = useAuth();
     const navigate = useNavigate();
+    const [open, setOpen] = useState(false);
 
     const handleLogout = () => {
         logout();
@@ -55,8 +57,8 @@ export function MainNavbar() {
                 </Link>
 
                 <div className="flex items-center space-x-4">
-                    <Button 
-                        variant="ghost" 
+                    <Button
+                        variant="ghost"
                         size="icon"
                         onClick={() => setTheme(theme === "light" ? "dark" : "light")}
                         aria-label="Toggle theme"
@@ -67,46 +69,82 @@ export function MainNavbar() {
                             <Sun className="h-5 w-5" />
                         )}
                     </Button>
-                    
+
                     {/* User menu based on authentication state */}
                     {isAuthenticated ? (
-                        <DropdownMenu>
+                        <DropdownMenu open={open} onOpenChange={setOpen}>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon" className="relative">
                                     <User className="h-5 w-5" />
                                     <span className="sr-only">User menu</span>
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56">
-                                <div className="px-2 py-1.5 text-sm font-medium border-b mb-1">
-                                    Hello, {user?.name || 'User'}
+                            <DropdownMenuContent align="end" className="w-[320px] p-0 rounded-lg">
+                                <div className="flex items-center justify-between p-6 border-b">
+                                    <h2 className="text-xl font-medium tracking-wide">
+                                        {user?.name || MOCK_USER_PROFILE.firstName} {MOCK_USER_PROFILE.lastName}
+                                    </h2>
+                                    <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="h-8 w-8"
+                                        onClick={() => setOpen(false)}
+                                    >
+                                        <X className="h-5 w-5" />
+                                    </Button>
                                 </div>
-                                <DropdownMenuItem asChild>
-                                    <Link to="/account" className="w-full cursor-pointer">
-                                        My Account
-                                    </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                    <Link to="/account/orders" className="w-full cursor-pointer">
-                                        My Orders
-                                    </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                    <Link to="/account/wishlist" className="w-full cursor-pointer">
-                                        My Wishlist
-                                    </Link>
-                                </DropdownMenuItem>
-                                {user?.role === 'admin' && (
-                                    <DropdownMenuItem asChild>
-                                        <Link to="/admin" className="w-full cursor-pointer">
-                                            Admin Dashboard
+
+                                <div className="py-2">
+                                    <DropdownMenuItem asChild className="px-6 py-4 text-base hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black">
+                                        <Link to="/account/membership">
+                                            Membership
                                         </Link>
                                     </DropdownMenuItem>
-                                )}
-                                <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
-                                    <LogOut className="h-4 w-4 mr-2" />
-                                    Logout
-                                </DropdownMenuItem>
+
+                                    {/* Menu items from ACCOUNT_NAVIGATION */}
+                                    {ACCOUNT_NAVIGATION.slice(0, 3).map((item) => (
+                                        <DropdownMenuItem key={item.path} asChild className="px-6 py-4 text-base hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black">
+                                            <Link to={item.path}>
+                                                {item.label}
+                                            </Link>
+                                        </DropdownMenuItem>
+                                    ))}
+
+                                    <DropdownMenuItem asChild className="px-6 py-4 text-base hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black">
+                                        <Link to="/account/shopping-preferences">
+                                            Preferences
+                                        </Link>
+                                    </DropdownMenuItem>
+
+                                    <DropdownMenuItem asChild className="px-6 py-4 text-base hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black">
+                                        <Link to="/account/referral">
+                                            Refer a Friend
+                                        </Link>
+                                    </DropdownMenuItem>
+
+                                    {user?.role === 'admin' && (
+                                        <DropdownMenuItem asChild className="px-6 py-4 text-base hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black">
+                                            <Link to="/admin">
+                                                Admin Dashboard
+                                            </Link>
+                                        </DropdownMenuItem>
+                                    )}
+                                    
+                                    <DropdownMenuItem 
+                                        className="px-6 py-4 text-base text-red-600 hover:bg-gray-50 hover:text-red-600 focus:bg-gray-50 focus:text-red-600"
+                                        onClick={handleLogout}
+                                    >
+                                        Sign out
+                                    </DropdownMenuItem>
+                                </div>
+
+                                <div className="p-4 border-t flex justify-center">
+                                    <Button asChild className="bg-black hover:bg-gray-800 text-white rounded-none w-full">
+                                        <Link to="/account">
+                                            My Account
+                                        </Link>
+                                    </Button>
+                                </div>
                             </DropdownMenuContent>
                         </DropdownMenu>
                     ) : (
@@ -116,7 +154,7 @@ export function MainNavbar() {
                             </Link>
                         </Button>
                     )}
-                    
+
                     <Button variant="ghost" size="icon" asChild>
                         <Link to={isAuthenticated ? "/account/wishlist" : "/login"}>
                             <Heart className="h-5 w-5" />
