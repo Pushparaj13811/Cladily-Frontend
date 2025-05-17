@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ShoppingBag, Heart, Star } from 'lucide-react';
 import { Button } from '@app/components/ui/button';
 import { useCart } from '@features/cart';
@@ -19,6 +19,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   rating,
 }) => {
   const { addItem } = useCart();
+  const navigate = useNavigate();
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -48,19 +49,26 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     });
   };
 
+  const handleCardClick = () => {
+    navigate(`/products/${id}`);
+  };
+
   return (
-    <div className="group relative h-full flex flex-col">
+    <div 
+      className="group relative h-full flex flex-col cursor-pointer" 
+      onClick={handleCardClick}
+    >
       {/* Card with subtle shadow and rounded border */}
-      <div className="flex-1 overflow-hidden rounded-lg border border-border/40 bg-background transition-all duration-300 hover:shadow-md hover:border-border">
+      <div className="flex-1 overflow-hidden rounded-lg border border-border/40 bg-background transition-all duration-300">
         {/* Image container with zoom effect on hover */}
         <div className="relative aspect-square overflow-hidden bg-muted/30">
-          <Link to={`/products/${id}`} className="block h-full w-full">
+          <div className="block h-full w-full">
             <img
               src={image}
               alt={name}
               className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
             />
-          </Link>
+          </div>
           
           {/* Quick action buttons with improved styling */}
           <div className="absolute right-2 top-2 z-10 flex flex-col gap-2 opacity-0 transform translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0">
@@ -114,9 +122,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         {/* Product info with improved typography and spacing */}
         <div className="p-3">
           <div className="space-y-1.5">
-            <Link to={`/products/${id}`} className="block group-hover:text-primary transition-colors">
+            <div className="block group-hover:text-primary transition-colors">
               <h3 className="font-medium line-clamp-1 text-sm">{name}</h3>
-            </Link>
+            </div>
             
             <p className="text-sm text-muted-foreground line-clamp-1">{department}</p>
             
