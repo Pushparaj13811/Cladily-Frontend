@@ -19,6 +19,7 @@ import {
 } from '@pages/Account';
 import { useAuth } from '@app/providers/auth-provider';
 import { AdminDashboardPage } from '@pages/Admin/Dashboard';
+import DashboardPage from '@pages/Account/ui/DashboardPage';
 
 // Admin pages imports
 import ProductsManagementPage from '@pages/Admin/Products/ui/ProductsManagementPage';
@@ -112,72 +113,18 @@ export const AppRoutes = () => {
           <UserRoute>
             <Outlet />
           </UserRoute>
-        } 
-      />
-      <Route 
-        path="/account/profile" 
-        element={
-          <UserRoute>
-            <ProfilePage />
-          </UserRoute>
-        } 
-      />
-      <Route 
-        path="/account/orders" 
-        element={
-          <UserRoute>
-            <OrdersPage />
-          </UserRoute>
-        } 
-      />
-      <Route 
-        path="/account/wishlist" 
-        element={
-          <UserRoute>
-            <WishlistPage />
-          </UserRoute>
-        } 
-      />
-      <Route 
-        path="/account/credits" 
-        element={
-          <UserRoute>
-            <CreditsPage />
-          </UserRoute>
-        } 
-      />
-      <Route 
-        path="/account/details" 
-        element={
-          <UserRoute>
-            <DetailsPage />
-          </UserRoute>
-        } 
-      />
-      <Route 
-        path="/account/addresses" 
-        element={
-          <UserRoute>
-            <AddressBookPage />
-          </UserRoute>
-        } 
-      />
-      <Route 
-        path="/account/shopping-preferences" 
-        element={
-          <UserRoute>
-            <ShoppingPreferencesPage />
-          </UserRoute>
-        } 
-      />
-      <Route 
-        path="/account/communication-preferences" 
-        element={
-          <UserRoute>
-            <CommunicationPreferencesPage />
-          </UserRoute>
-        } 
-      />
+        }
+      >
+        <Route index element={<DashboardPage />} />
+        <Route path="profile" element={<ProfilePage />} />
+        <Route path="orders" element={<OrdersPage />} />
+        <Route path="wishlist" element={<WishlistPage />} />
+        <Route path="credits" element={<CreditsPage />} />
+        <Route path="details" element={<DetailsPage />} />
+        <Route path="addresses" element={<AddressBookPage />} />
+        <Route path="shopping-preferences" element={<ShoppingPreferencesPage />} />
+        <Route path="communication-preferences" element={<CommunicationPreferencesPage />} />
+      </Route>
       
       {/* Admin Pages - Protected Routes */}
       <Route 
