@@ -78,7 +78,23 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   const paymentType = form.watch('type');
 
   const handleSubmit = (data: PaymentFormValues) => {
-    onSubmit(data);
+    console.log("Payment form submitted with data:", data);
+    
+    // Ensure data is valid before passing it to parent
+    const isCardValid = data.type !== 'card' || (!!data.cardNumber && !!data.cardExpiry && !!data.cardCvc);
+    const isUpiValid = data.type !== 'upi' || !!data.upiId;
+    
+    if (isCardValid && isUpiValid) {
+      console.log("Payment data valid, calling parent onSubmit");
+      onSubmit(data);
+    } else {
+      console.error("Payment validation failed");
+      // Form validation should prevent this, but just in case
+      form.setError("type", { 
+        type: "manual", 
+        message: "Please fill in all required fields for the selected payment method" 
+      });
+    }
   };
 
   return (
