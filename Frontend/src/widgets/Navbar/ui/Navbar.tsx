@@ -2,13 +2,15 @@ import { useTheme } from "@app/providers/theme-provider";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from "@app/components/ui/navigation-menu";
 import { Button } from "@app/components/ui/button";
 import { Input } from "@app/components/ui/input";
-import { ShoppingBag, Heart, Search, User } from "lucide-react";
+import { ShoppingBag, Heart, Search, User, Sun, Moon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@app/lib/utils";
 import { COMPANY, NAVIGATION } from "@shared/constants";
+import { useCart } from "@features/cart";
 
 export function MainNavbar() {
     const { theme, setTheme } = useTheme();
+    const { itemCount } = useCart();
 
     return (
         <header className="border-b border-border">
@@ -35,15 +37,35 @@ export function MainNavbar() {
                 </Link>
 
                 <div className="flex items-center space-x-4">
-                    <Button variant="ghost" size="icon"
-                        onClick={() => setTheme(theme === "light" ? "dark" : "light")}>
-                        <User className="h-5 w-5" />
+                    <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+                        aria-label="Toggle theme"
+                    >
+                        {theme === "light" ? (
+                            <Moon className="h-5 w-5" />
+                        ) : (
+                            <Sun className="h-5 w-5" />
+                        )}
+                    </Button>
+                    <Button variant="ghost" size="icon" asChild>
+                        <Link to="/login">
+                            <User className="h-5 w-5" />
+                        </Link>
                     </Button>
                     <Button variant="ghost" size="icon">
                         <Heart className="h-5 w-5" />
                     </Button>
-                    <Button variant="ghost" size="icon">
-                        <ShoppingBag className="h-5 w-5" />
+                    <Button variant="ghost" size="icon" asChild className="relative">
+                        <Link to="/cart">
+                            <ShoppingBag className="h-5 w-5" />
+                            {itemCount > 0 && (
+                                <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                    {itemCount > 99 ? '99+' : itemCount}
+                                </span>
+                            )}
+                        </Link>
                     </Button>
                 </div>
             </div>
