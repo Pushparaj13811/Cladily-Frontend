@@ -134,8 +134,8 @@ const CartPage: React.FC = () => {
               </div>
             </div>
             
-            <Button className="w-full mt-6">
-              Proceed to Checkout
+            <Button asChild className="w-full mt-6">
+              <Link to="/checkout">Proceed to Checkout</Link>
             </Button>
             
             <div className="mt-4 text-center">

@@ -14,6 +14,7 @@ import {
 import { CartPage } from '@pages/Cart';
 import { CartProvider } from '@features/cart';
 import { Toaster } from '@app/components/ui/toaster';
+import { CheckoutPage } from '@pages/Checkout';
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
                 <Route path="/products" element={<ProductsPage />} />
                 <Route path="/products/:id" element={<ProductDetailPage />} />
                 <Route path="/cart" element={<CartPage />} />
+                <Route path="/checkout" element={<CheckoutPage />} />
                 
                 {/* Auth Pages */}
                 <Route path="/login" element={<LoginPage />} />
