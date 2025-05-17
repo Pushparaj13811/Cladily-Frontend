@@ -9,7 +9,7 @@ import { ProductCardProps } from '@shared/types';
 export const ProductCard: React.FC<ProductCardProps> = ({
   id,
   name,
-  brand,
+  department,
   price,
   originalPrice,
   discount,
@@ -99,7 +99,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 {name}
               </Link>
             </h3>
-            <p className="text-sm text-muted-foreground">{brand}</p>
+            <p className="text-sm text-muted-foreground">{department}</p>
           </div>
           
           <div className="text-right">

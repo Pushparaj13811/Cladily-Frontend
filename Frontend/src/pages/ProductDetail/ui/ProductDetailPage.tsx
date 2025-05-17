@@ -51,7 +51,6 @@ const ProductDetailPage: React.FC = () => {
     const itemToAdd = {
       id: String(product.id), // Convert to string to match the CartItem type
       name: product.name,
-      brand: product.brand,
       price: convertPriceToNumber(product.price), // Convert price to number
       size: selectedSize,
       quantity,
@@ -103,8 +102,7 @@ const ProductDetailPage: React.FC = () => {
         <div className="space-y-6">
           <div>
             <h1 className="text-3xl font-bold">{product.name}</h1>
-            <p className="text-lg text-muted-foreground mt-1">{product.brand}</p>
-            
+            <p className="text-lg text-muted-foreground mt-1">{product.department}</p>
             {/* Rating */}
             {product.rating && (
               <div className="flex items-center mt-2">
@@ -290,7 +288,7 @@ const ProductDetailPage: React.FC = () => {
               key={relatedProduct.id}
               id={relatedProduct.id}
               name={relatedProduct.name}
-              brand={relatedProduct.brand}
+              department={relatedProduct.department || ""}
               price={relatedProduct.price}
               originalPrice={relatedProduct.originalPrice || undefined}
               discount={relatedProduct.discount || undefined}

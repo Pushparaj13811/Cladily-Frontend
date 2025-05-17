@@ -34,7 +34,7 @@ export interface Product {
 export interface ProductCardProps {
   id: number | string;
   name: string;
-  brand: string;
+  department: string;
   price: string;
   originalPrice?: string;
   discount?: string;
