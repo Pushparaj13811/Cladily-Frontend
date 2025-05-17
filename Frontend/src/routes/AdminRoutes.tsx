@@ -1,7 +1,7 @@
 import  { Fragment } from 'react';
 import { Route } from 'react-router-dom';
 import { AdminRoute } from '@app/components/ProtectedRoute';
-import { AdminDashboardPage } from '@pages/Account';
+import { AdminDashboardPage } from '@pages/Admin/Dashboard';
 
 /**
  * AdminRoutes - Component containing all admin related routes

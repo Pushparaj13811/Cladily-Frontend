@@ -17,10 +17,17 @@ import {
   WishlistPage,
   OrdersPage,
   ProfilePage,
-  AdminDashboardPage
 } from '@pages/Account';
 import { useAuth } from '@app/providers/auth-provider';
 
+// Admin pages imports
+import ProductsManagementPage from '@pages/Admin/Products/ui/ProductsManagementPage';
+import ProductEditPage from '@pages/Admin/Products/ui/ProductEditPage';
+import CategoriesManagementPage from '@pages/Admin/Categories/ui/CategoriesManagementPage';
+import CategoryEditPage from '@pages/Admin/Categories/ui/CategoryEditPage';
+import OrdersManagementPage from '@pages/Admin/Orders/ui/OrdersManagementPage';
+import OrderDetailPage from '@pages/Admin/Orders/ui/OrderDetailPage';
+import { AdminDashboardPage } from '@pages/Admin/Dashboard';
 /**
  * AnonymousRoute - Component to prevent authenticated users from accessing pages like login
  * Redirects to account page if user is already authenticated
@@ -135,10 +142,58 @@ export const AppRoutes = () => {
         } 
       />
       <Route 
+        path="/admin/dashboard" 
+        element={
+          <AdminRoute>
+            <AdminDashboardPage />
+          </AdminRoute>
+        } 
+      />
+      <Route 
         path="/admin/products" 
         element={
           <AdminRoute>
-            <div>Admin Products Management</div>
+            <ProductsManagementPage />
+          </AdminRoute>
+        } 
+      />
+      <Route 
+        path="/admin/products/new" 
+        element={
+          <AdminRoute>
+            <ProductEditPage />
+          </AdminRoute>
+        } 
+      />
+      <Route 
+        path="/admin/products/:id" 
+        element={
+          <AdminRoute>
+            <ProductEditPage />
+          </AdminRoute>
+        } 
+      />
+      <Route 
+        path="/admin/categories" 
+        element={
+          <AdminRoute>
+            <CategoriesManagementPage />
+          </AdminRoute>
+        } 
+      />
+      <Route 
+        path="/admin/categories/new" 
+        element={
+          <AdminRoute>
+            <CategoryEditPage />
+          </AdminRoute>
+        } 
+      />
+      <Route 
+        path="/admin/categories/:id" 
+        element={
+          <AdminRoute>
+            <CategoryEditPage />
           </AdminRoute>
         } 
       />
@@ -146,23 +201,15 @@ export const AppRoutes = () => {
         path="/admin/orders" 
         element={
           <AdminRoute>
-            <div>Admin Orders Management</div>
+            <OrdersManagementPage />
           </AdminRoute>
         } 
       />
       <Route 
-        path="/admin/customers" 
+        path="/admin/orders/:id" 
         element={
           <AdminRoute>
-            <div>Admin Customers Management</div>
-          </AdminRoute>
-        } 
-      />
-      <Route 
-        path="/admin/settings" 
-        element={
-          <AdminRoute>
-            <div>Admin Settings</div>
+            <OrderDetailPage />
           </AdminRoute>
         } 
       />
