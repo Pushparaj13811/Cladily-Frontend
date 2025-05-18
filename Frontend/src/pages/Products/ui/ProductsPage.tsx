@@ -8,6 +8,8 @@ import { Checkbox } from "@app/components/ui/checkbox";
 import { PRODUCTS } from "@shared/constants";
 import { ProductCard } from "@shared/components";
 import { X } from "lucide-react";
+import { motion } from "framer-motion";
+import { StaggerContainer } from "@app/components/ui/motion";
 
 export default function ProductsPage() {
   const [priceRange, setPriceRange] = useState<string>("all");
@@ -151,9 +153,19 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <motion.div 
+      className="container mx-auto px-4 py-8"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
       {/* Header with count and sorting */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+      <motion.div 
+        className="flex flex-col md:flex-row md:items-center md:justify-between mb-8"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.1 }}
+      >
         <div>
           <h1 className="text-3xl font-bold">{getPageTitle()}</h1>
           <p className="text-muted-foreground mt-1">
@@ -175,7 +187,7 @@ export default function ProductsPage() {
             </SelectContent>
           </Select>
         </div>
-      </div>
+      </motion.div>
 
       {/* Debug panel */}
       {debugMode && currentDepartment && (
@@ -213,63 +225,94 @@ export default function ProductsPage() {
 
       {/* Active filters */}
       {((!currentDepartment && selectedDepartments.length > 0) || priceRange !== "all" || searchQuery) && (
-        <div className="mb-6">
+        <motion.div 
+          className="mb-6"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-medium">Active filters:</span>
 
             {!currentDepartment && selectedDepartments.map(dept => (
-              <Button
+              <motion.div
                 key={dept}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-1 h-8 rounded-full"
-                onClick={() => toggleDepartment(dept)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                {dept}
-                <X className="h-3 w-3" />
-              </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-1 h-8 rounded-full"
+                  onClick={() => toggleDepartment(dept)}
+                >
+                  {dept}
+                  <X className="h-3 w-3" />
+                </Button>
+              </motion.div>
             ))}
 
             {priceRange !== "all" && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-1 h-8 rounded-full"
-                onClick={() => setPriceRange("all")}
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                {priceRange === "under200" ? "Under ₹20,000" :
-                  priceRange === "200to400" ? "₹20,000 - ₹40,000" : "Over ₹40,000"}
-                <X className="h-3 w-3" />
-              </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-1 h-8 rounded-full"
+                  onClick={() => setPriceRange("all")}
+                >
+                  {priceRange === "under200" ? "Under ₹20,000" :
+                    priceRange === "200to400" ? "₹20,000 - ₹40,000" : "Over ₹40,000"}
+                  <X className="h-3 w-3" />
+                </Button>
+              </motion.div>
             )}
 
             {searchQuery && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-1 h-8 rounded-full"
-                onClick={() => setSearchQuery("")}
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                "{searchQuery}"
-                <X className="h-3 w-3" />
-              </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-1 h-8 rounded-full"
+                  onClick={() => setSearchQuery("")}
+                >
+                  "{searchQuery}"
+                  <X className="h-3 w-3" />
+                </Button>
+              </motion.div>
             )}
 
-            <Button
-              variant="ghost"
-              size="sm"
-              className="ml-2 text-muted-foreground"
-              onClick={clearFilters}
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
-              Clear all
-            </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="ml-2 text-muted-foreground"
+                onClick={clearFilters}
+              >
+                Clear all
+              </Button>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Filters sidebar */}
-        <div className="space-y-6 bg-muted/20 p-4 rounded-lg">
+        <motion.div 
+          className="space-y-6 bg-muted/20 p-4 rounded-lg"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          {/* Search */}
           <div>
             <h3 className="font-medium mb-3">Search</h3>
             <Input
@@ -283,6 +326,7 @@ export default function ProductsPage() {
 
           <Separator />
 
+          {/* Price Range */}
           <div>
             <h3 className="font-medium mb-3">Price Range</h3>
             <div className="space-y-2">
@@ -368,41 +412,57 @@ export default function ProductsPage() {
               onCheckedChange={(checked) => setDebugMode(checked === true)}
             />
           </div>
-        </div>
+        </motion.div>
 
         {/* Products grid */}
         <div className="lg:col-span-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProducts.length > 0 ? (
-              filteredProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  id={product.id}
-                  name={product.name}
-                  department={product.department || "Uncategorized"}
-                  price={product.price}
-                  originalPrice={product.originalPrice ? product.originalPrice : undefined}
-                  discount={product.discount ? product.discount : undefined}
-                  image={product.image}
-                  isNew={!product.discount}
-                  rating={product.rating}
-                />
-              ))
-            ) : (
-              <div className="col-span-full flex flex-col items-center justify-center py-16">
-                <p className="text-lg text-muted-foreground mb-4">No products match your filters.</p>
-                <Button
-                  variant="outline"
-                  onClick={clearFilters}
-                  className="min-w-[150px]"
-                >
-                  Clear Filters
-                </Button>
+          {filteredProducts.length > 0 ? (
+            <StaggerContainer>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredProducts.map((product, index) => (
+                  <motion.div
+                    key={product.id}
+                    variants={{
+                      hidden: { opacity: 0, y: 20 },
+                      visible: { opacity: 1, y: 0 }
+                    }}
+                    transition={{ delay: index * 0.05 }}
+                    whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                  >
+                    <ProductCard
+                      id={product.id}
+                      name={product.name}
+                      department={product.department || "Uncategorized"}
+                      price={product.price}
+                      originalPrice={product.originalPrice ? product.originalPrice : undefined}
+                      discount={product.discount ? product.discount : undefined}
+                      image={product.image}
+                      isNew={!product.discount}
+                      rating={product.rating}
+                    />
+                  </motion.div>
+                ))}
               </div>
-            )}
-          </div>
+            </StaggerContainer>
+          ) : (
+            <motion.div 
+              className="col-span-full flex flex-col items-center justify-center py-16"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              <p className="text-lg text-muted-foreground mb-4">No products match your filters.</p>
+              <Button
+                variant="outline"
+                onClick={clearFilters}
+                className="min-w-[150px]"
+              >
+                Clear Filters
+              </Button>
+            </motion.div>
+          )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 } 

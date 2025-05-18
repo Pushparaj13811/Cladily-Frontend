@@ -9,6 +9,8 @@ import ShippingForm from './components/ShippingForm';
 import ShippingMethodForm from './components/ShippingMethodForm';
 import PaymentForm from './components/PaymentForm';
 import OrderSummary from './components/OrderSummary';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FadeIn, SlideUp } from '@app/components/ui/motion';
 
 // Define the payment form values type
 type PaymentFormValues = {
@@ -119,41 +121,66 @@ const CheckoutPage: React.FC = () => {
     switch (currentStep) {
       case CheckoutStep.Shipping:
         return (
-          <div className="space-y-8">
+          <motion.div 
+            className="space-y-8"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+          >
             <div>
               <h2 className="text-xl font-semibold mb-4">Shipping Information</h2>
               <ShippingForm onSubmit={handleShippingSubmit} />
             </div>
             
             {shippingAddress && (
-              <div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+              >
                 <h2 className="text-xl font-semibold mb-4">Shipping Method</h2>
                 <ShippingMethodForm 
                   onSubmit={handleShippingMethodSubmit} 
                   orderAmount={subtotal}
                 />
-              </div>
+              </motion.div>
             )}
-          </div>
+          </motion.div>
         );
         
       case CheckoutStep.Payment:
         return (
-          <div>
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.4 }}
+          >
             <h2 className="text-xl font-semibold mb-4">Payment Information</h2>
             <PaymentForm onSubmit={handlePaymentSubmit} />
-          </div>
+          </motion.div>
         );
         
       case CheckoutStep.Review:
         console.log("Rendering review step with payment method:", paymentMethod);
         return (
-          <div className="space-y-8">
+          <motion.div 
+            className="space-y-8"
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4 }}
+          >
             <div>
               <h2 className="text-xl font-semibold mb-4">Review Your Order</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-6">
-                  <div className="rounded-lg border p-4">
+                  <motion.div 
+                    className="rounded-lg border p-4"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.1 }}
+                  >
                     <h3 className="font-medium mb-2">Shipping Address</h3>
                     {shippingAddress && (
                       <address className="not-italic text-sm text-muted-foreground">
@@ -165,9 +192,14 @@ const CheckoutPage: React.FC = () => {
                         {shippingAddress.phone}
                       </address>
                     )}
-                  </div>
+                  </motion.div>
                   
-                  <div className="rounded-lg border p-4">
+                  <motion.div 
+                    className="rounded-lg border p-4"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.2 }}
+                  >
                     <h3 className="font-medium mb-2">Billing Address</h3>
                     {billingAddress && (
                       <address className="not-italic text-sm text-muted-foreground">
@@ -179,9 +211,14 @@ const CheckoutPage: React.FC = () => {
                         {billingAddress.phone}
                       </address>
                     )}
-                  </div>
+                  </motion.div>
                   
-                  <div className="rounded-lg border p-4">
+                  <motion.div 
+                    className="rounded-lg border p-4"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.3 }}
+                  >
                     <h3 className="font-medium mb-2">Shipping Method</h3>
                     {shippingMethod && (
                       <div className="text-sm text-muted-foreground">
@@ -195,9 +232,14 @@ const CheckoutPage: React.FC = () => {
                         </p>
                       </div>
                     )}
-                  </div>
+                  </motion.div>
                   
-                  <div className="rounded-lg border p-4">
+                  <motion.div 
+                    className="rounded-lg border p-4"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.4 }}
+                  >
                     <h3 className="font-medium mb-2">Payment Method</h3>
                     {paymentMethod && (
                       <div className="text-sm text-muted-foreground">
@@ -221,10 +263,14 @@ const CheckoutPage: React.FC = () => {
                         )}
                       </div>
                     )}
-                  </div>
+                  </motion.div>
                 </div>
                 
-                <div>
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 0.3 }}
+                >
                   <OrderSummary 
                     items={items}
                     subtotal={subtotal}
@@ -234,46 +280,62 @@ const CheckoutPage: React.FC = () => {
                     isEditable={false}
                   />
                   
-                  <button 
+                  <motion.button 
                     className="w-full mt-6 py-3 px-4 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md font-medium"
                     onClick={handlePlaceOrder}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.6 }}
                   >
                     Place Order - {formatCurrency(total)}
-                  </button>
-                </div>
+                  </motion.button>
+                </motion.div>
               </div>
             </div>
-          </div>
+          </motion.div>
         );
     }
   };
   
   return (
-    <div className="max-w-7xl mx-auto px-4">
-      <h1 className="text-3xl font-bold mb-8">Checkout</h1>
-      
-      {/* Checkout steps indicator */}
-      <CheckoutSteps currentStep={currentStep} />
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          {renderStep()}
-        </div>
+    <FadeIn>
+      <div className="max-w-7xl mx-auto px-4">
+        <motion.h1 
+          className="text-3xl font-bold mb-8"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          Checkout
+        </motion.h1>
         
-        {/* Only show order summary on shipping and payment steps */}
-        {currentStep !== CheckoutStep.Review && (
-          <div className="lg:col-span-1">
-            <OrderSummary 
-              items={items}
-              subtotal={subtotal}
-              shipping={shipping}
-              tax={tax}
-              total={total}
-            />
+        {/* Checkout steps indicator */}
+        <CheckoutSteps currentStep={currentStep} />
+        
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            <AnimatePresence mode="wait">
+              {renderStep()}
+            </AnimatePresence>
           </div>
-        )}
+          
+          {/* Only show order summary on shipping and payment steps */}
+          {currentStep !== CheckoutStep.Review && (
+            <SlideUp delay={0.3} className="lg:col-span-1">
+              <OrderSummary 
+                items={items}
+                subtotal={subtotal}
+                shipping={shipping}
+                tax={tax}
+                total={total}
+              />
+            </SlideUp>
+          )}
+        </div>
       </div>
-    </div>
+    </FadeIn>
   );
 };
 
