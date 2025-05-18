@@ -9,7 +9,7 @@ import ScrollAnimation from "@app/components/ui/scroll-animation";
 import AnimatedButton from "@app/components/ui/animated-button";
 import { StaggerContainer } from "@app/components/ui/motion";
 
-function HomePage() {
+const HomePage = () => {
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 }
@@ -141,4 +141,8 @@ function HomePage() {
   );
 }
 
-export default withPageAnimation(HomePage, 'fade');
+const WrappedHomePage = withPageAnimation(HomePage, 'fade');
+WrappedHomePage.displayName = 'AnimatedHomePage';
+
+export { WrappedHomePage };
+export default WrappedHomePage;

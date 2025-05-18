@@ -2,7 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 
 // Fade in animation
-export const fadeVariants: Variants = {
+const fadeVariants: Variants = {
   hidden: { opacity: 0 },
   visible: { 
     opacity: 1,
@@ -15,7 +15,7 @@ export const fadeVariants: Variants = {
 };
 
 // Slide up animation
-export const slideUpVariants: Variants = {
+const slideUpVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: { 
     opacity: 1, 
@@ -33,7 +33,7 @@ export const slideUpVariants: Variants = {
 };
 
 // Scale animation
-export const scaleVariants: Variants = {
+const scaleVariants: Variants = {
   hidden: { opacity: 0, scale: 0.95 },
   visible: { 
     opacity: 1, 
@@ -51,7 +51,7 @@ export const scaleVariants: Variants = {
 };
 
 // Staggered children animation
-export const staggerContainerVariants: Variants = {
+const staggerContainerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: { 
     opacity: 1,
@@ -63,9 +63,9 @@ export const staggerContainerVariants: Variants = {
 };
 
 // Motion components with default variants
-export const MotionDiv = motion.div;
+const MotionDiv = motion.div;
 
-export const FadeIn: React.FC<{
+const FadeIn: React.FC<{
   children: React.ReactNode;
   className?: string;
   delay?: number;
@@ -82,7 +82,7 @@ export const FadeIn: React.FC<{
   </motion.div>
 );
 
-export const SlideUp: React.FC<{
+const SlideUp: React.FC<{
   children: React.ReactNode;
   className?: string;
   delay?: number;
@@ -99,7 +99,7 @@ export const SlideUp: React.FC<{
   </motion.div>
 );
 
-export const Scale: React.FC<{
+const Scale: React.FC<{
   children: React.ReactNode;
   className?: string;
   delay?: number;
@@ -116,7 +116,7 @@ export const Scale: React.FC<{
   </motion.div>
 );
 
-export const StaggerContainer: React.FC<{
+const StaggerContainer: React.FC<{
   children: React.ReactNode;
   className?: string;
 }> = ({ children, className = "" }) => (
@@ -131,10 +131,23 @@ export const StaggerContainer: React.FC<{
 );
 
 // AnimatePresence wrapper for routes
-export const PageTransition: React.FC<{
+const PageTransition: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => (
   <AnimatePresence mode="wait">
     {children}
   </AnimatePresence>
 ); 
+
+export {
+    fadeVariants,
+    slideUpVariants,
+    scaleVariants,
+    staggerContainerVariants,
+    MotionDiv,
+    FadeIn,
+    SlideUp,
+    Scale,
+    StaggerContainer,
+    PageTransition
+}
