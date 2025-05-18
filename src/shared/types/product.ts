@@ -34,6 +34,52 @@ export interface Product {
 }
 
 /**
+ * DTO for creating a new product
+ */
+export interface CreateProductDto {
+  name: string;
+  price: string;
+  originalPrice?: string | null;
+  image: string;
+  discount?: string | null;
+  department: string;
+  description: string;
+  material: string;
+  care: string[];
+  features: string[];
+  sizes: string[];
+  colors: ProductColor[];
+  category: string;
+  subcategory: string;
+  deliveryInfo: string;
+  inStock: boolean;
+  images: string[];
+}
+
+/**
+ * DTO for updating an existing product
+ */
+export interface UpdateProductDto {
+  name?: string;
+  price?: string;
+  originalPrice?: string | null;
+  image?: string;
+  discount?: string | null;
+  department?: string;
+  description?: string;
+  material?: string;
+  care?: string[];
+  features?: string[];
+  sizes?: string[];
+  colors?: ProductColor[];
+  category?: string;
+  subcategory?: string;
+  deliveryInfo?: string;
+  inStock?: boolean;
+  images?: string[];
+}
+
+/**
  * Props for the ProductCard component
  */
 export interface ProductCardProps {
