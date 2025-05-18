@@ -5,6 +5,15 @@
 import { BaseEntity } from './base';
 
 /**
+ * Department enum for categorizing products
+ */
+export enum Department {
+  Menswear = "Menswear",
+  Womenswear = "Womenswear",
+  Kidswear = "Kidswear"
+}
+
+/**
  * Category interface representing a product category
  */
 export interface Category extends BaseEntity {
@@ -31,6 +40,9 @@ export interface Category extends BaseEntity {
   
   /** Whether category is visible in navigation */
   isVisible: boolean;
+  
+  /** Department the category belongs to */
+  department?: Department;
   
   /** SEO meta title */
   metaTitle?: string;
@@ -65,6 +77,7 @@ export interface CreateCategoryDto {
   slug: string;
   description?: string;
   parentId?: string | null;
+  department?: Department;
   isActive?: boolean;
   isVisible?: boolean;
   metaTitle?: string;
