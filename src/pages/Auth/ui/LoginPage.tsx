@@ -67,11 +67,24 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Submitting login form");
-    
-    // Dispatch login action
     dispatch(login({ phone, password }));
   };
+
+  const renderPasswordToggle = () => (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      className="absolute right-0 top-0 h-full px-3"
+      onClick={() => setShowPassword(!showPassword)}
+    >
+      {showPassword ? (
+        <EyeOff className="h-4 w-4 text-muted-foreground" />
+      ) : (
+        <Eye className="h-4 w-4 text-muted-foreground" />
+      )}
+    </Button>
+  );
 
   return (
     <div className="flex min-h-[calc(100vh-300px)] flex-col justify-center py-12">
@@ -129,19 +142,7 @@ export default function LoginPage() {
                 autoComplete="current-password"
                 className="pr-10"
               />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-0 top-0 h-full px-3"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4 text-muted-foreground" />
-                ) : (
-                  <Eye className="h-4 w-4 text-muted-foreground" />
-                )}
-              </Button>
+              {renderPasswordToggle()}
             </div>
           </div>
 
@@ -180,7 +181,6 @@ export default function LoginPage() {
           </div>
         </form>
 
-        {/* Demo Credentials Helper */}
         <LoginHelper />
 
         <div className="mt-8 pt-8 border-t">
