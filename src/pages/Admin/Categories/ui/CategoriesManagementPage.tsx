@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PlusCircle, Edit2, Trash2, Search, ArrowUpDown, Loader2 } from 'lucide-react';
+import { PlusCircle, Edit2, Trash2, Search, ArrowUpDown, Loader2, ChevronRight, ChevronDown, Check, X } from 'lucide-react';
 import { Button } from '@app/components/ui/button';
 import { Input } from '@app/components/ui/input';
 import { useToast } from '@app/hooks/use-toast';
@@ -20,8 +20,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@app/components/ui/dialog';
-import { getAllCategories, deleteCategory } from '@features/dashboard';
+import { Badge } from '@app/components/ui/badge';
+import { getCategoryHierarchy, deleteCategory } from '@features/dashboard';
 import { Category } from '@shared/types';
+
+// Interface for category with children
+interface CategoryWithChildren extends Category {
+  children?: CategoryWithChildren[];
+  depth?: number;
+  isExpanded?: boolean;
+}
 
 const CategoriesManagementPage: React.FC = () => {
   const navigate = useNavigate();
@@ -29,11 +37,12 @@ const CategoriesManagementPage: React.FC = () => {
 
   // State
   const [searchQuery, setSearchQuery] = useState('');
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<CategoryWithChildren[]>([]);
+  const [flattenedCategories, setFlattenedCategories] = useState<CategoryWithChildren[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sortColumn, setSortColumn] = useState<keyof Category>('name');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [sortColumn, setSortColumn] = useState<keyof Category>('sortOrder');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -43,9 +52,17 @@ const CategoriesManagementPage: React.FC = () => {
       try {
         setIsLoading(true);
         setError(null);
-        const data = await getAllCategories();
-        setCategories(data);
-      } catch {
+        const data = await getCategoryHierarchy();
+        
+        // Initialize expansion state for all categories
+        const categoriesWithState = initializeCategories(data);
+        setCategories(categoriesWithState);
+        
+        // Generate flattened list for display
+        const flattened = flattenCategories(categoriesWithState);
+        setFlattenedCategories(flattened);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
         setError('Failed to fetch categories');
         toast({
           title: 'Error',
@@ -60,27 +77,85 @@ const CategoriesManagementPage: React.FC = () => {
     fetchCategories();
   }, [toast]);
 
+  // Initialize categories with expansion state
+  const initializeCategories = (cats: CategoryWithChildren[]): CategoryWithChildren[] => {
+    return cats.map(category => ({
+      ...category,
+      isExpanded: false,
+      depth: 0,
+      children: category.children ? initializeCategories(category.children.map(child => ({
+        ...child,
+        depth: 1
+      }))) : undefined
+    }));
+  };
+
+  // Flatten hierarchical categories for display based on expansion state
+  const flattenCategories = (cats: CategoryWithChildren[], depth = 0): CategoryWithChildren[] => {
+    let result: CategoryWithChildren[] = [];
+    
+    for (const category of cats) {
+      // Add the category itself
+      const categoryWithDepth = { ...category, depth };
+      result.push(categoryWithDepth);
+      
+      // Add its children if expanded
+      if (category.isExpanded && category.children && category.children.length > 0) {
+        result = [...result, ...flattenCategories(category.children, depth + 1)];
+      }
+    }
+    
+    return result;
+  };
+
+  // Toggle category expansion
+  const toggleExpand = (categoryId: string) => {
+    const updateExpansion = (cats: CategoryWithChildren[]): CategoryWithChildren[] => {
+      return cats.map(cat => {
+        if (cat.id === categoryId) {
+          return { ...cat, isExpanded: !cat.isExpanded };
+        }
+        if (cat.children) {
+          return { ...cat, children: updateExpansion(cat.children) };
+        }
+        return cat;
+      });
+    };
+    
+    const updatedCategories = updateExpansion(categories);
+    setCategories(updatedCategories);
+    setFlattenedCategories(flattenCategories(updatedCategories));
+  };
+
   // Filter categories based on search query
-  const filteredCategories = categories.filter(category =>
-    category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (category.description && category.description.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredCategories = searchQuery
+    ? flattenedCategories.filter(category =>
+        category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (category.description && category.description.toLowerCase().includes(searchQuery.toLowerCase()))
+      )
+    : flattenedCategories;
 
   // Sort categories
   const sortedCategories = [...filteredCategories].sort((a, b) => {
-    const valueA = a[sortColumn];
-    const valueB = b[sortColumn];
+    // If search is active, ignore hierarchy and sort by the column
+    if (searchQuery) {
+      const valueA = a[sortColumn];
+      const valueB = b[sortColumn];
 
-    if (typeof valueA === 'string' && typeof valueB === 'string') {
-      return sortOrder === 'asc'
-        ? valueA.localeCompare(valueB)
-        : valueB.localeCompare(valueA);
+      if (typeof valueA === 'string' && typeof valueB === 'string') {
+        return sortOrder === 'asc'
+          ? valueA.localeCompare(valueB)
+          : valueB.localeCompare(valueA);
+      }
+
+      if (typeof valueA === 'number' && typeof valueB === 'number') {
+        return sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
+      }
+
+      return 0;
     }
-
-    if (typeof valueA === 'number' && typeof valueB === 'number') {
-      return sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
-    }
-
+    
+    // If no search, maintain hierarchical order
     return 0;
   });
 
@@ -103,8 +178,11 @@ const CategoriesManagementPage: React.FC = () => {
     try {
       await deleteCategory(categoryToDelete.id);
 
-      // Update local state
-      setCategories(categories.filter(cat => cat.id !== categoryToDelete.id));
+      // Refetch the categories to update the hierarchy
+      const data = await getCategoryHierarchy();
+      const categoriesWithState = initializeCategories(data);
+      setCategories(categoriesWithState);
+      setFlattenedCategories(flattenCategories(categoriesWithState));
 
       toast({
         title: 'Category deleted',
@@ -112,7 +190,8 @@ const CategoriesManagementPage: React.FC = () => {
       });
 
       setCategoryToDelete(null);
-    } catch {
+    } catch (error) {
+      console.error('Failed to delete category:', error);
       toast({
         title: 'Error',
         description: 'Failed to delete category',
@@ -198,24 +277,68 @@ const CategoriesManagementPage: React.FC = () => {
                       )}
                     </div>
                   </TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {sortedCategories.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8">
+                    <TableCell colSpan={5} className="text-center py-8">
                       {searchQuery ? 'No categories match your search' : 'No categories found'}
                     </TableCell>
                   </TableRow>
                 ) : (
                   sortedCategories.map((category) => (
                     <TableRow key={category.id}>
-                      <TableCell className="font-medium">{category.name}</TableCell>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center">
+                          <div className={`${category.depth ? `ml-${category.depth * 6}` : ''} flex items-center`}>
+                            {category.children && category.children.length > 0 && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 p-0 mr-1"
+                                onClick={() => toggleExpand(category.id)}
+                              >
+                                {category.isExpanded ? (
+                                  <ChevronDown className="h-4 w-4" />
+                                ) : (
+                                  <ChevronRight className="h-4 w-4" />
+                                )}
+                              </Button>
+                            )}
+                            {category.name}
+                            {!searchQuery && category.childrenCount && category.childrenCount > 0 && !category.children?.length && (
+                              <Badge variant="outline" className="ml-2">
+                                +{category.childrenCount}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
                       <TableCell className="max-w-md truncate">
                         {category.description || 'No description'}
                       </TableCell>
-                      <TableCell>{category.productsCount}</TableCell>
+                      <TableCell>{category.productsCount || 0}</TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          {category.isActive ? (
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                              <Check className="h-3 w-3 mr-1" /> Active
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+                              <X className="h-3 w-3 mr-1" /> Inactive
+                            </Badge>
+                          )}
+                          {!category.isVisible && (
+                            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                              Hidden
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
                           <Button
@@ -250,6 +373,11 @@ const CategoriesManagementPage: React.FC = () => {
             <DialogTitle>Delete Category</DialogTitle>
             <DialogDescription>
               Are you sure you want to delete the category "{categoryToDelete?.name}"?
+              {categoryToDelete?.childrenCount ? (
+                <strong className="block mt-2 text-red-500">
+                  Warning: This will also delete {categoryToDelete.childrenCount} subcategories!
+                </strong>
+              ) : null}
               This action cannot be undone.
             </DialogDescription>
           </DialogHeader>

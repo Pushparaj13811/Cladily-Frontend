@@ -10,3 +10,7 @@ export * from './checkout';
 export * from './store';
 export * from './footer';
 export * from './category';
+export * from './base';
+// Export admin types using namespace to avoid ambiguities with checkout
+import * as AdminTypes from './admin';
+export { AdminTypes };
