@@ -11,7 +11,8 @@ import {
   ForgotPasswordPage, 
   ResetPasswordPage 
 } from '@pages/Auth';
-import { UserRoute, AdminRoute, UserRole } from '@app/components/ProtectedRoute';
+import { UserRoute, AdminRoute, } from '@app/components/ProtectedRoute';
+import { UserRole } from '@shared/types';
 import { 
   WishlistPage,
   OrdersPage,

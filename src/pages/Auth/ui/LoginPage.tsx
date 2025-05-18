@@ -10,7 +10,7 @@ import { LoginHelper } from "./components";
 import { useAppDispatch, useAuth } from "@app/hooks/useAppRedux";
 import { login, clearError } from "@features/auth/authSlice";
 import { useToast } from "@app/hooks/use-toast";
-import { LocationState } from "../../../types";
+import { LocationState } from "@shared/types";
 
 // Helper function to render error message with additional help for JWT errors
 const formatErrorMessage = (error: string | null): ReactNode => {

@@ -3,8 +3,8 @@ import { useAuth, useAppDispatch } from '../hooks/useAppRedux';
 import { getUserProfile, getUserDebugInfo, testAdminAccess } from '@features/auth/authSlice';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
-import { UserRole } from './ProtectedRoute';
-import { UserDebugInfo, AdminAccessResponse } from '@/types';
+import { UserRole } from '@shared/types';
+import { UserDebugInfo, AdminAccessResponse } from '@shared/types';
 
 /**
  * UserDebugger component for displaying authentication state

@@ -9,7 +9,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { useAppDispatch, useAuth } from "@app/hooks/useAppRedux";
 import { register, clearError } from "@features/auth/authSlice";
 import { useToast } from "@app/hooks/use-toast";
-import { LocationState } from "../../../types";
+import { LocationState } from "@shared/types";
 
 export default function SignupPage() {
   const navigate = useNavigate();

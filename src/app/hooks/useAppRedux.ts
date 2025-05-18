@@ -1,6 +1,6 @@
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../store/store';
-import { AuthState } from '../../types';
+import { AuthState } from '@shared/types';
 
 // Type-safe version of useDispatch hook
 export const useAppDispatch = () => useDispatch<AppDispatch>();

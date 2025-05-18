@@ -2,13 +2,7 @@ import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAppDispatch, useAuth } from '@app/hooks/useAppRedux';
 import { getUserProfile } from '@features/auth/authSlice';
-
-// Define roles enum for type safety
-export enum UserRole {
-  USER = 'user',
-  CUSTOMER = 'customer',
-  ADMIN = 'admin'
-}
+import { UserRole } from '@shared/types';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;

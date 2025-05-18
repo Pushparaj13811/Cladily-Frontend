@@ -17,7 +17,7 @@ import {
 import { useState } from "react";
 import { useAuth, useAppDispatch } from "@app/hooks/useAppRedux";
 import { logout } from "@features/auth/authSlice";
-import { UserRole } from "../../../types";
+import { UserRole } from "@shared/types";
 import { UserDebugger } from "@app/components/UserDebugger";
 
 export function MainNavbar() {

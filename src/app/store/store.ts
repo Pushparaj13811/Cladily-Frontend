@@ -2,6 +2,7 @@ import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import { persistReducer, persistStore, FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import authReducer from '../../features/auth/authSlice';
+import { RootState as RootStateType } from '@shared/types';
 
 // Combine all reducers
 export const rootReducer = combineReducers({
@@ -34,5 +35,5 @@ export const store = configureStore({
 export const persistor = persistStore(store);
 
 // Export types
-export type RootState = ReturnType<typeof rootReducer>;
+export type RootState = RootStateType;
 export type AppDispatch = typeof store.dispatch; 

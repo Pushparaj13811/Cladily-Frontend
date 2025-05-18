@@ -8,7 +8,7 @@ import {
   MessageResponse,
   UserDebugInfo,
   AdminAccessResponse
-} from '../../types';
+} from '@shared/types';
 
 // Create API client for auth requests
 const api = createApiInstance();
