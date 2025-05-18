@@ -1,15 +1,7 @@
 import { COMPANY, NAVIGATION } from '@shared/constants';
 import { Link } from 'react-router-dom';
+import { FooterSectionProps, SocialIconProps } from '@shared/types';
 
-interface FooterLinkItem {
-  name: string;
-  href: string;
-}
-
-interface FooterSectionProps {
-  title: string;
-  items: FooterLinkItem[];
-}
 
 const FooterSection: React.FC<FooterSectionProps> = ({ title, items }) => (
   <div className="space-y-4">
@@ -26,12 +18,6 @@ const FooterSection: React.FC<FooterSectionProps> = ({ title, items }) => (
   </div>
 );
 
-interface SocialIconProps {
-  href: string;
-  label: string;
-  children: React.ReactNode;
-}
-
 const SocialIcon: React.FC<SocialIconProps> = ({ href, label, children }) => (
   <a href={href} className="hover:text-foreground text-muted-foreground">
     <span className="sr-only">{label}</span>
@@ -44,17 +30,17 @@ export function MainFooter() {
     <footer className="border-t border-border py-8 mt-16 bg-[#e6e6e6]">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-4">
-          <FooterSection 
-            title="Customer Service" 
-            items={NAVIGATION.FOOTER.CUSTOMER_SERVICE} 
+          <FooterSection
+            title="Customer Service"
+            items={NAVIGATION.FOOTER.CUSTOMER_SERVICE}
           />
-          <FooterSection 
-            title="About" 
-            items={NAVIGATION.FOOTER.ABOUT} 
+          <FooterSection
+            title="About"
+            items={NAVIGATION.FOOTER.ABOUT}
           />
-          <FooterSection 
-            title="Legal" 
-            items={NAVIGATION.FOOTER.LEGAL} 
+          <FooterSection
+            title="Legal"
+            items={NAVIGATION.FOOTER.LEGAL}
           />
           <div className="space-y-4">
             <h3 className="text-sm font-medium">Follow us</h3>

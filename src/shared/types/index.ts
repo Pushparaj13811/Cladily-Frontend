@@ -8,3 +8,4 @@ export * from './toast';
 export * from './ui';
 export * from './checkout'; 
 export * from './store';
+export * from './footer';
