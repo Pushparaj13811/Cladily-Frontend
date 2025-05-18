@@ -45,24 +45,18 @@ export const login = createAsyncThunk<
         return rejectWithValue('Invalid response from server: Missing authentication token');
       }
       
+      // Add refresh token from response if it's not in the data
+      if (!data.refreshToken) {
+        console.log('Warning: refreshToken not in API response, using cookie instead');
+      }
+      
       console.log('Login successful, received token');
       return data;
     } catch (error) {
       console.error('Login error:', error);
-      
       if (axios.isAxiosError(error)) {
-        // Check for specific error about JWT secret
-        if (error.response?.data?.message?.includes('secretOrPrivateKey') || 
-            error.message?.includes('secretOrPrivateKey')) {
-          console.error('JWT Secret key error detected');
-          return rejectWithValue('Authentication server error: JWT configuration issue');
-        }
-        
-        const errorMessage = error.response?.data?.message || 'Login failed';
-        console.error('Login failed with message:', errorMessage);
-        return rejectWithValue(errorMessage);
+        return rejectWithValue(error.response?.data?.message || 'Invalid credentials');
       }
-      
       return rejectWithValue('Login failed: An unexpected error occurred');
     }
   }
@@ -249,8 +243,12 @@ export const refreshAccessToken = createAsyncThunk<
         return rejectWithValue('Invalid response from server: Missing new token');
       }
       
+      // Return both tokens, handling case where refreshToken might not be in response
       console.log('Token refresh successful, received new token');
-      return data;
+      return {
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken || refreshToken // Use existing refresh token if not returned
+      };
     } catch (error) {
       console.error('Token refresh error:', error);
       
@@ -354,6 +352,29 @@ export const testAdminAccess = createAsyncThunk<
         return rejectWithValue(error.response?.data?.message || 'Failed to verify admin access');
       }
       return rejectWithValue('Unknown error occurred while testing admin access');
+    }
+  }
+);
+
+// Activate Account thunk
+export const activateAccount = createAsyncThunk<
+  User,
+  void,
+  { rejectValue: string }
+>(
+  'auth/activateAccount',
+  async (_, { rejectWithValue }) => {
+    try {
+      console.log('Attempting to activate user account...');
+      const response = await api.post('/api/user/activate');
+      console.log('Account activation response:', response.data);
+      return response.data.data;
+    } catch (error) {
+      console.error('Account activation error:', error);
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(error.response?.data?.message || 'Failed to activate account');
+      }
+      return rejectWithValue('Failed to activate account: An unexpected error occurred');
     }
   }
 );
@@ -557,6 +578,21 @@ const authSlice = createSlice({
       .addCase(testAdminAccess.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload || 'Failed to verify admin access';
+      })
+      
+      // Activate Account
+      .addCase(activateAccount.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(activateAccount.fulfilled, (state, action: PayloadAction<User>) => {
+        state.isLoading = false;
+        state.user = action.payload;
+        state.error = null;
+      })
+      .addCase(activateAccount.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || 'Failed to activate account';
       });
   },
 });

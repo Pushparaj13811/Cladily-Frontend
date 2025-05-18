@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth, useAppDispatch } from '../hooks/useAppRedux';
-import { getUserProfile, getUserDebugInfo, testAdminAccess } from '@features/auth/authSlice';
+import { getUserProfile, getUserDebugInfo, testAdminAccess, activateAccount } from '@features/auth/authSlice';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
 import { UserRole } from '@shared/types';
@@ -17,6 +17,7 @@ export const UserDebugger: React.FC = () => {
   const [showDetailedInfo, setShowDetailedInfo] = useState(false);
   const [adminTestResult, setAdminTestResult] = useState<AdminAccessResponse | null>(null);
   const [adminTestError, setAdminTestError] = useState<string | null>(null);
+  const [activationStatus, setActivationStatus] = useState<{success?: boolean, message?: string} | null>(null);
 
   const refreshUserData = () => {
     dispatch(getUserProfile());
@@ -47,7 +48,31 @@ export const UserDebugger: React.FC = () => {
     }
   };
 
+  const handleActivateAccount = async () => {
+    try {
+      setActivationStatus(null);
+      const resultAction = await dispatch(activateAccount());
+      if (activateAccount.fulfilled.match(resultAction)) {
+        setActivationStatus({
+          success: true,
+          message: 'Account activated successfully'
+        });
+        // Refresh debug info if it's visible
+        if (showDetailedInfo) {
+          fetchDebugInfo();
+        }
+      }
+    } catch (error) {
+      console.error('Failed to activate account:', error);
+      setActivationStatus({
+        success: false,
+        message: typeof error === 'string' ? error : 'Failed to activate account'
+      });
+    }
+  };
+
   const isExpectedAdmin = user?.role?.toLowerCase() === UserRole.ADMIN.toLowerCase();
+  const isPendingVerification = debugInfo?.user.status === 'PENDING_VERIFICATION';
 
   if (!isAuthenticated) {
     return (
@@ -106,6 +131,14 @@ export const UserDebugger: React.FC = () => {
             <p><strong>Error:</strong> {adminTestError}</p>
           </div>
         )}
+        
+        {activationStatus && (
+          <div className={`mt-4 border-t pt-4 ${activationStatus.success ? 'text-green-600' : 'text-red-600'}`}>
+            <h3 className="font-semibold mb-2">Account Activation:</h3>
+            <p><strong>Status:</strong> {activationStatus.success ? 'Success' : 'Failed'}</p>
+            <p><strong>Message:</strong> {activationStatus.message}</p>
+          </div>
+        )}
       </CardContent>
       <CardFooter className="flex flex-wrap gap-2">
         <Button onClick={refreshUserData}>Refresh User Data</Button>
@@ -115,7 +148,12 @@ export const UserDebugger: React.FC = () => {
         <Button onClick={checkAdminAccess} variant={isExpectedAdmin ? "default" : "secondary"}>
           Test Admin Access
         </Button>
+        {isPendingVerification && (
+          <Button onClick={handleActivateAccount} variant="destructive">
+            Activate Account
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );
-}; 
+};

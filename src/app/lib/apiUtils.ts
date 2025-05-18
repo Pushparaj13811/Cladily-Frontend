@@ -1,28 +1,36 @@
-import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 
 /**
- * Creates a configured Axios instance for API requests
- * @returns Configured Axios instance
+ * Create a configured axios instance
+ * @param {string} baseURL - Base URL for API calls (defaults to env variable or localhost)
+ * @returns {AxiosInstance} Configured axios instance
  */
-export function createApiInstance(): AxiosInstance {
-  return axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
+export const createApiInstance = (baseURL?: string): AxiosInstance => {
+  const instance = axios.create({
+    baseURL: baseURL || import.meta.env.VITE_API_URL || 'http://localhost:3000',
     headers: {
       'Content-Type': 'application/json',
     },
-    withCredentials: true, // To ensure cookies are sent with requests
+    withCredentials: true, // Important for cookies
   });
-}
+  
+  return instance;
+};
 
 /**
- * Adds authorization token to request headers if provided
- * @param config Axios request configuration
- * @param token Authentication token
- * @returns Updated configuration with token
+ * Add auth token to request config if provided
+ * @param {AxiosRequestConfig} config - Axios request config
+ * @param {string} token - Auth token to add
+ * @returns {AxiosRequestConfig} Updated config with auth token
  */
-export function addAuthToken(config: InternalAxiosRequestConfig, token: string | null): InternalAxiosRequestConfig {
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-} 
+export const addAuthToken = (config: AxiosRequestConfig, token?: string): AxiosRequestConfig => {
+  if (!token) return config;
+  
+  return {
+    ...config,
+    headers: {
+      ...config.headers,
+      Authorization: `Bearer ${token}`,
+    },
+  };
+}; 
