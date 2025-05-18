@@ -33,6 +33,7 @@ import DiscountsManagementPage from '@pages/Admin/Discounts/ui/DiscountsManageme
 import DiscountEditPage from '@pages/Admin/Discounts/ui/DiscountEditPage';
 import CouponsManagementPage from '@pages/Admin/Coupons/ui/CouponsManagementPage';
 import CouponEditPage from '@pages/Admin/Coupons/ui/CouponEditPage';
+import DiscountCreatePage from '@pages/Admin/Discounts/ui/DiscountCreatePage';
 
 // Account page imports
 import CreditsPage from '@pages/Account/Credits/ui/CreditsPage';
@@ -256,7 +257,7 @@ export const AppRoutes = () => {
           path="/admin/discounts/new" 
           element={
             <AdminRoute>
-              <DiscountEditPage />
+              <DiscountCreatePage />
             </AdminRoute>
           } 
         />
