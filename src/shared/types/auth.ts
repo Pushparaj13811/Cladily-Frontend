@@ -22,6 +22,7 @@ export interface User {
   phoneNumber: string;
   avatar?: string;
   role: string;
+  status: string;
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
   createdAt: string;
@@ -94,6 +95,7 @@ export interface UserDebugInfo {
     };
   };
 }
+
 
 /**
  * Response from the admin access test endpoint
