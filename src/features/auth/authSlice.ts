@@ -366,7 +366,7 @@ export const activateAccount = createAsyncThunk<
   async (_, { rejectWithValue }) => {
     try {
       console.log('Attempting to activate user account...');
-      const response = await api.post('/api/user/activate');
+      const response = await api.post('/api/auth/activate-account');
       console.log('Account activation response:', response.data);
       return response.data.data;
     } catch (error) {
