@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '@app/providers/auth-provider';
+import { useAuth } from '@app/hooks/useAppRedux';
 
 interface AccountCardProps {
   title: string;
@@ -70,7 +70,7 @@ const accountSections = [
 
 const DashboardPage: React.FC = () => {
   const { user } = useAuth();
-  const firstName = (user?.name || 'User').split(' ')[0];
+  const firstName = user?.firstName || 'User';
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">

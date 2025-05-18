@@ -38,7 +38,8 @@
             "@entities/*": ["./src/entities/*"],
             "@shared/*": ["./src/shared/*"],
             "@pages/*": ["./src/pages/*"],
-            "@assets/*": ["./src/assets/*"]
+            "@assets/*": ["./src/assets/*"],
+            "@/*": ["./src/*"]
         }
     }
 }

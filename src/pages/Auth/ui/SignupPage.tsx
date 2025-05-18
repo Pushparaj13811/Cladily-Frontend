@@ -1,13 +1,27 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@app/components/ui/button";
 import { Input } from "@app/components/ui/input";
 import { Checkbox } from "@app/components/ui/checkbox";
 import { Link } from "react-router-dom";
 import { COMPANY } from "@shared/constants";
 import { Eye, EyeOff } from "lucide-react";
+import { useAppDispatch, useAuth } from "@app/hooks/useAppRedux";
+import { register, clearError } from "@features/auth/authSlice";
+import { useToast } from "@app/hooks/use-toast";
+import { LocationState } from "@shared/types";
 
 export default function SignupPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const dispatch = useAppDispatch();
+  const { toast } = useToast();
+  
+  // Get auth state from Redux
+  const { isLoading, error, isAuthenticated } = useAuth();
+  
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -15,33 +29,100 @@ export default function SignupPage() {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [newsletter, setNewsletter] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
+
+  // Clear errors when component mounts
+  useEffect(() => {
+    dispatch(clearError());
+  }, [dispatch]);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Redirect to the page they were trying to access or dashboard
+      const from = (location.state as LocationState)?.from?.pathname || "/account";
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, navigate, location]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    setValidationError(null);
     
     // Validate form
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setValidationError("Passwords do not match");
       return;
     }
     
     if (!agreeTerms) {
-      setError("You must agree to the terms and conditions");
+      setValidationError("You must agree to the terms and conditions");
       return;
     }
     
-    setIsLoading(true);
-
-    // Simulate API call
-    setTimeout(() => {
-      // Success case - in a real app, this would navigate to login or dashboard
-      console.log("Signup successful");
-      setIsLoading(false);
-    }, 1000);
+    if (password.length < 8) {
+      setValidationError("Password must be at least 8 characters long");
+      return;
+    }
+    
+    // Dispatch registration action with success callback
+    try {
+      const resultAction = await dispatch(register({ 
+        firstName, 
+        lastName, 
+        email, 
+        phone: phone,
+        password 
+      }));
+      
+      if (register.fulfilled.match(resultAction)) {
+        // Clear form fields after success
+        setFirstName("");
+        setLastName("");
+        setEmail("");
+        setPhone("");
+        setPassword("");
+        setConfirmPassword("");
+        setAgreeTerms(false);
+        setNewsletter(false);
+        
+        setRegistrationSuccess(true);
+        toast({
+          title: "Registration successful",
+          description: "Your account has been created. Please log in.",
+        });
+        
+        // Redirect to login page after a short delay
+        setTimeout(() => {
+          navigate("/login", { 
+            replace: true,
+            state: { from: location.state?.from }
+          });
+        }, 1500);
+      }
+    } catch (err) {
+      console.error("Registration error:", err);
+    }
   };
+
+  // Show success message if registration was successful
+  if (registrationSuccess) {
+    return (
+      <div className="flex min-h-[calc(100vh-300px)] flex-col justify-center py-12">
+        <div className="mx-auto w-full max-w-md text-center">
+          <h2 className="text-2xl font-semibold mb-4">Registration Successful!</h2>
+          <p className="mb-6">Your account has been created successfully. Redirecting you to login page...</p>
+          <Button 
+            onClick={() => navigate("/login")}
+            className="mx-auto"
+          >
+            Go to Login
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-[calc(100vh-300px)] flex-col justify-center py-12">
@@ -54,9 +135,9 @@ export default function SignupPage() {
           </p>
         </div>
 
-        {error && (
+        {(validationError || error) && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded-md">
-            {error}
+            {validationError || error}
           </div>
         )}
 
@@ -100,6 +181,21 @@ export default function SignupPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="email"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="phone" className="text-sm font-medium">
+              Phone
+            </label>
+            <Input
+              id="phone"
+              type="tel"
+              placeholder="+1234567890"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+              autoComplete="tel"
             />
           </div>
 

@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth, UserRole } from '@app/providers/auth-provider';
+import { useAppDispatch, useAuth } from '@app/hooks/useAppRedux';
+import { getUserProfile } from '@features/auth/authSlice';
+import { UserRole } from '@shared/types';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -16,8 +18,37 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   allowedRoles,
   redirectPath = '/login',
 }) => {
-  const { isAuthenticated, hasRole, isLoading } = useAuth();
   const location = useLocation();
+  const dispatch = useAppDispatch();
+  const { isAuthenticated, user, isLoading, token } = useAuth();
+
+  useEffect(() => {
+    // If authenticated but no user data, fetch the user profile
+    if (isAuthenticated && token && !user) {
+      dispatch(getUserProfile());
+    }
+  }, [isAuthenticated, token, user, dispatch]);
+
+  // Helper function to check if user has allowed role
+  const hasRole = (roles: UserRole[]): boolean => {
+    if (!user) return false;
+    
+    const userRole = user.role?.toLowerCase();
+    
+    console.log("ProtectedRoute - User role:", user.role);
+    console.log("ProtectedRoute - Allowed roles:", roles);
+    
+    // Check if any allowed role matches the user's role
+    return roles.some(role => {
+      const allowedRole = role.toString().toLowerCase();
+      const hasAccess = userRole === allowedRole || 
+        // Special case: 'customer' role should have the same access as 'user'
+        (userRole === 'customer' && allowedRole === 'user');
+      
+      console.log(`Checking ${userRole} against ${allowedRole}: ${hasAccess}`);
+      return hasAccess;
+    });
+  };
 
   // Show loading state if auth is still being verified
   if (isLoading) {
@@ -56,7 +87,7 @@ export const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }
  */
 export const UserRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <ProtectedRoute allowedRoles={[UserRole.USER, UserRole.ADMIN]} redirectPath="/login">
+    <ProtectedRoute allowedRoles={[UserRole.USER, UserRole.CUSTOMER, UserRole.ADMIN]} redirectPath="/login">
       {children}
     </ProtectedRoute>
   );

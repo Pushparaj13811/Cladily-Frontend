@@ -7,3 +7,4 @@ export * from './product';
 export * from './toast';
 export * from './ui';
 export * from './checkout'; 
+export * from './store';

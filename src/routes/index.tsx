@@ -11,16 +11,17 @@ import {
   ForgotPasswordPage, 
   ResetPasswordPage 
 } from '@pages/Auth';
-import { UserRoute, AdminRoute } from '@app/components/ProtectedRoute';
+import { UserRoute, AdminRoute, } from '@app/components/ProtectedRoute';
+import { UserRole } from '@shared/types';
 import { 
   WishlistPage,
   OrdersPage,
   ProfilePage,
 } from '@pages/Account';
-import { useAuth, UserRole } from '@app/providers/auth-provider';
 import { AdminDashboardPage } from '@pages/Admin/Dashboard';
 import DashboardPage from '@pages/Account/ui/DashboardPage';
 import { PageTransition } from '@app/components/ui/motion';
+import { useAuth } from '@app/hooks/useAppRedux';
 
 // Admin pages imports
 import ProductsManagementPage from '@pages/Admin/Products/ui/ProductsManagementPage';
@@ -244,8 +245,6 @@ export const AppRoutes = () => {
             </AdminRoute>
           } 
         />
-        
-        {/* New discount and coupon management routes */}
         <Route 
           path="/admin/discounts" 
           element={
@@ -294,6 +293,9 @@ export const AppRoutes = () => {
             </AdminRoute>
           } 
         />
+        
+        {/* Fallback route */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </PageTransition>
   );

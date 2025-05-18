@@ -1,27 +1,41 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@app/components/ui/button";
 import { Input } from "@app/components/ui/input";
 import { Link } from "react-router-dom";
 import { COMPANY } from "@shared/constants";
 import { ArrowLeft, CheckCircle } from "lucide-react";
+import { useAppDispatch, useAuth } from "@app/hooks/useAppRedux";
+import { forgotPassword, clearError } from "@features/auth/authSlice";
+import { useToast } from "@app/hooks/use-toast";
 
 export default function ForgotPasswordPage() {
+  const dispatch = useAppDispatch();
+  const { toast } = useToast();
+  
+  // Get auth state from Redux
+  const { isLoading, error } = useAuth();
+  
   const [email, setEmail] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  // Clear errors when component mounts
+  useEffect(() => {
+    dispatch(clearError());
+  }, [dispatch]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setIsLoading(true);
-
-    // Simulate API call
-    setTimeout(() => {
-      // Success case
+    
+    // Dispatch forgot password action
+    const resultAction = await dispatch(forgotPassword(email));
+    
+    if (forgotPassword.fulfilled.match(resultAction)) {
       setIsSubmitted(true);
-      setIsLoading(false);
-    }, 1000);
+      toast({
+        title: "Reset link sent",
+        description: "Please check your email for instructions to reset your password.",
+      });
+    }
   };
 
   return (
@@ -56,7 +70,10 @@ export default function ForgotPasswordPage() {
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() => setIsSubmitted(false)}
+                onClick={() => {
+                  setIsSubmitted(false);
+                  dispatch(clearError());
+                }}
               >
                 Try a different email
               </Button>
