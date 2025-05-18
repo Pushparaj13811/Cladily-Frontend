@@ -3,7 +3,7 @@ import { useAuth } from "@app/providers/auth-provider";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from "@app/components/ui/navigation-menu";
 import { Button } from "@app/components/ui/button";
 import { Input } from "@app/components/ui/input";
-import { ShoppingBag, Heart, Search, User, Sun, Moon, X, Package, Tag, Ticket, LayoutDashboard } from "lucide-react";
+import { ShoppingBag, Heart, Search, User, Sun, Moon, X, Package, Tag, Ticket, LayoutDashboard, Percent } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@app/lib/utils";
 import { COMPANY, NAVIGATION } from "@shared/constants";
@@ -66,8 +66,14 @@ export function MainNavbar() {
                                     </NavigationMenuItem>
                                     <NavigationMenuItem>
                                         <Link to="/admin/discounts" className="text-sm font-medium px-3 flex items-center">
+                                            <Percent className="mr-2 h-4 w-4" />
+                                            Discounts
+                                        </Link>
+                                    </NavigationMenuItem>
+                                    <NavigationMenuItem>
+                                        <Link to="/admin/coupons" className="text-sm font-medium px-3 flex items-center">
                                             <Ticket className="mr-2 h-4 w-4" />
-                                            Discounts & Coupons
+                                            Coupons
                                         </Link>
                                     </NavigationMenuItem>
                                 </>
