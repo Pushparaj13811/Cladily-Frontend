@@ -1,0 +1,88 @@
+import { Discount, DiscountStatus, DiscountType, ApplicabilityScope } from '@shared/types/discount';
+
+// Mock data for discounts
+export const MOCK_DISCOUNTS: Discount[] = [
+  {
+    id: '1',
+    name: 'Summer Sale 2023',
+    description: '20% off on all summer products',
+    type: DiscountType.PERCENTAGE,
+    value: 20,
+    applicabilityScope: ApplicabilityScope.SPECIFIC_CATEGORIES,
+    startDate: '2023-06-01T00:00:00Z',
+    endDate: '2023-08-31T23:59:59Z',
+    status: DiscountStatus.ACTIVE,
+    priority: 1,
+    isAutomaticallyApplied: true,
+    createdAt: '2023-05-15T10:00:00Z',
+    updatedAt: '2023-05-15T10:00:00Z',
+    usageCount: 352
+  },
+  {
+    id: '2',
+    name: 'New Year Sale',
+    description: '₹1000 off on orders above ₹5000',
+    type: DiscountType.FIXED_AMOUNT,
+    value: 1000,
+    applicabilityScope: ApplicabilityScope.ALL_PRODUCTS,
+    startDate: '2024-01-01T00:00:00Z',
+    endDate: '2024-01-15T23:59:59Z',
+    status: DiscountStatus.SCHEDULED,
+    priority: 2,
+    isAutomaticallyApplied: true,
+    minimumOrderAmount: 5000,
+    createdAt: '2023-12-10T10:00:00Z',
+    updatedAt: '2023-12-10T10:00:00Z',
+    usageCount: 0
+  },
+  {
+    id: '3',
+    name: 'Buy 2 Get 1 Free - T-shirts',
+    description: 'Buy 2 T-shirts and get 1 free',
+    type: DiscountType.BUY_X_GET_Y,
+    value: 0,
+    buyQuantity: 2,
+    getQuantity: 1,
+    applicabilityScope: ApplicabilityScope.SPECIFIC_PRODUCTS,
+    startDate: '2023-07-01T00:00:00Z',
+    endDate: '2023-07-31T23:59:59Z',
+    status: DiscountStatus.EXPIRED,
+    priority: 3,
+    isAutomaticallyApplied: true,
+    createdAt: '2023-06-15T10:00:00Z',
+    updatedAt: '2023-06-15T10:00:00Z',
+    usageCount: 189
+  },
+  {
+    id: '4',
+    name: 'Free Shipping',
+    description: 'Free shipping on orders above ₹2000',
+    type: DiscountType.FREE_SHIPPING,
+    value: 0,
+    applicabilityScope: ApplicabilityScope.ALL_PRODUCTS,
+    startDate: '2023-01-01T00:00:00Z',
+    status: DiscountStatus.ACTIVE,
+    priority: 4,
+    isAutomaticallyApplied: true,
+    minimumOrderAmount: 2000,
+    createdAt: '2023-01-01T10:00:00Z',
+    updatedAt: '2023-01-01T10:00:00Z',
+    usageCount: 723
+  },
+  {
+    id: '5',
+    name: 'Clearance Sale',
+    description: '50% off on selected items',
+    type: DiscountType.PERCENTAGE,
+    value: 50,
+    applicabilityScope: ApplicabilityScope.SPECIFIC_PRODUCTS,
+    startDate: '2023-09-01T00:00:00Z',
+    endDate: '2023-09-30T23:59:59Z',
+    status: DiscountStatus.INACTIVE,
+    priority: 5,
+    isAutomaticallyApplied: true,
+    createdAt: '2023-08-15T10:00:00Z',
+    updatedAt: '2023-08-15T10:00:00Z',
+    usageCount: 0
+  }
+]; 
