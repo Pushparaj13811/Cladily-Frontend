@@ -39,14 +39,20 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const hasRole = (roles: UserRole[]): boolean => {
     if (!user) return false;
     
-    const userRole = user.role.toLowerCase();
+    const userRole = user.role?.toLowerCase();
+    
+    console.log("ProtectedRoute - User role:", user.role);
+    console.log("ProtectedRoute - Allowed roles:", roles);
     
     // Check if any allowed role matches the user's role
     return roles.some(role => {
       const allowedRole = role.toString().toLowerCase();
-      return userRole === allowedRole || 
+      const hasAccess = userRole === allowedRole || 
         // Special case: 'customer' role should have the same access as 'user'
         (userRole === 'customer' && allowedRole === 'user');
+      
+      console.log(`Checking ${userRole} against ${allowedRole}: ${hasAccess}`);
+      return hasAccess;
     });
   };
 

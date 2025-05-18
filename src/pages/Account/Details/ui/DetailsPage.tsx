@@ -17,12 +17,15 @@ const DetailsPage: React.FC = () => {
     // Handle sign out from all devices
     const handleSignOutEverywhere = async () => {
         try {
-            await dispatch(logout()).unwrap();
-            toast({
-                title: "Signed out",
-                description: "You've been successfully signed out from all devices.",
-            });
-            navigate('/login');
+            const resultAction = await dispatch(logout());
+            
+            if (logout.fulfilled.match(resultAction)) {
+                toast({
+                    title: "Signed out",
+                    description: "You've been successfully signed out from all devices.",
+                });
+                navigate('/login');
+            }
         } catch (err) {
             console.error('Error signing out:', err);
             toast({

@@ -50,4 +50,49 @@ export interface LocationState {
   from?: {
     pathname: string;
   };
-} 
+}
+
+/**
+ * Debug information about the user and their authentication state
+ */
+export interface UserDebugInfo {
+  user: {
+    id: string;
+    email?: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    role: UserRole;
+    status: string;
+    emailVerified: boolean;
+    phoneVerified: boolean;
+    createdAt: string;
+    updatedAt: string;
+  };
+  sessions: Array<{
+    id: string;
+    createdAt: string;
+    expiresAt: string;
+    deviceInfo?: string;
+    ipAddress?: string;
+  }>;
+  authInfo: {
+    authenticated: boolean;
+    tokenPayload: {
+      userId: string;
+      role: UserRole;
+    };
+  };
+}
+
+/**
+ * Response from the admin access test endpoint
+ */
+export interface AdminAccessResponse {
+  user: {
+    id: string;
+    role: UserRole;
+    name: string;
+  };
+  message: string;
+}

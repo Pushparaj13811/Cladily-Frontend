@@ -5,7 +5,9 @@ import {
   User, 
   AuthState, 
   AuthResponse, 
-  MessageResponse
+  MessageResponse,
+  UserDebugInfo,
+  AdminAccessResponse
 } from '../../types';
 
 // Create API client for auth requests
@@ -104,10 +106,13 @@ export const getUserProfile = createAsyncThunk<
   'auth/getUserProfile',
   async (_, { rejectWithValue }) => {
     try {
+      console.log('Fetching user profile...');
       // We'll set the auth token in the API interceptor when configured
       const response = await api.get('/api/user/profile');
+      console.log('User profile received:', response.data.data);
       return response.data.data;
     } catch (error) {
+      console.error('Error fetching user profile:', error);
       if (axios.isAxiosError(error)) {
         return rejectWithValue(error.response?.data?.message || 'Failed to fetch user profile');
       }
@@ -140,18 +145,37 @@ export const updateUserProfile = createAsyncThunk<
 export const logout = createAsyncThunk<
   null,
   void,
-  { rejectValue: string }
+  { rejectValue: string; state: { auth: AuthState } }
 >(
   'auth/logout',
-  async (_, { rejectWithValue }) => {
+  async (_, { getState }) => {
     try {
-      await api.post(`${API_URL}/logout`);
+      const state = getState();
+      const refreshToken = state.auth.refreshToken;
+      const userId = state.auth.user?.id;
+      
+      // If there's no refreshToken or userId, we can just return (the reducer will clear state)
+      if (!refreshToken || !userId) {
+        console.log('No refresh token or user ID available, skipping API call');
+        return null;
+      }
+      
+      // Send the refreshToken in the request body (userId comes from auth middleware)
+      await api.post(`${API_URL}/logout`, { refreshToken });
       return null;
     } catch (error) {
+      console.error('Logout error:', error);
+      
       if (axios.isAxiosError(error)) {
-        return rejectWithValue(error.response?.data?.message || 'Logout failed');
+        // Log the error but don't reject - we'll clear the state regardless
+        console.error(
+          'API error during logout:', 
+          error.response?.data?.message || error.message
+        );
       }
-      return rejectWithValue('Logout failed');
+      
+      // Return null instead of rejecting so the state still gets cleared
+      return null;
     }
   }
 );
@@ -284,6 +308,52 @@ export const resetPassword = createAsyncThunk<
         return rejectWithValue(error.response?.data?.message || 'Failed to reset password');
       }
       return rejectWithValue('Failed to reset password');
+    }
+  }
+);
+
+// Get user debug info
+export const getUserDebugInfo = createAsyncThunk<
+  UserDebugInfo,
+  void,
+  { rejectValue: string }
+>(
+  'auth/getUserDebugInfo',
+  async (_, { rejectWithValue }) => {
+    try {
+      console.log('Fetching user debug info...');
+      const response = await api.get('/api/auth/debug');
+      console.log('User debug info received:', response.data.data);
+      return response.data.data;
+    } catch (error) {
+      console.error('Error fetching user debug info:', error);
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(error.response?.data?.message || 'Failed to fetch user debug info');
+      }
+      return rejectWithValue('Unknown error occurred while fetching user debug info');
+    }
+  }
+);
+
+// Test admin access
+export const testAdminAccess = createAsyncThunk<
+  AdminAccessResponse,
+  void,
+  { rejectValue: string }
+>(
+  'auth/testAdminAccess',
+  async (_, { rejectWithValue }) => {
+    try {
+      console.log('Testing admin access...');
+      const response = await api.get('/api/auth/admin-test');
+      console.log('Admin access test response:', response.data.data);
+      return response.data.data;
+    } catch (error) {
+      console.error('Error testing admin access:', error);
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(error.response?.data?.message || 'Failed to verify admin access');
+      }
+      return rejectWithValue('Unknown error occurred while testing admin access');
     }
   }
 );
@@ -459,6 +529,34 @@ const authSlice = createSlice({
       .addCase(resetPassword.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload || 'Failed to reset password';
+      })
+      
+      // Get user debug info
+      .addCase(getUserDebugInfo.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getUserDebugInfo.fulfilled, (state) => {
+        state.isLoading = false;
+        state.error = null;
+      })
+      .addCase(getUserDebugInfo.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || 'Failed to fetch user debug info';
+      })
+      
+      // Test admin access
+      .addCase(testAdminAccess.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(testAdminAccess.fulfilled, (state) => {
+        state.isLoading = false;
+        state.error = null;
+      })
+      .addCase(testAdminAccess.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || 'Failed to verify admin access';
       });
   },
 });

@@ -18,6 +18,7 @@ import { useState } from "react";
 import { useAuth, useAppDispatch } from "@app/hooks/useAppRedux";
 import { logout } from "@features/auth/authSlice";
 import { UserRole } from "../../../types";
+import { UserDebugger } from "@app/components/UserDebugger";
 
 export function MainNavbar() {
     const { theme, setTheme } = useTheme();
@@ -25,11 +26,17 @@ export function MainNavbar() {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
     const [open, setOpen] = useState(false);
+    const [showDebugger, setShowDebugger] = useState(false);
 
     // Get auth state from Redux
     const { user, isAuthenticated } = useAuth();
 
-    const isAdmin = user?.role === UserRole.ADMIN;
+    // Check if user is admin, handling both lowercase and uppercase role values
+    const isAdmin = user?.role?.toLowerCase() === UserRole.ADMIN.toLowerCase();
+    
+    console.log("Current user role:", user?.role);
+    console.log("Is admin?", isAdmin);
+    console.log("UserRole.ADMIN value:", UserRole.ADMIN);
 
     const handleLogout = () => {
         dispatch(logout());
@@ -113,6 +120,18 @@ export function MainNavbar() {
                             <Sun className="h-5 w-5" />
                         )}
                     </Button>
+
+                    {/* Debug toggle button */}
+                    {isAuthenticated && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setShowDebugger(!showDebugger)}
+                            className="text-xs"
+                        >
+                            Debug
+                        </Button>
+                    )}
 
                     {/* User menu based on authentication state */}
                     {isAuthenticated ? (
@@ -282,6 +301,13 @@ export function MainNavbar() {
                         </div>
                     </div>
                 </>
+            )}
+
+            {/* Debugging panel */}
+            {showDebugger && (
+                <div className="container mx-auto my-4">
+                    <UserDebugger />
+                </div>
             )}
         </header>
     );
