@@ -141,8 +141,7 @@ const HomePage = () => {
   );
 }
 
-const WrappedHomePage = withPageAnimation(HomePage, 'fade');
-WrappedHomePage.displayName = 'AnimatedHomePage';
+export { HomePage };
 
-export { WrappedHomePage };
-export default WrappedHomePage;
+const AnimatedHomePage = withPageAnimation(HomePage, 'fade');
+export default AnimatedHomePage;
