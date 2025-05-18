@@ -31,9 +31,10 @@ import OrdersManagementPage from '@pages/Admin/Orders/ui/OrdersManagementPage';
 import OrderDetailPage from '@pages/Admin/Orders/ui/OrderDetailPage';
 import DiscountsManagementPage from '@pages/Admin/Discounts/ui/DiscountsManagementPage';
 import DiscountEditPage from '@pages/Admin/Discounts/ui/DiscountEditPage';
+import DiscountCreatePage from '@pages/Admin/Discounts/ui/DiscountCreatePage';
 import CouponsManagementPage from '@pages/Admin/Coupons/ui/CouponsManagementPage';
 import CouponEditPage from '@pages/Admin/Coupons/ui/CouponEditPage';
-import DiscountCreatePage from '@pages/Admin/Discounts/ui/DiscountCreatePage';
+import CouponCreatePage from '@pages/Admin/Coupons/ui/CouponCreatePage';
 
 // Account page imports
 import CreditsPage from '@pages/Account/Credits/ui/CreditsPage';
@@ -281,7 +282,7 @@ export const AppRoutes = () => {
           path="/admin/coupons/new" 
           element={
             <AdminRoute>
-              <CouponEditPage />
+              <CouponCreatePage />
             </AdminRoute>
           } 
         />
