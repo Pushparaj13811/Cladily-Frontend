@@ -94,16 +94,14 @@ const CreateParentDialog: React.FC<CreateParentDialogProps> = ({
   const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     
-    // Check if the input contains a slash
-    if (inputValue.includes('/')) {
-      // If there's a slash, extract everything after the last slash
-      const parts = inputValue.split('/');
-      const lastPart = parts[parts.length - 1];
-      setBaseCategorySlug(lastPart);
-    } else {
-      // If no slash, treat the whole input as base slug
-      setBaseCategorySlug(inputValue);
-    }
+    // Remove any characters that aren't allowed in slugs
+    const sanitizedValue = inputValue.toLowerCase()
+      .replace(/[^a-z0-9-]/g, '')  // Remove all chars except lowercase letters, numbers and hyphens
+      .replace(/--+/g, '-')        // Replace multiple hyphens with single hyphen
+      .replace(/^-+/, '')          // Remove hyphens from start
+      .replace(/-+$/, '');         // Remove hyphens from end
+    
+    setBaseCategorySlug(sanitizedValue);
   };
   
   // Handle department change

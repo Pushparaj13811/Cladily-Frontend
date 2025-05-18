@@ -25,11 +25,11 @@ interface BasicInfoTabProps {
   parentCategories: Category[];
   loadingParentCategories: boolean;
   baseSlug: string;
-  setBaseSlug: (value: string) => void;
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleNumberChange: (name: string, value: string) => void;
   handleSelectChange: (name: string, value: string | null) => void;
   handleSwitchChange: (name: string, checked: boolean) => void;
+  handleBaseSlugChange: (value: string) => void;
   onOpenParentCategoryDialog: () => void;
 }
 
@@ -40,11 +40,11 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
   parentCategories,
   loadingParentCategories,
   baseSlug,
-  setBaseSlug,
   handleChange,
   handleNumberChange,
   handleSelectChange,
   handleSwitchChange,
+  handleBaseSlugChange,
   onOpenParentCategoryDialog
 }) => {
   return (
@@ -124,7 +124,7 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
                 name="baseSlug"
                 placeholder="e.g. t-shirts"
                 value={baseSlug}
-                onChange={(e) => setBaseSlug(e.target.value)}
+                onChange={(e) => handleBaseSlugChange(e.target.value)}
                 className={`mt-1 ${errors.slug ? 'border-red-500' : ''}`}
               />
             </div>

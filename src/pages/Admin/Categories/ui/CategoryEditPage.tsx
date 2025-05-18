@@ -44,7 +44,6 @@ const CategoryEditPage: React.FC = () => {
     setDeleteDialogOpen,
     setParentCategoryDialogOpen,
     setNewParentCategory,
-    setBaseSlug,
     
     // Event handlers
     handleChange,
@@ -55,6 +54,7 @@ const CategoryEditPage: React.FC = () => {
     handleSubmit,
     handleDelete,
     handleCreateParentCategory,
+    handleBaseSlugChange,
     
     // Utility functions
     resetNewParentForm,
@@ -113,11 +113,11 @@ const CategoryEditPage: React.FC = () => {
                 parentCategories={parentCategories}
                 loadingParentCategories={loadingParentCategories}
                 baseSlug={baseSlug}
-                setBaseSlug={setBaseSlug}
                 handleChange={handleChange}
                 handleNumberChange={handleNumberChange}
                 handleSelectChange={handleSelectChange}
                 handleSwitchChange={handleSwitchChange}
+                handleBaseSlugChange={handleBaseSlugChange}
                 onOpenParentCategoryDialog={() => setParentCategoryDialogOpen(true)}
               />
             </TabsContent>

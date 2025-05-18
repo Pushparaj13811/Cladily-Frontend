@@ -221,19 +221,7 @@ export const useCategoryForm = ({ categoryId }: UseCategoryFormProps) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
-    // Handle slug separately to maintain department prefix
-    if (name === 'slug') {
-      // If user edits the full slug, extract base slug
-      if (value.includes('/')) {
-        const parts = value.split('/');
-        setBaseSlug(parts[parts.length - 1]);
-      } else {
-        // If no slash, assume user is editing just base part
-        setBaseSlug(value);
-      }
-    } else {
-      setCategory(prev => ({ ...prev, [name]: value }));
-    }
+    setCategory(prev => ({ ...prev, [name]: value }));
     
     // Clear error for this field if it exists
     if (errors[name]) {
@@ -248,6 +236,18 @@ export const useCategoryForm = ({ categoryId }: UseCategoryFormProps) => {
     if (name === 'name' && (!baseSlug || baseSlug === slugify(category.name))) {
       setBaseSlug(slugify(value));
     }
+  };
+  
+  // Set baseSlug with validation
+  const handleBaseSlugChange = (value: string) => {
+    // Sanitize the slug input to allow only lowercase letters, numbers, and hyphens
+    const sanitizedSlug = value.toLowerCase()
+      .replace(/[^a-z0-9-]/g, '')  // Remove all chars except lowercase letters, numbers and hyphens
+      .replace(/--+/g, '-')        // Replace multiple hyphens with single hyphen
+      .replace(/^-+/, '')          // Remove hyphens from start
+      .replace(/-+$/, '');         // Remove hyphens from end
+    
+    setBaseSlug(sanitizedSlug);
   };
   
   // Handle category type change
@@ -300,9 +300,19 @@ export const useCategoryForm = ({ categoryId }: UseCategoryFormProps) => {
       newErrors.parentId = 'A parent category is required for subcategories';
     }
     
-    // Slug format validation
-    if (category.slug && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(category.slug)) {
-      newErrors.slug = 'Slug can only contain lowercase letters, numbers, and hyphens';
+    // Slug format validation with department support
+    if (category.slug) {
+      // For department-based slugs like "menswear/t-shirts"
+      const slugParts = category.slug.split('/');
+      
+      // Check if each part follows the slug rules
+      const isValidSlug = slugParts.every(part => 
+        /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(part)
+      );
+      
+      if (!isValidSlug) {
+        newErrors.slug = 'Each part of the slug can only contain lowercase letters, numbers, and hyphens';
+      }
     }
     
     setErrors(newErrors);
@@ -559,6 +569,7 @@ export const useCategoryForm = ({ categoryId }: UseCategoryFormProps) => {
     handleDelete,
     handleParentNameChange,
     handleCreateParentCategory,
+    handleBaseSlugChange,
     
     // Utility functions
     validateForm,
