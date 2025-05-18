@@ -1,9 +1,19 @@
-
 import api from '@app/lib/api';
 import { Category, CreateCategoryDto, UpdateCategoryDto } from '@shared/types';
 
 // API base URL
 const API_URL = "/api/categories";
+
+// API error response interface
+interface ApiErrorResponse {
+  data?: {
+    message?: string;
+    statusCode?: number;
+    success?: boolean;
+  };
+  status?: number;
+  statusText?: string;
+}
 
 /**
  * Extract data from API response
@@ -105,10 +115,20 @@ export const getCategoryBySlug = async (slug: string): Promise<Category> => {
  */
 export const createCategory = async (category: CreateCategoryDto): Promise<Category> => {
   try {
+    console.log("Sending category data to API:", category);
     const response = await api.post(`${API_URL}`, category);
     return extractData<Category>(response);
   } catch (error) {
     console.error('Error creating category:', error);
+    if (error && typeof error === 'object' && 'response' in error) {
+      console.error('API Error response:', error.response);
+      
+      // Extract the specific error message from the response if available
+      const errorResponse = error.response as ApiErrorResponse;
+      if (errorResponse?.data?.message) {
+        throw new Error(errorResponse.data.message);
+      }
+    }
     throw new Error('Failed to create category');
   }
 };

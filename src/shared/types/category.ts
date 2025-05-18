@@ -77,7 +77,7 @@ export interface CreateCategoryDto {
   slug: string;
   description?: string;
   parentId?: string | null;
-  department?: Department;
+  department?: Department | string;
   isActive?: boolean;
   isVisible?: boolean;
   metaTitle?: string;

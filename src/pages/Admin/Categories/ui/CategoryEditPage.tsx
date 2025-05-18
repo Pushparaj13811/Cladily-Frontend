@@ -37,12 +37,14 @@ const CategoryEditPage: React.FC = () => {
     parentCategories,
     loadingParentCategories,
     isEditMode,
+    baseSlug,
     
     // State setters
     setActiveTab,
     setDeleteDialogOpen,
     setParentCategoryDialogOpen,
     setNewParentCategory,
+    setBaseSlug,
     
     // Event handlers
     handleChange,
@@ -110,6 +112,8 @@ const CategoryEditPage: React.FC = () => {
                 errors={errors}
                 parentCategories={parentCategories}
                 loadingParentCategories={loadingParentCategories}
+                baseSlug={baseSlug}
+                setBaseSlug={setBaseSlug}
                 handleChange={handleChange}
                 handleNumberChange={handleNumberChange}
                 handleSelectChange={handleSelectChange}

@@ -24,6 +24,8 @@ interface BasicInfoTabProps {
   errors: Record<string, string>;
   parentCategories: Category[];
   loadingParentCategories: boolean;
+  baseSlug: string;
+  setBaseSlug: (value: string) => void;
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleNumberChange: (name: string, value: string) => void;
   handleSelectChange: (name: string, value: string | null) => void;
@@ -37,6 +39,8 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
   errors,
   parentCategories,
   loadingParentCategories,
+  baseSlug,
+  setBaseSlug,
   handleChange,
   handleNumberChange,
   handleSelectChange,
@@ -69,29 +73,6 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
           )}
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="slug">
-            Slug <span className="text-red-500">*</span>
-          </Label>
-          <div className="flex items-center">
-            <span className="mr-2 text-muted-foreground">/products/category/</span>
-            <Input
-              id="slug"
-              name="slug"
-              placeholder="e.g. t-shirts"
-              value={category.slug}
-              onChange={handleChange}
-              className={errors.slug ? 'border-red-500' : ''}
-            />
-          </div>
-          {errors.slug && (
-            <p className="text-xs text-red-500">{errors.slug}</p>
-          )}
-          <p className="text-xs text-muted-foreground">
-            The slug is used in the URL of the category page. It should contain only lowercase letters, numbers, and hyphens.
-          </p>
-        </div>
-
         {/* Department dropdown - only enabled for parent categories */}
         <div className="space-y-2">
           <Label htmlFor="department">
@@ -118,6 +99,43 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
               Subcategories inherit the department from their parent category.
             </p>
           )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="slug">
+            Slug <span className="text-red-500">*</span>
+          </Label>
+          <div className="flex flex-col">
+            <div className="flex items-center">
+              <span className="mr-2 text-muted-foreground">/products/category/</span>
+              <Input
+                id="slug"
+                name="slug"
+                placeholder="e.g. menswear/t-shirts"
+                value={category.slug}
+                className={errors.slug ? 'border-red-500' : ''}
+                readOnly
+              />
+            </div>
+            <div className="mt-2">
+              <Label htmlFor="baseSlug" className="text-xs">Category Part:</Label>
+              <Input
+                id="baseSlug"
+                name="baseSlug"
+                placeholder="e.g. t-shirts"
+                value={baseSlug}
+                onChange={(e) => setBaseSlug(e.target.value)}
+                className={`mt-1 ${errors.slug ? 'border-red-500' : ''}`}
+              />
+            </div>
+          </div>
+          {errors.slug && (
+            <p className="text-xs text-red-500">{errors.slug}</p>
+          )}
+          <p className="text-xs text-muted-foreground">
+            The slug is used in the URL of the category page. It automatically includes the department prefix.
+            You can modify the category part only. It should contain only lowercase letters, numbers, and hyphens.
+          </p>
         </div>
 
         {categoryType === 'sub' && (

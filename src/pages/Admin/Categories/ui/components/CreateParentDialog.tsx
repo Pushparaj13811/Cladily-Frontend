@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -12,7 +12,7 @@ import { Input } from '@app/components/ui/input';
 import { Label } from '@app/components/ui/label';
 import { Textarea } from '@app/components/ui/textarea';
 import { Switch } from '@app/components/ui/switch';
-import { Loader2, Plus } from 'lucide-react';
+import { Loader2, Plus, AlertCircle } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -22,6 +22,7 @@ import {
 } from '@app/components/ui/select';
 import { Department } from '@shared/types';
 import { ParentCategoryFormState } from '../hooks/useCategoryForm';
+import { Alert, AlertDescription, AlertTitle } from '@app/components/ui/alert';
 
 interface CreateParentDialogProps {
   open: boolean;
@@ -42,6 +43,125 @@ const CreateParentDialog: React.FC<CreateParentDialogProps> = ({
   onCancel,
   isCreating
 }) => {
+  const [slugError, setSlugError] = useState<string | null>(null);
+  const [baseCategorySlug, setBaseCategorySlug] = useState('');
+  
+  // Generate a slug from text
+  const slugify = (text: string): string => {
+    return text
+      .toString()
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w-]+/g, '')
+      .replace(/--+/g, '-')
+      .replace(/^-+/, '')
+      .replace(/-+$/, '');
+  };
+  
+  // Generate full slug with department prefix
+  const generateFullSlug = (department: Department | string, baseSlug: string): string => {
+    const deptSlug = slugify(department.toString());
+    const cleanBaseSlug = slugify(baseSlug);
+    return `${deptSlug}/${cleanBaseSlug}`;
+  };
+  
+  // Effect to update the slug when department or base slug changes
+  useEffect(() => {
+    if (newParentCategory.department && baseCategorySlug) {
+      const fullSlug = generateFullSlug(newParentCategory.department, baseCategorySlug);
+      setNewParentCategory(prev => ({
+        ...prev,
+        slug: fullSlug
+      }));
+    }
+  }, [newParentCategory.department, baseCategorySlug]);
+  
+  // Handle name change to update base slug
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const name = e.target.value;
+    const newBaseSlug = slugify(name);
+    
+    setNewParentCategory(prev => ({ 
+      ...prev, 
+      name: name,
+    }));
+    
+    setBaseCategorySlug(newBaseSlug);
+  };
+  
+  // Handle slug change (only the category part, not department)
+  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    
+    // Check if the input contains a slash
+    if (inputValue.includes('/')) {
+      // If there's a slash, extract everything after the last slash
+      const parts = inputValue.split('/');
+      const lastPart = parts[parts.length - 1];
+      setBaseCategorySlug(lastPart);
+    } else {
+      // If no slash, treat the whole input as base slug
+      setBaseCategorySlug(inputValue);
+    }
+  };
+  
+  // Handle department change
+  const handleDepartmentChange = (value: string) => {
+    setNewParentCategory(prev => ({ 
+      ...prev, 
+      department: value as Department
+    }));
+  };
+  
+  // Handle form submission with error handling
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSlugError(null); // Clear previous errors
+    
+    try {
+      await onCreateParent(e);
+    } catch (error) {
+      // If it's a slug error, capture it and show suggestions
+      const errorMessage = error instanceof Error ? error.message : '';
+      if (errorMessage.includes('slug already exists')) {
+        setSlugError('A category with this slug already exists.');
+        
+        // Suggest an alternative slug by adding a random number
+        const randomSuffix = Math.floor(Math.random() * 1000);
+        const departmentPart = newParentCategory.slug.split('/')[0];
+        const newBaseSlug = `${baseCategorySlug}-${randomSuffix}`;
+        const suggestedSlug = `${departmentPart}/${newBaseSlug}`;
+        
+        // Update form state
+        setBaseCategorySlug(newBaseSlug);
+        setNewParentCategory(prev => ({
+          ...prev,
+          slug: suggestedSlug
+        }));
+      }
+    }
+  };
+
+  // Initialize base slug when dialog opens
+  useEffect(() => {
+    if (open && newParentCategory.name && !baseCategorySlug) {
+      // If dialog is opened with existing data but no base slug
+      if (newParentCategory.slug && newParentCategory.slug.includes('/')) {
+        // Extract base slug from full slug
+        const parts = newParentCategory.slug.split('/');
+        setBaseCategorySlug(parts[parts.length - 1]);
+      } else {
+        // Generate base slug from name
+        setBaseCategorySlug(slugify(newParentCategory.name));
+      }
+    } else if (!open) {
+      // Reset base slug when dialog closes
+      setBaseCategorySlug('');
+      setSlugError(null);
+    }
+  }, [open, newParentCategory.name, newParentCategory.slug, baseCategorySlug]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -52,7 +172,17 @@ const CreateParentDialog: React.FC<CreateParentDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={onCreateParent}>
+        {slugError && (
+          <Alert variant="destructive" className="mt-2">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>
+              {slugError} We've suggested an alternative slug.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label htmlFor="parentName">
@@ -62,45 +192,18 @@ const CreateParentDialog: React.FC<CreateParentDialogProps> = ({
                 id="parentName"
                 placeholder="e.g. Clothing"
                 value={newParentCategory.name}
-                onChange={(e) => setNewParentCategory(prev => ({ 
-                  ...prev, 
-                  name: e.target.value,
-                  slug: e.target.value.toString()
-                      .toLowerCase()
-                      .trim()
-                      .replace(/\s+/g, '-')
-                      .replace(/[^\w-]+/g, '')
-                      .replace(/--+/g, '-')
-                      .replace(/^-+/, '')
-                      .replace(/-+$/, '')
-                }))}
+                onChange={handleNameChange}
                 required
               />
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="parentSlug">Slug</Label>
-              <div className="flex items-center">
-                <span className="mr-2 text-muted-foreground">/products/category/</span>
-                <Input
-                  id="parentSlug"
-                  placeholder="e.g. clothing"
-                  value={newParentCategory.slug}
-                  onChange={(e) => setNewParentCategory(prev => ({ ...prev, slug: e.target.value }))}
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Auto-generated from name. You can modify if needed.
-              </p>
-            </div>
-
+            
             <div className="space-y-2">
               <Label htmlFor="parentDepartment">
                 Department <span className="text-red-500">*</span>
               </Label>
               <Select
                 value={newParentCategory.department}
-                onValueChange={(value) => setNewParentCategory(prev => ({ ...prev, department: value as Department }))}
+                onValueChange={handleDepartmentChange}
               >
                 <SelectTrigger id="parentDepartment">
                   <SelectValue placeholder="Select a department" />
@@ -113,6 +216,40 @@ const CreateParentDialog: React.FC<CreateParentDialogProps> = ({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="parentSlug">
+                Slug <span className="text-red-500">*</span>
+              </Label>
+              <div className="flex flex-col">
+                <div className="flex items-center">
+                  <span className="mr-2 text-muted-foreground">/products/category/</span>
+                  <Input
+                    id="parentSlug"
+                    placeholder="e.g. menswear/clothing"
+                    value={newParentCategory.slug}
+                    className={slugError ? "border-red-500" : ""}
+                    readOnly
+                  />
+                </div>
+                <div className="mt-2">
+                  <Label htmlFor="baseSlug" className="text-xs">Category Slug Part:</Label>
+                  <Input
+                    id="baseSlug"
+                    placeholder="e.g. clothing"
+                    value={baseCategorySlug}
+                    onChange={handleSlugChange}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {slugError ? 
+                  <span className="text-red-500">Please use the suggested slug or create a unique one.</span> : 
+                  "Automatically includes department prefix. You can modify the category part."
+                }
+              </p>
             </div>
 
             <div className="space-y-2">

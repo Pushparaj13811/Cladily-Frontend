@@ -23,6 +23,22 @@ export const slugify = (text: string): string => {
     .replace(/-+$/, '');      // Trim - from end of text
 };
 
+// Helper function to generate full slug with department prefix
+export const generateFullSlug = (department: Department | string, baseSlug: string): string => {
+  const deptSlug = slugify(department.toString());
+  const cleanBaseSlug = slugify(baseSlug);
+  return `${deptSlug}/${cleanBaseSlug}`;
+};
+
+// Helper to extract base slug (without department)
+export const extractBaseSlug = (fullSlug: string): string => {
+  if (fullSlug && fullSlug.includes('/')) {
+    const parts = fullSlug.split('/');
+    return parts[parts.length - 1];
+  }
+  return fullSlug;
+};
+
 export interface CategoryFormState {
   name: string;
   slug: string;
@@ -74,6 +90,9 @@ export const useCategoryForm = ({ categoryId }: UseCategoryFormProps) => {
     iconUrl: '',
     position: 0
   });
+  
+  // Track base slug separately (without department prefix)
+  const [baseSlug, setBaseSlug] = useState('');
   
   // UI state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -140,9 +159,13 @@ export const useCategoryForm = ({ categoryId }: UseCategoryFormProps) => {
           // Determine if this is a parent or sub category
           setCategoryType(fetchedCategory.parentId ? 'sub' : 'parent');
           
+          // Extract base slug from full slug
+          const extractedBaseSlug = extractBaseSlug(fetchedCategory.slug);
+          setBaseSlug(extractedBaseSlug);
+          
           setCategory({
             name: fetchedCategory.name,
-            slug: fetchedCategory.slug,
+            slug: fetchedCategory.slug, // Keep the original full slug
             description: fetchedCategory.description || '',
             department: fetchedCategory.department || Department.Menswear,
             parentId: fetchedCategory.parentId || null,
@@ -171,6 +194,14 @@ export const useCategoryForm = ({ categoryId }: UseCategoryFormProps) => {
     }
   }, [categoryId, isEditMode, navigate, toast]);
   
+  // Update slug when department or base slug changes
+  useEffect(() => {
+    if (category.department && baseSlug) {
+      const fullSlug = generateFullSlug(category.department, baseSlug);
+      setCategory(prev => ({ ...prev, slug: fullSlug }));
+    }
+  }, [category.department, baseSlug]);
+  
   // Update department when parent category changes for subcategories
   useEffect(() => {
     if (categoryType === 'sub' && category.parentId) {
@@ -180,6 +211,8 @@ export const useCategoryForm = ({ categoryId }: UseCategoryFormProps) => {
           ...prev, 
           department: parentCategory.department || Department.Menswear 
         }));
+        
+        // Don't update the slug here as the department effect will handle it
       }
     }
   }, [category.parentId, categoryType, parentCategories]);
@@ -187,7 +220,20 @@ export const useCategoryForm = ({ categoryId }: UseCategoryFormProps) => {
   // Handle text field changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setCategory(prev => ({ ...prev, [name]: value }));
+    
+    // Handle slug separately to maintain department prefix
+    if (name === 'slug') {
+      // If user edits the full slug, extract base slug
+      if (value.includes('/')) {
+        const parts = value.split('/');
+        setBaseSlug(parts[parts.length - 1]);
+      } else {
+        // If no slash, assume user is editing just base part
+        setBaseSlug(value);
+      }
+    } else {
+      setCategory(prev => ({ ...prev, [name]: value }));
+    }
     
     // Clear error for this field if it exists
     if (errors[name]) {
@@ -199,8 +245,8 @@ export const useCategoryForm = ({ categoryId }: UseCategoryFormProps) => {
     }
     
     // Auto-generate slug when name changes
-    if (name === 'name' && (!category.slug || category.slug === slugify(category.name))) {
-      setCategory(prev => ({ ...prev, slug: slugify(value) }));
+    if (name === 'name' && (!baseSlug || baseSlug === slugify(category.name))) {
+      setBaseSlug(slugify(value));
     }
   };
   
@@ -286,29 +332,66 @@ export const useCategoryForm = ({ categoryId }: UseCategoryFormProps) => {
     setIsSubmitting(true);
     
     try {
+      // Create API-compatible data object
+      const apiCategoryData = {
+        ...category,
+        // Ensure department is sent as a string value
+        department: category.department?.toString() || 'Menswear'
+      };
+      
+      console.log("Submitting category data to API:", apiCategoryData);
+      
       if (isEditMode && categoryId) {
-        await updateCategory(categoryId, category);
+        await updateCategory(categoryId, apiCategoryData);
         
         toast({
           title: 'Category updated',
           description: `${category.name} has been updated successfully.`,
         });
+        
+        navigate('/admin/categories');
       } else {
-        await createCategory(category);
+        await createCategory(apiCategoryData);
         
         toast({
           title: 'Category created',
           description: `${category.name} has been created successfully.`,
         });
+        
+        navigate('/admin/categories');
       }
-      
-      navigate('/admin/categories');
     } catch (error: unknown) {
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : (isEditMode ? 'Failed to update category' : 'Failed to create category'),
-        variant: 'destructive',
-      });
+      const errorMessage = error instanceof Error ? error.message : (isEditMode ? 'Failed to update category' : 'Failed to create category');
+      
+      // Check if it's a slug already exists error
+      if (errorMessage.includes('slug already exists')) {
+        // Set a more specific error message for slug conflict
+        toast({
+          title: 'Duplicate Slug',
+          description: 'A category with this slug already exists. Please modify the slug to make it unique.',
+          variant: 'destructive',
+        });
+        
+        // Suggest alternative slug with random suffix
+        const randomSuffix = Math.floor(Math.random() * 1000);
+        const newBaseSlug = `${baseSlug}-${randomSuffix}`;
+        setBaseSlug(newBaseSlug);
+        
+        // Set error for the slug field to highlight it
+        setErrors({
+          ...errors,
+          slug: 'A category with this slug already exists'
+        });
+        
+        // Make sure we're on the basic tab to show the error
+        setActiveTab('basic');
+      } else {
+        toast({
+          title: 'Error',
+          description: errorMessage,
+          variant: 'destructive',
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -356,10 +439,18 @@ export const useCategoryForm = ({ categoryId }: UseCategoryFormProps) => {
   // Generate slug for parent category
   const handleParentNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
+    const newBaseSlug = slugify(value);
+    
     setNewParentCategory(prev => ({ 
       ...prev, 
       name: value,
-      slug: slugify(value)
+    }));
+    
+    // Update full slug with department prefix
+    const fullSlug = generateFullSlug(newParentCategory.department, newBaseSlug);
+    setNewParentCategory(prev => ({
+      ...prev,
+      slug: fullSlug
     }));
   };
   
@@ -380,8 +471,16 @@ export const useCategoryForm = ({ categoryId }: UseCategoryFormProps) => {
     setCreatingParent(true);
     
     try {
+      // Create API-compatible data object - ensure department is a string
+      const apiParentData = {
+        ...newParentCategory,
+        department: newParentCategory.department?.toString() || 'Menswear' 
+      };
+      
+      console.log("Submitting parent category to API:", apiParentData);
+      
       // Create the parent category
-      const createdParent = await createCategory(newParentCategory);
+      const createdParent = await createCategory(apiParentData);
       
       // Add to parent categories list
       setParentCategories(prev => [...prev, createdParent]);
@@ -402,11 +501,23 @@ export const useCategoryForm = ({ categoryId }: UseCategoryFormProps) => {
         description: `Parent category "${createdParent.name}" has been created`,
       });
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to create parent category',
-        variant: 'destructive',
-      });
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create parent category';
+      
+      // Check if it's a slug already exists error
+      if (errorMessage.includes('slug already exists')) {
+        // Set a more helpful error message
+        toast({
+          title: 'Slug Already Used',
+          description: 'A category with this slug already exists. Please modify the name or slug to create a unique category.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: errorMessage,
+          variant: 'destructive',
+        });
+      }
     } finally {
       setCreatingParent(false);
     }
@@ -427,6 +538,7 @@ export const useCategoryForm = ({ categoryId }: UseCategoryFormProps) => {
     parentCategories,
     loadingParentCategories,
     isEditMode,
+    baseSlug,
     
     // State setters
     setCategory,
@@ -435,6 +547,7 @@ export const useCategoryForm = ({ categoryId }: UseCategoryFormProps) => {
     setDeleteDialogOpen,
     setParentCategoryDialogOpen,
     setNewParentCategory,
+    setBaseSlug,
     
     // Event handlers
     handleChange,
@@ -450,6 +563,9 @@ export const useCategoryForm = ({ categoryId }: UseCategoryFormProps) => {
     // Utility functions
     validateForm,
     resetNewParentForm,
+    slugify,
+    generateFullSlug,
+    extractBaseSlug,
   };
 };
 
