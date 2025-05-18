@@ -1,6 +1,13 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth, UserRole } from '@app/providers/auth-provider';
+import { useAppDispatch, useAuth } from '@app/hooks/useAppRedux';
+import { getUserProfile } from '@features/auth/authSlice';
+
+// Define roles enum for type safety
+export enum UserRole {
+  USER = 'user',
+  ADMIN = 'admin'
+}
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -16,8 +23,22 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   allowedRoles,
   redirectPath = '/login',
 }) => {
-  const { isAuthenticated, hasRole, isLoading } = useAuth();
   const location = useLocation();
+  const dispatch = useAppDispatch();
+  const { isAuthenticated, user, isLoading, token } = useAuth();
+
+  useEffect(() => {
+    // If authenticated but no user data, fetch the user profile
+    if (isAuthenticated && token && !user) {
+      dispatch(getUserProfile());
+    }
+  }, [isAuthenticated, token, user, dispatch]);
+
+  // Helper function to check if user has allowed role
+  const hasRole = (roles: UserRole[]): boolean => {
+    if (!user) return false;
+    return roles.includes(user.role as UserRole);
+  };
 
   // Show loading state if auth is still being verified
   if (isLoading) {

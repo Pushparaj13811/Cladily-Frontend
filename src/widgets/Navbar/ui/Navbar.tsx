@@ -1,5 +1,4 @@
 import { useTheme } from "@app/providers/theme-provider";
-import { useAuth } from "@app/providers/auth-provider";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from "@app/components/ui/navigation-menu";
 import { Button } from "@app/components/ui/button";
 import { Input } from "@app/components/ui/input";
@@ -7,7 +6,7 @@ import { ShoppingBag, Heart, Search, User, Sun, Moon, X, Package, Tag, Ticket, L
 import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@app/lib/utils";
 import { COMPANY, NAVIGATION } from "@shared/constants";
-import { ACCOUNT_NAVIGATION, MOCK_USER_PROFILE } from "@shared/constants/account";
+import { ACCOUNT_NAVIGATION } from "@shared/constants/account";
 import { useCart } from "@features/cart";
 import {
     DropdownMenu,
@@ -16,18 +15,24 @@ import {
     DropdownMenuTrigger,
 } from "@app/components/ui/dropdown-menu";
 import { useState } from "react";
+import { useAuth, useAppDispatch } from "@app/hooks/useAppRedux";
+import { logout } from "@features/auth/authSlice";
+import { UserRole } from "../../../types";
 
 export function MainNavbar() {
     const { theme, setTheme } = useTheme();
     const { itemCount } = useCart();
-    const { user, isAuthenticated, logout } = useAuth();
     const navigate = useNavigate();
+    const dispatch = useAppDispatch();
     const [open, setOpen] = useState(false);
-    
-    const isAdmin = user?.role === 'admin';
+
+    // Get auth state from Redux
+    const { user, isAuthenticated } = useAuth();
+
+    const isAdmin = user?.role === UserRole.ADMIN;
 
     const handleLogout = () => {
-        logout();
+        dispatch(logout());
         navigate("/");
     };
 
@@ -121,11 +126,11 @@ export function MainNavbar() {
                             <DropdownMenuContent align="end" className="w-[320px] p-0 rounded-lg">
                                 <div className="flex items-center justify-between p-6 border-b">
                                     <h2 className="text-xl font-medium tracking-wide">
-                                        {user?.name || MOCK_USER_PROFILE.firstName} {MOCK_USER_PROFILE.lastName}
+                                        {user?.firstName} {user?.lastName}
                                     </h2>
-                                    <Button 
-                                        variant="ghost" 
-                                        size="icon" 
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
                                         className="h-8 w-8"
                                         onClick={() => setOpen(false)}
                                     >
@@ -194,8 +199,8 @@ export function MainNavbar() {
                                             </DropdownMenuItem>
                                         </>
                                     )}
-                                    
-                                    <DropdownMenuItem 
+
+                                    <DropdownMenuItem
                                         className="px-6 py-4 text-base text-red-600 hover:bg-gray-50 hover:text-red-600 focus:bg-gray-50 focus:text-red-600"
                                         onClick={handleLogout}
                                     >

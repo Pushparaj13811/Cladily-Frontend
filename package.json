@@ -27,6 +27,7 @@
     "@radix-ui/react-tabs": "^1.1.11",
     "@radix-ui/react-toast": "^1.2.13",
     "@radix-ui/react-tooltip": "^1.2.6",
+    "@reduxjs/toolkit": "^2.8.2",
     "@shadcn/ui": "^0.0.4",
     "axios": "^1.9.0",
     "class-variance-authority": "^0.7.1",

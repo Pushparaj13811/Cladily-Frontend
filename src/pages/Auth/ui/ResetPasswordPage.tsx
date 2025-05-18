@@ -1,21 +1,34 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@app/components/ui/button";
 import { Input } from "@app/components/ui/input";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { COMPANY } from "@shared/constants";
 import { Eye, EyeOff, CheckCircle } from "lucide-react";
+import { useAppDispatch, useAuth } from "@app/hooks/useAppRedux";
+import { resetPassword, clearError } from "@features/auth/authSlice";
+import { useToast } from "@app/hooks/use-toast";
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { toast } = useToast();
+  
+  // Get auth state from Redux
+  const { isLoading, error } = useAuth();
+  
   const token = searchParams.get("token");
   
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  // Clear errors when component mounts
+  useEffect(() => {
+    dispatch(clearError());
+  }, [dispatch]);
 
   // Check if token exists
   if (!token && !isSuccess) {
@@ -41,27 +54,34 @@ export default function ResetPasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    setValidationError(null);
     
     // Validate passwords
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setValidationError("Passwords do not match");
       return;
     }
     
     if (password.length < 8) {
-      setError("Password must be at least 8 characters long");
+      setValidationError("Password must be at least 8 characters long");
       return;
     }
     
-    setIsLoading(true);
-
-    // Simulate API call
-    setTimeout(() => {
-      // Success case
+    if (!token) {
+      setValidationError("Token is missing");
+      return;
+    }
+    
+    // Dispatch reset password action
+    const resultAction = await dispatch(resetPassword({ token, password }));
+    
+    if (resetPassword.fulfilled.match(resultAction)) {
       setIsSuccess(true);
-      setIsLoading(false);
-    }, 1000);
+      toast({
+        title: "Password reset successful",
+        description: "Your password has been updated successfully.",
+      });
+    }
   };
 
   if (isSuccess) {
@@ -106,9 +126,9 @@ export default function ResetPasswordPage() {
           </p>
         </div>
 
-        {error && (
+        {(validationError || error) && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded-md">
-            {error}
+            {validationError || error}
           </div>
         )}
 

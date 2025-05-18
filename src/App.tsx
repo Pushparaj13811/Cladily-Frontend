@@ -4,8 +4,8 @@ import { Navbar } from '@widgets/Navbar';
 import { Footer } from '@widgets/Footer';
 import { CartProvider } from '@features/cart';
 import { Toaster } from '@app/components/ui/toaster';
-import { AuthProvider } from '@app/providers/auth-provider';
 import { PageTransition } from '@app/components/ui/motion';
+import { ReduxProvider } from '@app/providers/ReduxProvider';
 import { AppRoutes } from './routes';
 
 // AnimatedRoutes component to handle page transitions
@@ -27,8 +27,8 @@ const AnimatedRoutes = () => {
  */
 function App() {
   return (
-    <ThemeProvider defaultTheme="light">
-      <AuthProvider>
+    <ReduxProvider>
+      <ThemeProvider defaultTheme="light">
         <CartProvider>
           <Router>
             <div className="min-h-screen bg-background text-foreground antialiased">
@@ -39,8 +39,8 @@ function App() {
             </div>
           </Router>
         </CartProvider>
-      </AuthProvider>
-    </ThemeProvider>
+      </ThemeProvider>
+    </ReduxProvider>
   );
 }
 

@@ -1,39 +1,76 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, ReactNode } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@app/components/ui/button";
 import { Input } from "@app/components/ui/input";
 import { Checkbox } from "@app/components/ui/checkbox";
 import { Link } from "react-router-dom";
 import { COMPANY } from "@shared/constants";
 import { Eye, EyeOff } from "lucide-react";
-import { useAuth } from "@app/providers/auth-provider";
 import { LoginHelper } from "./components";
+import { useAppDispatch, useAuth } from "@app/hooks/useAppRedux";
+import { login, clearError } from "@features/auth/authSlice";
+import { useToast } from "@app/hooks/use-toast";
+import { LocationState } from "../../../types";
+
+// Helper function to render error message with additional help for JWT errors
+const formatErrorMessage = (error: string | null): ReactNode => {
+  if (!error) return '';
+  
+  // Check if it's a JWT configuration error
+  if (error.includes('JWT configuration') || error.includes('secretOrPrivateKey')) {
+    return (
+      <>
+        <strong>Server Configuration Error:</strong> The authentication system is not properly configured. 
+        <br /><br />
+        Please contact the administrator and report the following error:
+        <br />
+        <code className="block mt-2 p-2 bg-red-100 rounded text-xs">{error}</code>
+      </>
+    );
+  }
+  
+  return error;
+};
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
-  const [email, setEmail] = useState("");
+  const location = useLocation();
+  const dispatch = useAppDispatch();
+  const { toast } = useToast();
+  
+  // Get auth state from Redux
+  const { isLoading, error, isAuthenticated } = useAuth();
+  
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  // Clear errors when component mounts
+  useEffect(() => {
+    dispatch(clearError());
+  }, [dispatch]);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Redirect to the page they were trying to access or dashboard
+      const from = (location.state as LocationState)?.from?.pathname || "/account";
+      navigate(from, { replace: true });
+      
+      toast({
+        title: "Login successful",
+        description: "You've been successfully logged in.",
+      });
+    }
+  }, [isAuthenticated, navigate, location, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setIsLoading(true);
-
-    try {
-      await login(email, password);
-      // Redirect to the appropriate dashboard based on user role
-      navigate("/account");
-    } catch (err) {
-      console.error("Login error:", err);
-      setError(err instanceof Error ? err.message : "An error occurred during login");
-    } finally {
-      setIsLoading(false);
-    }
+    console.log("Submitting login form");
+    
+    // Dispatch login action
+    dispatch(login({ phone, password }));
   };
 
   return (
@@ -49,23 +86,23 @@ export default function LoginPage() {
 
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded-md text-sm">
-            {error}
+            {formatErrorMessage(error)}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <label htmlFor="email" className="text-sm font-medium">
-              Email
+            <label htmlFor="phone" className="text-sm font-medium">
+              Phone
             </label>
             <Input
-              id="email"
-              type="email"
-              placeholder="name@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              id="phone"
+              type="tel"
+              placeholder="+1234567890"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
               required
-              autoComplete="email"
+              autoComplete="tel"
             />
           </div>
 
