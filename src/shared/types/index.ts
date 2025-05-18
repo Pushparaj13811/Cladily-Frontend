@@ -9,3 +9,4 @@ export * from './ui';
 export * from './checkout'; 
 export * from './store';
 export * from './footer';
+export * from './category';
