@@ -6,6 +6,7 @@ import { getUserProfile } from '@features/auth/authSlice';
 // Define roles enum for type safety
 export enum UserRole {
   USER = 'user',
+  CUSTOMER = 'customer',
   ADMIN = 'admin'
 }
 
@@ -37,7 +38,16 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // Helper function to check if user has allowed role
   const hasRole = (roles: UserRole[]): boolean => {
     if (!user) return false;
-    return roles.includes(user.role as UserRole);
+    
+    const userRole = user.role.toLowerCase();
+    
+    // Check if any allowed role matches the user's role
+    return roles.some(role => {
+      const allowedRole = role.toString().toLowerCase();
+      return userRole === allowedRole || 
+        // Special case: 'customer' role should have the same access as 'user'
+        (userRole === 'customer' && allowedRole === 'user');
+    });
   };
 
   // Show loading state if auth is still being verified
@@ -77,7 +87,7 @@ export const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }
  */
 export const UserRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <ProtectedRoute allowedRoles={[UserRole.USER, UserRole.ADMIN]} redirectPath="/login">
+    <ProtectedRoute allowedRoles={[UserRole.USER, UserRole.CUSTOMER, UserRole.ADMIN]} redirectPath="/login">
       {children}
     </ProtectedRoute>
   );

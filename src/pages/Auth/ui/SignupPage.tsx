@@ -1,4 +1,4 @@
-  import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@app/components/ui/button";
 import { Input } from "@app/components/ui/input";
@@ -30,6 +30,7 @@ export default function SignupPage() {
   const [newsletter, setNewsletter] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
 
   // Clear errors when component mounts
   useEffect(() => {
@@ -42,13 +43,8 @@ export default function SignupPage() {
       // Redirect to the page they were trying to access or dashboard
       const from = (location.state as LocationState)?.from?.pathname || "/account";
       navigate(from, { replace: true });
-      
-      toast({
-        title: "Registration successful",
-        description: "Your account has been created successfully.",
-      });
     }
-  }, [isAuthenticated, navigate, location, toast]);
+  }, [isAuthenticated, navigate, location]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,15 +66,63 @@ export default function SignupPage() {
       return;
     }
     
-    // Dispatch registration action
-    dispatch(register({ 
-      firstName, 
-      lastName, 
-      email, 
-      phone, 
-      password 
-    }));
+    // Dispatch registration action with success callback
+    try {
+      const resultAction = await dispatch(register({ 
+        firstName, 
+        lastName, 
+        email, 
+        phone: phone,
+        password 
+      }));
+      
+      if (register.fulfilled.match(resultAction)) {
+        // Clear form fields after success
+        setFirstName("");
+        setLastName("");
+        setEmail("");
+        setPhone("");
+        setPassword("");
+        setConfirmPassword("");
+        setAgreeTerms(false);
+        setNewsletter(false);
+        
+        setRegistrationSuccess(true);
+        toast({
+          title: "Registration successful",
+          description: "Your account has been created. Please log in.",
+        });
+        
+        // Redirect to login page after a short delay
+        setTimeout(() => {
+          navigate("/login", { 
+            replace: true,
+            state: { from: location.state?.from }
+          });
+        }, 1500);
+      }
+    } catch (err) {
+      console.error("Registration error:", err);
+    }
   };
+
+  // Show success message if registration was successful
+  if (registrationSuccess) {
+    return (
+      <div className="flex min-h-[calc(100vh-300px)] flex-col justify-center py-12">
+        <div className="mx-auto w-full max-w-md text-center">
+          <h2 className="text-2xl font-semibold mb-4">Registration Successful!</h2>
+          <p className="mb-6">Your account has been created successfully. Redirecting you to login page...</p>
+          <Button 
+            onClick={() => navigate("/login")}
+            className="mx-auto"
+          >
+            Go to Login
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-[calc(100vh-300px)] flex-col justify-center py-12">

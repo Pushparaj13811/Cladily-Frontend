@@ -5,7 +5,8 @@
 // User role enum for type safety
 export enum UserRole {
   USER = 'user',
-  ADMIN = 'admin'
+  ADMIN = 'admin',
+  CUSTOMER = 'customer'
 }
 
 // User model
@@ -14,7 +15,7 @@ export interface User {
   firstName: string;
   lastName: string;
   email: string;
-  phone: string;
+  phoneNumber: string;
   avatar?: string;
   role: string;
   isEmailVerified: boolean;
