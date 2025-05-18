@@ -17,7 +17,7 @@ import {
   OrdersPage,
   ProfilePage,
 } from '@pages/Account';
-import { useAuth } from '@app/providers/auth-provider';
+import { useAuth, UserRole } from '@app/providers/auth-provider';
 import { AdminDashboardPage } from '@pages/Admin/Dashboard';
 import DashboardPage from '@pages/Account/ui/DashboardPage';
 import { PageTransition } from '@app/components/ui/motion';
@@ -29,6 +29,10 @@ import CategoriesManagementPage from '@pages/Admin/Categories/ui/CategoriesManag
 import CategoryEditPage from '@pages/Admin/Categories/ui/CategoryEditPage';
 import OrdersManagementPage from '@pages/Admin/Orders/ui/OrdersManagementPage';
 import OrderDetailPage from '@pages/Admin/Orders/ui/OrderDetailPage';
+import DiscountsManagementPage from '@pages/Admin/Discounts/ui/DiscountsManagementPage';
+import DiscountEditPage from '@pages/Admin/Discounts/ui/DiscountEditPage';
+import CouponsManagementPage from '@pages/Admin/Coupons/ui/CouponsManagementPage';
+import CouponEditPage from '@pages/Admin/Coupons/ui/CouponEditPage';
 
 // Account page imports
 import CreditsPage from '@pages/Account/Credits/ui/CreditsPage';
@@ -38,8 +42,7 @@ import ShoppingPreferencesPage from '@pages/Account/ShoppingPreferences/ui/Shopp
 import CommunicationPreferencesPage from '@pages/Account/Communication/ui/CommunicationPreferencesPage';
 
 /**
- * AnonymousRoute - Component to prevent authenticated users from accessing pages like login
- * Redirects to account page if user is already authenticated
+ * AnonymousRoute - Component that redirects to account page if user is already authenticated
  */
 const AnonymousRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuth();
@@ -56,25 +59,53 @@ const AnonymousRoute = ({ children }: { children: React.ReactNode }) => {
  */
 export const AppRoutes = () => {
   const location = useLocation();
+  const { user, isAuthenticated } = useAuth();
+  const isAdmin = isAuthenticated && user?.role === UserRole.ADMIN;
   
   return (
     <PageTransition>
       <Routes location={location} key={location.pathname}>
-        {/* Main Pages */}
-        <Route path="/" element={<HomePage />} />
-        <Route path="/products" element={<ProductsPage />} />
-        <Route path="/products/:id" element={<ProductDetailPage />} />
-        <Route path="/cart" element={<CartPage />} />
-        <Route path="/checkout" element={<CheckoutPage />} />
-        <Route path="/thank-you" element={<ThankYouPage />} />
+        {/* Main Pages - Redirect admin users to admin dashboard */}
+        <Route path="/" element={
+          isAdmin ? <Navigate to="/admin" replace /> : <HomePage />
+        } />
         
-        {/* Category Pages */}
-        <Route path="/menswear" element={<ProductsPage />} />
-        <Route path="/menswear/:category" element={<ProductsPage />} />
-        <Route path="/womenswear" element={<ProductsPage />} />
-        <Route path="/womenswear/:category" element={<ProductsPage />} />
-        <Route path="/kidswear" element={<ProductsPage />} />
-        <Route path="/kidswear/:category" element={<ProductsPage />} />
+        {/* Shopping pages - Only for non-admin users */}
+        <Route path="/products" element={
+          isAdmin ? <Navigate to="/admin/products" replace /> : <ProductsPage />
+        } />
+        <Route path="/products/:id" element={
+          isAdmin ? <Navigate to="/admin/products" replace /> : <ProductDetailPage />
+        } />
+        <Route path="/cart" element={
+          isAdmin ? <Navigate to="/admin" replace /> : <CartPage />
+        } />
+        <Route path="/checkout" element={
+          isAdmin ? <Navigate to="/admin" replace /> : <CheckoutPage />
+        } />
+        <Route path="/thank-you" element={
+          isAdmin ? <Navigate to="/admin" replace /> : <ThankYouPage />
+        } />
+        
+        {/* Category Pages - Only for non-admin users */}
+        <Route path="/menswear" element={
+          isAdmin ? <Navigate to="/admin" replace /> : <ProductsPage />
+        } />
+        <Route path="/menswear/:category" element={
+          isAdmin ? <Navigate to="/admin" replace /> : <ProductsPage />
+        } />
+        <Route path="/womenswear" element={
+          isAdmin ? <Navigate to="/admin" replace /> : <ProductsPage />
+        } />
+        <Route path="/womenswear/:category" element={
+          isAdmin ? <Navigate to="/admin" replace /> : <ProductsPage />
+        } />
+        <Route path="/kidswear" element={
+          isAdmin ? <Navigate to="/admin" replace /> : <ProductsPage />
+        } />
+        <Route path="/kidswear/:category" element={
+          isAdmin ? <Navigate to="/admin" replace /> : <ProductsPage />
+        } />
 
         {/* Auth Pages - Only accessible if not logged in */}
         <Route 
@@ -208,6 +239,56 @@ export const AppRoutes = () => {
           element={
             <AdminRoute>
               <OrderDetailPage />
+            </AdminRoute>
+          } 
+        />
+        
+        {/* New discount and coupon management routes */}
+        <Route 
+          path="/admin/discounts" 
+          element={
+            <AdminRoute>
+              <DiscountsManagementPage />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/discounts/new" 
+          element={
+            <AdminRoute>
+              <DiscountEditPage />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/discounts/:id" 
+          element={
+            <AdminRoute>
+              <DiscountEditPage />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/coupons" 
+          element={
+            <AdminRoute>
+              <CouponsManagementPage />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/coupons/new" 
+          element={
+            <AdminRoute>
+              <CouponEditPage />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/coupons/:id" 
+          element={
+            <AdminRoute>
+              <CouponEditPage />
             </AdminRoute>
           } 
         />

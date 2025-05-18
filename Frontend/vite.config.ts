@@ -1,19 +1,24 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import path from 'node:path'
+import { fileURLToPath } from 'url'
+import { dirname, resolve } from 'path'
+
+// Create __dirname equivalent in ESM
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@app': path.resolve(__dirname, './src/app'),
-      '@widgets': path.resolve(__dirname, './src/widgets'),
-      '@features': path.resolve(__dirname, './src/features'),
-      '@entities': path.resolve(__dirname, './src/entities'),
-      '@shared': path.resolve(__dirname, './src/shared'),
-      '@pages': path.resolve(__dirname, './src/pages'),
-      '@assets': path.resolve(__dirname, './src/assets'),
+      '@app': resolve(__dirname, './src/app'),
+      '@widgets': resolve(__dirname, './src/widgets'),
+      '@features': resolve(__dirname, './src/features'),
+      '@entities': resolve(__dirname, './src/entities'),
+      '@shared': resolve(__dirname, './src/shared'),
+      '@pages': resolve(__dirname, './src/pages'),
+      '@assets': resolve(__dirname, './src/assets'),
     },
   },
 })

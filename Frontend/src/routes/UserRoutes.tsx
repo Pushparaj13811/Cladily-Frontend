@@ -2,7 +2,6 @@ import { Fragment } from 'react';
 import { Route } from 'react-router-dom';
 import { UserRoute } from '@app/components/ProtectedRoute';
 import { 
-  UserDashboardPage,
   WishlistPage,
   OrdersPage,
   ProfilePage
@@ -20,7 +19,7 @@ export const UserRoutes = () => {
         path="/account" 
         element={
           <UserRoute>
-            <UserDashboardPage />
+            <OrdersPage />
           </UserRoute>
         } 
       />
