@@ -1,10 +1,13 @@
 import React from 'react';
-import { motion, Variants } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { fadeVariants, slideUpVariants, scaleVariants } from './motionVariants';
+
+type AnimationType = 'fade' | 'slideUp' | 'slideRight' | 'slideLeft' | 'scale';
 
 interface ScrollAnimationProps {
   children: React.ReactNode;
   className?: string;
-  animationType?: 'fade' | 'slideUp' | 'slideRight' | 'slideLeft' | 'scale';
+  animationType?: AnimationType;
   delay?: number;
   duration?: number;
   once?: boolean;
@@ -24,67 +27,33 @@ const ScrollAnimation: React.FC<ScrollAnimationProps> = ({
   once = true,
   threshold = 0.1
 }) => {
-  // Animation variants
-  const animations: Record<string, Variants> = {
-    fade: {
-      hidden: { opacity: 0 },
-      visible: { 
-        opacity: 1,
-        transition: { 
-          duration,
-          delay 
-        }
-      }
-    },
-    slideUp: {
-      hidden: { opacity: 0, y: 30 },
-      visible: { 
-        opacity: 1, 
-        y: 0,
-        transition: { 
-          duration,
-          delay,
-          ease: "easeOut" 
-        }
-      }
-    },
-    slideRight: {
-      hidden: { opacity: 0, x: -30 },
-      visible: { 
-        opacity: 1, 
-        x: 0,
-        transition: { 
-          duration,
-          delay,
-          ease: "easeOut" 
-        }
-      }
-    },
-    slideLeft: {
-      hidden: { opacity: 0, x: 30 },
-      visible: { 
-        opacity: 1, 
-        x: 0,
-        transition: { 
-          duration,
-          delay,
-          ease: "easeOut" 
-        }
-      }
-    },
-    scale: {
-      hidden: { opacity: 0, scale: 0.9 },
-      visible: { 
-        opacity: 1, 
-        scale: 1,
-        transition: { 
-          duration,
-          delay,
-          ease: "easeOut" 
-        }
-      }
+  // Get the base animation variant
+  const getBaseVariant = () => {
+    switch(animationType) {
+      case 'fade':
+        return fadeVariants;
+      case 'slideUp':
+        return slideUpVariants;
+      case 'scale':
+        return scaleVariants;
+      case 'slideRight':
+        return {
+          hidden: { opacity: 0, x: -30 },
+          visible: { opacity: 1, x: 0 },
+          exit: { opacity: 0, x: -15 }
+        };
+      case 'slideLeft':
+        return {
+          hidden: { opacity: 0, x: 30 },
+          visible: { opacity: 1, x: 0 },
+          exit: { opacity: 0, x: 15 }
+        };
+      default:
+        return fadeVariants;
     }
   };
+
+  const variant = getBaseVariant();
 
   return (
     <motion.div
@@ -92,7 +61,12 @@ const ScrollAnimation: React.FC<ScrollAnimationProps> = ({
       initial="hidden"
       whileInView="visible"
       viewport={{ once, amount: threshold }}
-      variants={animations[animationType]}
+      variants={variant}
+      transition={{ 
+        duration, 
+        delay,
+        ease: "easeOut" 
+      }}
     >
       {children}
     </motion.div>

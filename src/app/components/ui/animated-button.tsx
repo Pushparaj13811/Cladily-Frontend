@@ -5,6 +5,8 @@ import { Button, ButtonProps } from './button';
 interface AnimatedButtonProps extends ButtonProps {
   whileHoverScale?: number;
   whileTapScale?: number;
+  transitionDuration?: number;
+  ease?: string;
 }
 
 /**
@@ -16,13 +18,15 @@ const AnimatedButton: React.FC<AnimatedButtonProps> = ({
   className,
   whileHoverScale = 1.03,
   whileTapScale = 0.97,
+  transitionDuration = 0.2,
+  ease = "easeInOut",
   ...props
 }) => {
   return (
     <motion.div
       whileHover={{ scale: whileHoverScale }}
       whileTap={{ scale: whileTapScale }}
-      transition={{ duration: 0.2, ease: "easeInOut" }}
+      transition={{ duration: transitionDuration, ease }}
     >
       <Button className={className} {...props}>
         {children}

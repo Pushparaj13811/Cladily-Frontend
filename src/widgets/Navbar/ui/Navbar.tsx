@@ -30,18 +30,129 @@ export function MainNavbar() {
 
     // Get auth state from Redux
     const { user, isAuthenticated } = useAuth();
-
+    
     // Check if user is admin, handling both lowercase and uppercase role values
     const isAdmin = user?.role?.toLowerCase() === UserRole.ADMIN.toLowerCase();
-    
-    console.log("Current user role:", user?.role);
-    console.log("Is admin?", isAdmin);
-    console.log("UserRole.ADMIN value:", UserRole.ADMIN);
 
     const handleLogout = () => {
         dispatch(logout());
         navigate("/");
     };
+
+    const renderAdminNavigation = () => (
+        <>
+            <NavigationMenuItem>
+                <Link to="/admin/dashboard" className="text-sm font-medium px-3 flex items-center">
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    Dashboard
+                </Link>
+            </NavigationMenuItem>
+            <NavigationMenuItem>
+                <Link to="/admin/products" className="text-sm font-medium px-3 flex items-center">
+                    <Package className="mr-2 h-4 w-4" />
+                    Products
+                </Link>
+            </NavigationMenuItem>
+            <NavigationMenuItem>
+                <Link to="/admin/categories" className="text-sm font-medium px-3 flex items-center">
+                    <Tag className="mr-2 h-4 w-4" />
+                    Categories
+                </Link>
+            </NavigationMenuItem>
+            <NavigationMenuItem>
+                <Link to="/admin/discounts" className="text-sm font-medium px-3 flex items-center">
+                    <Percent className="mr-2 h-4 w-4" />
+                    Discounts
+                </Link>
+            </NavigationMenuItem>
+            <NavigationMenuItem>
+                <Link to="/admin/coupons" className="text-sm font-medium px-3 flex items-center">
+                    <Ticket className="mr-2 h-4 w-4" />
+                    Coupons
+                </Link>
+            </NavigationMenuItem>
+        </>
+    );
+
+    const renderUserNavigation = () => (
+        NAVIGATION.MAIN_CATEGORIES.map((category) => (
+            <NavigationMenuItem key={category.name}>
+                <Link to={category.href} className="text-sm font-medium px-3">
+                    {category.name}
+                </Link>
+            </NavigationMenuItem>
+        ))
+    );
+
+    const renderDropdownMenuItems = () => (
+        <>
+            {!isAdmin ? (
+                <>
+                    <DropdownMenuItem asChild className="px-6 py-4 text-base hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black">
+                        <Link to="/account/membership">
+                            Membership
+                        </Link>
+                    </DropdownMenuItem>
+
+                    {/* Menu items from ACCOUNT_NAVIGATION */}
+                    {ACCOUNT_NAVIGATION.slice(0, 3).map((item) => (
+                        <DropdownMenuItem key={item.path} asChild className="px-6 py-4 text-base hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black">
+                            <Link to={item.path}>
+                                {item.label}
+                            </Link>
+                        </DropdownMenuItem>
+                    ))}
+
+                    <DropdownMenuItem asChild className="px-6 py-4 text-base hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black">
+                        <Link to="/account/shopping-preferences">
+                            Preferences
+                        </Link>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem asChild className="px-6 py-4 text-base hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black">
+                        <Link to="/account/referral">
+                            Refer a Friend
+                        </Link>
+                    </DropdownMenuItem>
+                </>
+            ) : (
+                <>
+                    <DropdownMenuItem asChild className="px-6 py-4 text-base hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black">
+                        <Link to="/admin">
+                            Admin Dashboard
+                        </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="px-6 py-4 text-base hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black">
+                        <Link to="/admin/products">
+                            Manage Products
+                        </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="px-6 py-4 text-base hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black">
+                        <Link to="/admin/categories">
+                            Manage Categories
+                        </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="px-6 py-4 text-base hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black">
+                        <Link to="/admin/discounts">
+                            Manage Discounts & Coupons
+                        </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="px-6 py-4 text-base hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black">
+                        <Link to="/admin/orders">
+                            Manage Orders
+                        </Link>
+                    </DropdownMenuItem>
+                </>
+            )}
+
+            <DropdownMenuItem
+                className="px-6 py-4 text-base text-red-600 hover:bg-gray-50 hover:text-red-600 focus:bg-gray-50 focus:text-red-600"
+                onClick={handleLogout}
+            >
+                Sign out
+            </DropdownMenuItem>
+        </>
+    );
 
     return (
         <header className="border-b border-border">
@@ -55,50 +166,7 @@ export function MainNavbar() {
                 <div className="flex items-center space-x-6">
                     <NavigationMenu>
                         <NavigationMenuList>
-                            {isAdmin ? (
-                                // Admin navigation
-                                <>
-                                    <NavigationMenuItem>
-                                        <Link to="/admin/dashboard" className="text-sm font-medium px-3 flex items-center">
-                                            <LayoutDashboard className="mr-2 h-4 w-4" />
-                                            Dashboard
-                                        </Link>
-                                    </NavigationMenuItem>
-                                    <NavigationMenuItem>
-                                        <Link to="/admin/products" className="text-sm font-medium px-3 flex items-center">
-                                            <Package className="mr-2 h-4 w-4" />
-                                            Products
-                                        </Link>
-                                    </NavigationMenuItem>
-                                    <NavigationMenuItem>
-                                        <Link to="/admin/categories" className="text-sm font-medium px-3 flex items-center">
-                                            <Tag className="mr-2 h-4 w-4" />
-                                            Categories
-                                        </Link>
-                                    </NavigationMenuItem>
-                                    <NavigationMenuItem>
-                                        <Link to="/admin/discounts" className="text-sm font-medium px-3 flex items-center">
-                                            <Percent className="mr-2 h-4 w-4" />
-                                            Discounts
-                                        </Link>
-                                    </NavigationMenuItem>
-                                    <NavigationMenuItem>
-                                        <Link to="/admin/coupons" className="text-sm font-medium px-3 flex items-center">
-                                            <Ticket className="mr-2 h-4 w-4" />
-                                            Coupons
-                                        </Link>
-                                    </NavigationMenuItem>
-                                </>
-                            ) : (
-                                // Regular user navigation
-                                NAVIGATION.MAIN_CATEGORIES.map((category) => (
-                                    <NavigationMenuItem key={category.name}>
-                                        <Link to={category.href} className="text-sm font-medium px-3">
-                                            {category.name}
-                                        </Link>
-                                    </NavigationMenuItem>
-                                ))
-                            )}
+                            {isAdmin ? renderAdminNavigation() : renderUserNavigation()}
                         </NavigationMenuList>
                     </NavigationMenu>
                 </div>
@@ -158,73 +226,7 @@ export function MainNavbar() {
                                 </div>
 
                                 <div className="py-2">
-                                    {!isAdmin && (
-                                        <>
-                                            <DropdownMenuItem asChild className="px-6 py-4 text-base hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black">
-                                                <Link to="/account/membership">
-                                                    Membership
-                                                </Link>
-                                            </DropdownMenuItem>
-
-                                            {/* Menu items from ACCOUNT_NAVIGATION */}
-                                            {ACCOUNT_NAVIGATION.slice(0, 3).map((item) => (
-                                                <DropdownMenuItem key={item.path} asChild className="px-6 py-4 text-base hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black">
-                                                    <Link to={item.path}>
-                                                        {item.label}
-                                                    </Link>
-                                                </DropdownMenuItem>
-                                            ))}
-
-                                            <DropdownMenuItem asChild className="px-6 py-4 text-base hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black">
-                                                <Link to="/account/shopping-preferences">
-                                                    Preferences
-                                                </Link>
-                                            </DropdownMenuItem>
-
-                                            <DropdownMenuItem asChild className="px-6 py-4 text-base hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black">
-                                                <Link to="/account/referral">
-                                                    Refer a Friend
-                                                </Link>
-                                            </DropdownMenuItem>
-                                        </>
-                                    )}
-
-                                    {isAdmin && (
-                                        <>
-                                            <DropdownMenuItem asChild className="px-6 py-4 text-base hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black">
-                                                <Link to="/admin">
-                                                    Admin Dashboard
-                                                </Link>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem asChild className="px-6 py-4 text-base hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black">
-                                                <Link to="/admin/products">
-                                                    Manage Products
-                                                </Link>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem asChild className="px-6 py-4 text-base hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black">
-                                                <Link to="/admin/categories">
-                                                    Manage Categories
-                                                </Link>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem asChild className="px-6 py-4 text-base hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black">
-                                                <Link to="/admin/discounts">
-                                                    Manage Discounts & Coupons
-                                                </Link>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem asChild className="px-6 py-4 text-base hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black">
-                                                <Link to="/admin/orders">
-                                                    Manage Orders
-                                                </Link>
-                                            </DropdownMenuItem>
-                                        </>
-                                    )}
-
-                                    <DropdownMenuItem
-                                        className="px-6 py-4 text-base text-red-600 hover:bg-gray-50 hover:text-red-600 focus:bg-gray-50 focus:text-red-600"
-                                        onClick={handleLogout}
-                                    >
-                                        Sign out
-                                    </DropdownMenuItem>
+                                    {renderDropdownMenuItems()}
                                 </div>
 
                                 <div className="p-4 border-t flex justify-center">

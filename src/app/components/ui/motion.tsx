@@ -10,52 +10,66 @@ import {
 // Motion components with default variants
 const MotionDiv = motion.div;
 
-const FadeIn: React.FC<{
+interface AnimationProps {
   children: React.ReactNode;
   className?: string;
   delay?: number;
-}> = ({ children, className = "", delay = 0 }) => (
+  duration?: number;
+  ease?: string;
+}
+
+const FadeIn: React.FC<AnimationProps> = ({ 
+  children, 
+  className = "", 
+  delay = 0,
+  duration = 0.4,
+  ease = "easeOut"
+}) => (
   <motion.div
     variants={fadeVariants}
     initial="hidden"
     animate="visible"
     exit="exit"
     className={className}
-    transition={{ delay }}
+    transition={{ delay, duration, ease }}
   >
     {children}
   </motion.div>
 );
 
-const SlideUp: React.FC<{
-  children: React.ReactNode;
-  className?: string;
-  delay?: number;
-}> = ({ children, className = "", delay = 0 }) => (
+const SlideUp: React.FC<AnimationProps> = ({ 
+  children, 
+  className = "", 
+  delay = 0,
+  duration = 0.4,
+  ease = "easeOut"
+}) => (
   <motion.div
     variants={slideUpVariants}
     initial="hidden"
     animate="visible"
     exit="exit"
     className={className}
-    transition={{ delay }}
+    transition={{ delay, duration, ease }}
   >
     {children}
   </motion.div>
 );
 
-const Scale: React.FC<{
-  children: React.ReactNode;
-  className?: string;
-  delay?: number;
-}> = ({ children, className = "", delay = 0 }) => (
+const Scale: React.FC<AnimationProps> = ({ 
+  children, 
+  className = "", 
+  delay = 0,
+  duration = 0.4,
+  ease = "easeOut"
+}) => (
   <motion.div
     variants={scaleVariants}
     initial="hidden"
     animate="visible"
     exit="exit"
     className={className}
-    transition={{ delay }}
+    transition={{ delay, duration, ease }}
   >
     {children}
   </motion.div>
@@ -64,9 +78,23 @@ const Scale: React.FC<{
 const StaggerContainer: React.FC<{
   children: React.ReactNode;
   className?: string;
-}> = ({ children, className = "" }) => (
+  staggerDelay?: number;
+}> = ({ 
+  children, 
+  className = "",
+  staggerDelay = 0.1
+}) => (
   <motion.div
-    variants={staggerContainerVariants}
+    variants={{
+      ...staggerContainerVariants,
+      visible: { 
+        opacity: 1,
+        transition: { 
+          staggerChildren: staggerDelay,
+          delayChildren: staggerDelay
+        }
+      }
+    }}
     initial="hidden"
     animate="visible"
     className={className}

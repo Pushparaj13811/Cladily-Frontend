@@ -34,7 +34,6 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   // Add an item to the cart
   const addItem = (newItem: CartItem) => {
     setItems(currentItems => {
-      // Check if the item already exists in the cart
       const existingItemIndex = currentItems.findIndex(
         item => item.id === newItem.id && 
                 item.size === newItem.size && 
@@ -42,16 +41,13 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       );
 
       if (existingItemIndex > -1) {
-        // Update quantity if item exists
         return currentItems.map((item, index) => 
           index === existingItemIndex 
             ? { ...item, quantity: item.quantity + newItem.quantity }
             : item
         );
-      } else {
-        // Add new item
-        return [...currentItems, newItem];
       }
+      return [...currentItems, newItem];
     });
   };
 
