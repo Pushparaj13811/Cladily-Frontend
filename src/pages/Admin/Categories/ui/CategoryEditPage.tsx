@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, Loader2, } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Plus } from 'lucide-react';
 import { Button } from '@app/components/ui/button';
 import { Input } from '@app/components/ui/input';
 import { Textarea } from '@app/components/ui/textarea';
@@ -37,6 +37,7 @@ import {
   getAllCategories 
 } from '@features/dashboard';
 import { Category } from '@shared/types';
+import { RadioGroup, RadioGroupItem } from '@app/components/ui/radio-group';
 
 const CategoryEditPage: React.FC = () => {
   const { id } = useParams();
@@ -45,6 +46,7 @@ const CategoryEditPage: React.FC = () => {
   const isEditMode = Boolean(id);
   
   // Category form state
+  const [categoryType, setCategoryType] = useState<'parent' | 'sub'>('parent');
   const [category, setCategory] = useState({
     name: '',
     slug: '',
@@ -57,7 +59,7 @@ const CategoryEditPage: React.FC = () => {
     metaKeywords: '',
     imageUrl: '',
     iconUrl: '',
-    sortOrder: 0
+    position: 0
   });
   
   // UI state
@@ -66,6 +68,17 @@ const CategoryEditPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(isEditMode);
   const [activeTab, setActiveTab] = useState('basic');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  // Parent category dialog state
+  const [parentCategoryDialogOpen, setParentCategoryDialogOpen] = useState(false);
+  const [newParentCategory, setNewParentCategory] = useState({
+    name: '',
+    slug: '',
+    description: '',
+    isActive: true,
+    isVisible: true,
+  });
+  const [creatingParent, setCreatingParent] = useState(false);
   
   // Available parent categories
   const [parentCategories, setParentCategories] = useState<Category[]>([]);
@@ -96,8 +109,11 @@ const CategoryEditPage: React.FC = () => {
       }
     };
     
-    fetchParentCategories();
-  }, [id, isEditMode, toast]);
+    // Only fetch parent categories once when the component mounts
+    if (!loadingParentCategories && parentCategories.length === 0) {
+      fetchParentCategories();
+    }
+  }, [id, isEditMode, toast, loadingParentCategories, parentCategories.length]);
   
   // Load category data if in edit mode
   useEffect(() => {
@@ -106,6 +122,9 @@ const CategoryEditPage: React.FC = () => {
         try {
           setIsLoading(true);
           const fetchedCategory = await getCategoryById(id);
+          
+          // Determine if this is a parent or sub category
+          setCategoryType(fetchedCategory.parentId ? 'sub' : 'parent');
           
           setCategory({
             name: fetchedCategory.name,
@@ -119,7 +138,7 @@ const CategoryEditPage: React.FC = () => {
             metaKeywords: fetchedCategory.metaKeywords || '',
             imageUrl: fetchedCategory.imageUrl || '',
             iconUrl: fetchedCategory.iconUrl || '',
-            sortOrder: fetchedCategory.sortOrder || 0
+            position: fetchedCategory.position || 0
           });
           setIsLoading(false);
         } catch (error: unknown) {
@@ -154,6 +173,16 @@ const CategoryEditPage: React.FC = () => {
     // Auto-generate slug when name changes
     if (name === 'name' && (!category.slug || category.slug === slugify(category.name))) {
       setCategory(prev => ({ ...prev, slug: slugify(value) }));
+    }
+  };
+  
+  // Handle category type change
+  const handleCategoryTypeChange = (value: 'parent' | 'sub') => {
+    setCategoryType(value);
+    
+    // If changing to parent category, clear parentId
+    if (value === 'parent') {
+      setCategory(prev => ({ ...prev, parentId: null }));
     }
   };
   
@@ -205,6 +234,11 @@ const CategoryEditPage: React.FC = () => {
     if (!category.name.trim()) newErrors.name = 'Category name is required';
     if (!category.slug.trim()) newErrors.slug = 'Slug is required';
     
+    // Validate parent ID for subcategories
+    if (categoryType === 'sub' && !category.parentId) {
+      newErrors.parentId = 'A parent category is required for subcategories';
+    }
+    
     // Slug format validation
     if (category.slug && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(category.slug)) {
       newErrors.slug = 'Slug can only contain lowercase letters, numbers, and hyphens';
@@ -214,7 +248,7 @@ const CategoryEditPage: React.FC = () => {
     
     if (Object.keys(newErrors).length > 0) {
       // Switch to the tab containing the first error
-      if (newErrors.name || newErrors.slug || newErrors.description) {
+      if (newErrors.name || newErrors.slug || newErrors.description || newErrors.parentId) {
         setActiveTab('basic');
       } else if (newErrors.imageUrl || newErrors.iconUrl) {
         setActiveTab('media');
@@ -292,6 +326,72 @@ const CategoryEditPage: React.FC = () => {
     }
   };
   
+  // Reset new parent category form
+  const resetNewParentForm = () => {
+    setNewParentCategory({
+      name: '',
+      slug: '',
+      description: '',
+      isActive: true,
+      isVisible: true,
+    });
+  };
+  
+  // Generate slug for parent category
+  const handleParentNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    setNewParentCategory(prev => ({ 
+      ...prev, 
+      name: value,
+      slug: slugify(value)
+    }));
+  };
+  
+  // Handle create parent category
+  const handleCreateParentCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate
+    if (!newParentCategory.name.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Category name is required',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    setCreatingParent(true);
+    
+    try {
+      // Create the parent category
+      const createdParent = await createCategory(newParentCategory);
+      
+      // Add to parent categories list
+      setParentCategories(prev => [...prev, createdParent]);
+      
+      // Set as the parent in the current form
+      setCategory(prev => ({ ...prev, parentId: createdParent.id }));
+      
+      // Close dialog and reset form
+      setParentCategoryDialogOpen(false);
+      resetNewParentForm();
+      
+      toast({
+        title: 'Success',
+        description: `Parent category "${createdParent.name}" has been created`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to create parent category',
+        variant: 'destructive',
+      });
+    } finally {
+      setCreatingParent(false);
+    }
+  };
+  
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <div className="flex items-center space-x-2 mb-8">
@@ -322,6 +422,37 @@ const CategoryEditPage: React.FC = () => {
         </div>
       ) : (
         <form onSubmit={handleSubmit}>
+          {!isEditMode && (
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>Category Type</CardTitle>
+                <CardDescription>
+                  Select whether you want to create a parent category or a subcategory
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <RadioGroup 
+                  value={categoryType} 
+                  onValueChange={(value) => handleCategoryTypeChange(value as 'parent' | 'sub')}
+                  className="flex flex-col space-y-3"
+                >
+                  <div className="flex items-center space-x-3 space-y-0">
+                    <RadioGroupItem value="parent" id="parent" />
+                    <Label htmlFor="parent" className="font-normal cursor-pointer">
+                      Parent Category - Top level category with no parent
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-3 space-y-0">
+                    <RadioGroupItem value="sub" id="sub" />
+                    <Label htmlFor="sub" className="font-normal cursor-pointer">
+                      Subcategory - Category that belongs under a parent category
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </CardContent>
+            </Card>
+          )}
+
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-6 grid grid-cols-3">
               <TabsTrigger value="basic">Basic Information</TabsTrigger>
@@ -379,35 +510,54 @@ const CategoryEditPage: React.FC = () => {
                     </p>
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="parentId">Parent Category</Label>
-                    <Select
-                      value={category.parentId || ''}
-                      onValueChange={(value) => handleSelectChange('parentId', value === '' ? null : value)}
-                    >
-                      <SelectTrigger id="parentId">
-                        <SelectValue placeholder="No parent (top level category)" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="">No parent (top level category)</SelectItem>
-                        {loadingParentCategories ? (
-                          <div className="flex items-center justify-center py-2">
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                            <span>Loading categories...</span>
-                          </div>
-                        ) : (
-                          parentCategories.map(cat => (
-                            <SelectItem key={cat.id} value={cat.id}>
-                              {cat.name}
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-muted-foreground">
-                      Select a parent category if this is a subcategory. Leave empty for a top-level category.
-                    </p>
-                  </div>
+                  {categoryType === 'sub' && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <Label htmlFor="parentId">
+                          Parent Category <span className="text-red-500">*</span>
+                        </Label>
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setParentCategoryDialogOpen(true)}
+                        >
+                          <Plus className="mr-2 h-4 w-4" />
+                          Add New Parent
+                        </Button>
+                      </div>
+                      <Select
+                        value={category.parentId || 'none'}
+                        onValueChange={(value) => handleSelectChange('parentId', value === 'none' ? null : value)}
+                      >
+                        <SelectTrigger id="parentId">
+                          <SelectValue placeholder="Select a parent category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {loadingParentCategories ? (
+                            <div className="flex items-center justify-center py-2">
+                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                              <span>Loading categories...</span>
+                            </div>
+                          ) : (
+                            parentCategories.map(cat => (
+                              cat.id ? (
+                                <SelectItem key={cat.id} value={cat.id}>
+                                  {cat.name}
+                                </SelectItem>
+                              ) : null
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                      {errors.parentId && (
+                        <p className="text-xs text-red-500">{errors.parentId}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        Select the parent category under which this subcategory will be displayed.
+                      </p>
+                    </div>
+                  )}
 
                   <div className="space-y-2">
                     <Label htmlFor="description">Description</Label>
@@ -425,14 +575,14 @@ const CategoryEditPage: React.FC = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="sortOrder">Sort Order</Label>
+                    <Label htmlFor="position">Sort Order</Label>
                     <Input
-                      id="sortOrder"
-                      name="sortOrder"
+                      id="position"
+                      name="position"
                       type="number"
                       min="0"
-                      value={category.sortOrder}
-                      onChange={(e) => handleNumberChange('sortOrder', e.target.value)}
+                      value={category.position}
+                      onChange={(e) => handleNumberChange('position', e.target.value)}
                     />
                     <p className="text-xs text-muted-foreground">
                       Categories with higher numbers appear first. Default is 0.
@@ -615,7 +765,7 @@ const CategoryEditPage: React.FC = () => {
                 <Save className="mr-2 h-4 w-4" />
                 {isSubmitting 
                   ? isEditMode ? 'Updating...' : 'Creating...' 
-                  : isEditMode ? 'Update Category' : 'Create Category'
+                  : isEditMode ? 'Update Category' : `Create ${categoryType === 'parent' ? 'Parent Category' : 'Subcategory'}`
                 }
               </Button>
             </div>
@@ -648,6 +798,109 @@ const CategoryEditPage: React.FC = () => {
               {isSubmitting ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Create Parent Category Dialog */}
+      <Dialog open={parentCategoryDialogOpen} onOpenChange={setParentCategoryDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Parent Category</DialogTitle>
+            <DialogDescription>
+              Create a new parent category which will immediately be set as the parent for this category.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleCreateParentCategory}>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="parentName">
+                  Category Name <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="parentName"
+                  placeholder="e.g. Clothing"
+                  value={newParentCategory.name}
+                  onChange={handleParentNameChange}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="parentSlug">Slug</Label>
+                <div className="flex items-center">
+                  <span className="mr-2 text-muted-foreground">/products/category/</span>
+                  <Input
+                    id="parentSlug"
+                    placeholder="e.g. clothing"
+                    value={newParentCategory.slug}
+                    onChange={(e) => setNewParentCategory(prev => ({ ...prev, slug: e.target.value }))}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Auto-generated from name. You can modify if needed.
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="parentDescription">Description</Label>
+                <Textarea
+                  id="parentDescription"
+                  placeholder="Brief description of the category..."
+                  value={newParentCategory.description}
+                  onChange={(e) => setNewParentCategory(prev => ({ ...prev, description: e.target.value }))}
+                  rows={3}
+                />
+              </div>
+              
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <Switch 
+                    id="parentIsActive" 
+                    checked={newParentCategory.isActive} 
+                    onCheckedChange={(checked) => setNewParentCategory(prev => ({ ...prev, isActive: checked }))}
+                  />
+                  <Label htmlFor="parentIsActive">Category is active</Label>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Switch 
+                    id="parentIsVisible" 
+                    checked={newParentCategory.isVisible} 
+                    onCheckedChange={(checked) => setNewParentCategory(prev => ({ ...prev, isVisible: checked }))}
+                  />
+                  <Label htmlFor="parentIsVisible">Visible in navigation</Label>
+                </div>
+              </div>
+            </div>
+            
+            <DialogFooter className="mt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setParentCategoryDialogOpen(false);
+                  resetNewParentForm();
+                }}
+                disabled={creatingParent}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={creatingParent}>
+                {creatingParent ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create Parent
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

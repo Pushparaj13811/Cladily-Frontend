@@ -79,7 +79,7 @@ export const getSubcategories = async (parentId: string): Promise<Category[]> =>
  */
 export const getCategoryById = async (id: string): Promise<Category> => {
   try {
-    const response = await api.get(`${API_URL}/${id}`);
+    const response = await api.get(`${API_URL}/id/${id}`);
     return extractData<Category>(response);
   } catch (error) {
     console.error(`Error fetching category ${id}:`, error);

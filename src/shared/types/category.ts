@@ -48,7 +48,7 @@ export interface Category extends BaseEntity {
   iconUrl?: string;
   
   /** Sort order (higher numbers appear first) */
-  sortOrder: number;
+  position: number;
   
   /** Count of products in this category */
   productsCount?: number;
@@ -72,7 +72,7 @@ export interface CreateCategoryDto {
   metaKeywords?: string;
   imageUrl?: string;
   iconUrl?: string;
-  sortOrder?: number;
+  position?: number;
 }
 
 /**
