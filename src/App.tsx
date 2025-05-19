@@ -11,7 +11,18 @@ import { AppRoutes } from './routes';
 // AnimatedRoutes component to handle page transitions
 const AnimatedRoutes = () => {
   const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin');
   
+  // If it's an admin route, don't wrap with container
+  if (isAdminRoute) {
+    return (
+      <PageTransition>
+        <AppRoutes />
+      </PageTransition>
+    );
+  }
+  
+  // For regular routes, use the container layout
   return (
     <PageTransition>
       <main className="container mx-auto px-4 py-8" key={location.pathname}>
@@ -32,9 +43,7 @@ function App() {
         <CartProvider>
           <Router>
             <div className="min-h-screen bg-background text-foreground antialiased">
-              <Navbar />
-              <AnimatedRoutes />
-              <Footer />
+              <AppLayout />
               <Toaster />
             </div>
           </Router>
@@ -43,5 +52,25 @@ function App() {
     </ReduxProvider>
   );
 }
+
+/**
+ * AppLayout - Layout that conditionally renders nav and footer
+ */
+const AppLayout = () => {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin');
+  
+  if (isAdminRoute) {
+    return <AnimatedRoutes />;
+  }
+  
+  return (
+    <>
+      <Navbar />
+      <AnimatedRoutes />
+      <Footer />
+    </>
+  );
+};
 
 export default App;

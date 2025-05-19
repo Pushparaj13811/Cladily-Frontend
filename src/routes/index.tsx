@@ -18,8 +18,8 @@ import {
   OrdersPage,
   ProfilePage,
 } from '@pages/Account';
-import { AdminDashboardPage } from '@pages/Admin/Dashboard';
-import DashboardPage from '@pages/Account/ui/DashboardPage';
+import DashboardPage from '@pages/Admin/Dashboard/ui/DashboardPage';
+import AccountDashboardPage from '@pages/Account/ui/DashboardPage';
 import { PageTransition } from '@app/components/ui/motion';
 import { useAuth } from '@app/hooks/useAppRedux';
 
@@ -153,7 +153,7 @@ export const AppRoutes = () => {
             </UserRoute>
           }
         >
-          <Route index element={<DashboardPage />} />
+          <Route index element={<AccountDashboardPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="orders" element={<OrdersPage />} />
           <Route path="wishlist" element={<WishlistPage />} />
@@ -165,138 +165,28 @@ export const AppRoutes = () => {
         </Route>
         
         {/* Admin Pages - Protected Routes */}
-        <Route 
-          path="/admin" 
-          element={
-            <AdminRoute>
-              <AdminDashboardPage />
-            </AdminRoute>
-          } 
-        />
-        <Route 
-          path="/admin/dashboard" 
-          element={
-            <AdminRoute>
-              <AdminDashboardPage />
-            </AdminRoute>
-          } 
-        />
-        <Route 
-          path="/admin/products" 
-          element={
-            <AdminRoute>
-              <ProductsManagementPage />
-            </AdminRoute>
-          } 
-        />
-        <Route 
-          path="/admin/products/new" 
-          element={
-            <AdminRoute>
-              <ProductEditPage />
-            </AdminRoute>
-          } 
-        />
-        <Route 
-          path="/admin/products/:id" 
-          element={
-            <AdminRoute>
-              <ProductEditPage />
-            </AdminRoute>
-          } 
-        />
-        <Route 
-          path="/admin/categories" 
-          element={
-            <AdminRoute>
-              <CategoriesManagementPage />
-            </AdminRoute>
-          } 
-        />
-        <Route 
-          path="/admin/categories/new" 
-          element={
-            <AdminRoute>
-              <CategoryEditPage />
-            </AdminRoute>
-          } 
-        />
-        <Route 
-          path="/admin/categories/:id" 
-          element={
-            <AdminRoute>
-              <CategoryEditPage />
-            </AdminRoute>
-          } 
-        />
-        <Route 
-          path="/admin/orders" 
-          element={
-            <AdminRoute>
-              <OrdersManagementPage />
-            </AdminRoute>
-          } 
-        />
-        <Route 
-          path="/admin/orders/:id" 
-          element={
-            <AdminRoute>
-              <OrderDetailPage />
-            </AdminRoute>
-          } 
-        />
-        <Route 
-          path="/admin/discounts" 
-          element={
-            <AdminRoute>
-              <DiscountsManagementPage />
-            </AdminRoute>
-          } 
-        />
-        <Route 
-          path="/admin/discounts/new" 
-          element={
-            <AdminRoute>
-              <DiscountCreatePage />
-            </AdminRoute>
-          } 
-        />
-        <Route 
-          path="/admin/discounts/:id" 
-          element={
-            <AdminRoute>
-              <DiscountEditPage />
-            </AdminRoute>
-          } 
-        />
-        <Route 
-          path="/admin/coupons" 
-          element={
-            <AdminRoute>
-              <CouponsManagementPage />
-            </AdminRoute>
-          } 
-        />
-        <Route 
-          path="/admin/coupons/new" 
-          element={
-            <AdminRoute>
-              <CouponCreatePage />
-            </AdminRoute>
-          } 
-        />
-        <Route 
-          path="/admin/coupons/:id" 
-          element={
-            <AdminRoute>
-              <CouponEditPage />
-            </AdminRoute>
-          } 
-        />
+        <Route path="/admin" element={<AdminRoute><Navigate to="/admin/dashboard" replace /></AdminRoute>} />
         
-        {/* Fallback route */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/admin/*" element={<AdminRoute><Outlet /></AdminRoute>}>
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="products" element={<ProductsManagementPage />} />
+          <Route path="products/new" element={<ProductEditPage />} />
+          <Route path="products/:id" element={<ProductEditPage />} />
+          <Route path="categories" element={<CategoriesManagementPage />} />
+          <Route path="categories/new" element={<CategoryEditPage />} />
+          <Route path="categories/:id" element={<CategoryEditPage />} />
+          <Route path="orders" element={<OrdersManagementPage />} />
+          <Route path="orders/:id" element={<OrderDetailPage />} />
+          <Route path="discounts" element={<DiscountsManagementPage />} />
+          <Route path="discounts/new" element={<DiscountCreatePage />} />
+          <Route path="discounts/:id" element={<DiscountEditPage />} />
+          <Route path="coupons" element={<CouponsManagementPage />} />
+          <Route path="coupons/new" element={<CouponCreatePage />} />
+          <Route path="coupons/:id" element={<CouponEditPage />} />
+        </Route>
       </Routes>
     </PageTransition>
   );
-}; 
+};
+
+export default AppRoutes; 
