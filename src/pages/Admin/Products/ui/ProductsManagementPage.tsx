@@ -3,20 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Search, SlidersHorizontal, Home, ArrowUpDown, ChevronDown } from 'lucide-react';
 import { Button } from '@app/components/ui/button';
 import { Input } from '@app/components/ui/input';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
   TableRow,
 } from '@app/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
   DialogTitle,
 } from '@app/components/ui/dialog';
 import {
@@ -203,8 +203,8 @@ const ProductsManagementPage: React.FC = () => {
 
       if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
       if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-      return 0;
-    });
+    return 0;
+  });
 
     setFilteredProducts(filtered);
     setTotalPages(Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE)));
@@ -389,10 +389,10 @@ const ProductsManagementPage: React.FC = () => {
             onClick={() => navigate('/admin/products/new')}
           >
             <Plus className="mr-2 h-4 w-4" />
-            Add Product
-          </Button>
-        </div>
+          Add Product
+        </Button>
       </div>
+            </div>
 
       {/* Filter tabs */}
       <div className="mb-6">
@@ -426,7 +426,7 @@ const ProductsManagementPage: React.FC = () => {
             className={`rounded-none border-b-2 ${selectedStatus === 'OUT_OF_STOCK' ? 'border-primary' : 'border-transparent'} px-4`}
             onClick={() => setSelectedStatus('OUT_OF_STOCK')}
           >
-            Out of Stock
+              Out of Stock
             <Badge className="ml-2 bg-secondary text-secondary-foreground">{productCounts.OUT_OF_STOCK}</Badge>
           </Button>
           <Button
@@ -437,9 +437,9 @@ const ProductsManagementPage: React.FC = () => {
             Archived
             <Badge className="ml-2 bg-secondary text-secondary-foreground">{productCounts.ARCHIVED}</Badge>
           </Button>
-        </div>
+            </div>
       </div>
-
+      
       {/* Search, sort and filter controls */}
       <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between">
         <div className="relative w-full md:w-72">
@@ -451,7 +451,7 @@ const ProductsManagementPage: React.FC = () => {
             className="pl-9"
           />
         </div>
-
+        
         <div className="flex gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -568,9 +568,9 @@ const ProductsManagementPage: React.FC = () => {
                       <div className="flex items-center">
                         <div className="h-10 w-10 rounded-md overflow-hidden bg-gray-100 mr-3">
                           {product.image ? (
-                            <img
-                              src={product.image}
-                              alt={product.name}
+                        <img 
+                          src={product.image} 
+                          alt={product.name} 
                               className="h-full w-full object-cover"
                               onError={(e) => {
                                 (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40x40?text=No+Image';
@@ -582,31 +582,31 @@ const ProductsManagementPage: React.FC = () => {
                         </div>
                         <span className="truncate max-w-[200px]">{product.name}</span>
                       </div>
-                    </TableCell>
-                    <TableCell>
+                      </TableCell>
+                      <TableCell>
                       {renderStatusBadge((product as ExtendedProduct).status || '')}
-                    </TableCell>
+                      </TableCell>
                     <TableCell>{product.category}</TableCell>
                     <TableCell>{formatPrice(product.price)}</TableCell>
                     <TableCell className="text-right space-x-1">
-                      <Button
-                        variant="ghost"
+                          <Button 
+                            variant="ghost" 
                         size="sm"
                         className="h-8 w-8 p-0"
                         onClick={() => navigate(`/admin/products/${product.id}`)}
-                      >
+                          >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                         </svg>
-                      </Button>
-                      <Button
-                        variant="ghost"
+                          </Button>
+                          <Button 
+                            variant="ghost" 
                         size="sm"
                         className="h-8 w-8 p-0 text-red-500"
                         onClick={() => confirmDelete({ id: product.id!, name: product.name })}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"> <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3m-4 0h14" /> </svg>
-                      </Button>
+                          </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -620,13 +620,13 @@ const ProductsManagementPage: React.FC = () => {
       {!isLoading && totalPages > 1 && (
         <div className="mt-4 flex justify-center">
           <Pagination>
-            <PaginationContent>
-              <PaginationItem>
+          <PaginationContent>
+            <PaginationItem>
                 <Button
                   variant="outline"
                   size="icon"
                   className="h-9 w-9"
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
                 >
                   <span className="sr-only">Go to previous page</span>
@@ -634,16 +634,16 @@ const ProductsManagementPage: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
                 </Button>
-              </PaginationItem>
-
+            </PaginationItem>
+            
               {generatePaginationItems()}
-
-              <PaginationItem>
+            
+            <PaginationItem>
                 <Button
                   variant="outline"
                   size="icon"
                   className="h-9 w-9"
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
                 >
                   <span className="sr-only">Go to next page</span>
@@ -651,9 +651,9 @@ const ProductsManagementPage: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </Button>
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
         </div>
       )}
 

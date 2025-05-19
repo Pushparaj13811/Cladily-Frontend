@@ -77,6 +77,17 @@ const ProductEditPage: React.FC = () => {
   // Determine if we're in edit mode based on presence of productId
   const isEditMode = Boolean(id);
   
+  // Safe navigation helper
+  const safeNavigate = (path: string) => {
+    try {
+      navigate(path);
+    } catch (error) {
+      console.error('Navigation error:', error);
+      // Force a reload if navigation fails
+      window.location.href = path;
+    }
+  };
+  
   return (
     <div className="p-6 w-full">
       {/* Breadcrumb & Header */}
@@ -85,19 +96,25 @@ const ProductEditPage: React.FC = () => {
           <Button 
             variant="link" 
             className="p-0 h-auto"
-            onClick={() => navigate('/admin/dashboard')}
+            onClick={(e) => {
+              e.preventDefault();
+              safeNavigate('/admin/dashboard');
+            }}
           >
             <Home className="h-4 w-4 mr-1" />
             Home
           </Button>
           <span className="mx-2">/</span>
-          <Button 
+        <Button 
             variant="link" 
             className="p-0 h-auto"
-            onClick={() => navigate('/admin/products')}
+            onClick={(e) => {
+              e.preventDefault();
+              safeNavigate('/admin/products');
+            }}
           >
             Products
-          </Button>
+        </Button>
           <span className="mx-2">/</span>
           <span className="text-foreground">
             {isEditMode ? 'Edit Product' : 'Add Product'}
@@ -106,30 +123,33 @@ const ProductEditPage: React.FC = () => {
         
         {/* Header with actions */}
         <div className="flex justify-between items-center">
-          <div>
+        <div>
             <h1 className="text-2xl font-bold tracking-tight">
-              {isEditMode ? 'Edit Product' : 'Add New Product'}
-            </h1>
-            <p className="text-muted-foreground">
-              {isEditMode 
+            {isEditMode ? 'Edit Product' : 'Add New Product'}
+          </h1>
+          <p className="text-muted-foreground">
+            {isEditMode 
                 ? 'Update information for this product' 
                 : 'Fill in the product details to create a new listing'
-              }
-            </p>
-          </div>
+            }
+          </p>
+        </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={() => navigate('/admin/products')}
-            >
-              Cancel
-            </Button>
-            
-            <Button 
-              disabled={isSubmitting}
+                  <Button
+                    variant="outline"
+              onClick={(e) => {
+                e.preventDefault();
+                safeNavigate('/admin/products');
+              }}
+          >
+            Cancel
+          </Button>
+          
+              <Button
+                disabled={isSubmitting}
               onClick={handleSubmit}
               className="bg-primary hover:bg-primary/90 text-white"
-            >
+              >
               <Save className="mr-2 h-4 w-4" />
               {isSubmitting 
                 ? isEditMode ? 'Updating...' : 'Creating...' 
@@ -246,9 +266,9 @@ const ProductEditPage: React.FC = () => {
               </Card>
             </div>
           )}
-        </form>
+      </form>
       )}
-      
+
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
@@ -260,15 +280,15 @@ const ProductEditPage: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setDeleteDialogOpen(false)}
               disabled={isSubmitting}
             >
               Cancel
             </Button>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={handleDelete}
               disabled={isSubmitting}
             >
