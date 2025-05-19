@@ -119,11 +119,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex">
-            {/* Sidebar */}
+        <div className="flex h-screen overflow-hidden bg-gray-50">
+            {/* Sidebar - Make it fixed with proper z-index */}
             <aside
                 className={cn(
-                    "fixed inset-y-0 left-0 z-50 w-64 border-r border-gray-200 bg-white transition-all duration-300 ease-in-out",
+                    "fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transition-all duration-300 ease-in-out",
                     isSidebarOpen ? "translate-x-0" : "-translate-x-full",
                     "lg:relative lg:translate-x-0"
                 )}
@@ -146,8 +146,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                     </Button>
                 </div>
 
-                {/* Navigation */}
-                <nav className="p-2 overflow-y-auto h-[calc(100vh-4rem)]">
+                {/* Navigation - Scrollable container */}
+                <nav className="overflow-y-auto h-[calc(100vh-4rem)]">
                     <div className="space-y-1">
                         {navItems.map((item) => (
                             <div key={item.title}>
@@ -230,10 +230,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 </nav>
             </aside>
 
-            {/* Main content */}
-            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                {/* Header */}
-                <header className="h-16 border-b bg-white flex items-center px-4 sticky top-0 z-10">
+            {/* Main content area */}
+            <div className={cn(
+                "flex-1 flex flex-col min-w-0",
+                isSidebarOpen ? "" : ""
+            )}>
+                {/* Header - Fixed at top */}
+                <header className="sticky top-0 z-40 h-16 bg-white border-b shadow-sm flex items-center px-4">
                     <Button
                         variant="ghost"
                         size="icon"
@@ -327,7 +330,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                     </div>
                 </header>
 
-                {/* Main content */}
+                {/* Main content - Make it scrollable independently */}
                 <main className="flex-1 overflow-y-auto bg-gray-50 pb-10">
                     {children}
                 </main>
