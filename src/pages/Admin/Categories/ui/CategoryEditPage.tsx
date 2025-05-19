@@ -182,10 +182,16 @@ const CategoryEditPage: React.FC = () => {
 
   // Fix bug with category loading
   useEffect(() => {
-    // Check for issues with the ID parameter
+    // Only check ID validity for edit mode, not for new categories
     if (!isNewCategory && (!id || id === 'undefined')) {
       setError('Invalid category ID');
       return;
+    }
+    
+    // For new category, always clear any error
+    if (isNewCategory) {
+      setError(null);
+      setIsLoading(false);
     }
 
     // This helps prevent potential issues with navigation
@@ -340,12 +346,18 @@ const CategoryEditPage: React.FC = () => {
           <div className="flex gap-4 justify-center">
             <Button 
               variant="outline" 
-              onClick={() => navigate('/admin/categories')}
+              onClick={(e) => {
+                e.preventDefault();
+                safeNavigate('/admin/categories');
+              }}
             >
               Back to Categories
             </Button>
             <Button 
-              onClick={() => navigate(0)}
+              onClick={(e) => {
+                e.preventDefault();
+                window.location.reload();
+              }}
             >
               Retry
             </Button>
@@ -354,7 +366,7 @@ const CategoryEditPage: React.FC = () => {
       </div>
     );
   }
-
+  
   return (
     <div className="p-6 w-full">
       {/* Breadcrumb */}
@@ -362,7 +374,10 @@ const CategoryEditPage: React.FC = () => {
         <Button 
           variant="link" 
           className="p-0 h-auto"
-          onClick={() => navigate('/admin/dashboard')}
+          onClick={(e) => {
+            e.preventDefault();
+            safeNavigate('/admin/dashboard');
+          }}
         >
           <Home className="h-4 w-4 mr-1" />
           Home
@@ -371,7 +386,10 @@ const CategoryEditPage: React.FC = () => {
         <Button 
           variant="link" 
           className="p-0 h-auto"
-          onClick={() => navigate('/admin/categories')}
+          onClick={(e) => {
+            e.preventDefault();
+            safeNavigate('/admin/categories');
+          }}
         >
           <Tag className="h-4 w-4 mr-1" />
           Categories
@@ -419,7 +437,7 @@ const CategoryEditPage: React.FC = () => {
               </>
             )}
           </Button>
-        </div>
+      </div>
       </header>
 
       {/* Form */}
@@ -451,50 +469,50 @@ const CategoryEditPage: React.FC = () => {
           </TabsList>
 
           <TabsContent value="basic" className="space-y-4">
-            <Card>
-              <CardHeader>
+        <Card>
+          <CardHeader>
                 <CardTitle>Basic Information</CardTitle>
                 <CardDescription>General information about the category</CardDescription>
-              </CardHeader>
+          </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
+            <div className="space-y-2">
                     <Label htmlFor="name">Category Name <span className="text-red-500">*</span></Label>
-                    <Input
-                      id="name"
-                      name="name"
-                      value={category.name}
+              <Input
+                id="name"
+                name="name"
+                value={category.name}
                       onChange={handleInputChange}
                       placeholder="e.g. Electronics"
                       required
-                    />
-                  </div>
-                  <div className="space-y-2">
+              />
+            </div>
+            <div className="space-y-2">
                     <Label htmlFor="slug">Slug <span className="text-red-500">*</span></Label>
-                    <Input
-                      id="slug"
-                      name="slug"
-                      value={category.slug}
+                <Input
+                  id="slug"
+                  name="slug"
+                  value={category.slug}
                       onChange={handleInputChange}
                       placeholder="e.g. electronics"
                       required
-                    />
-                    <p className="text-xs text-muted-foreground">
+                />
+              <p className="text-xs text-muted-foreground">
                       Used in the URL: /category/<span className="font-medium">{category.slug || 'your-slug'}</span>
-                    </p>
+              </p>
                   </div>
-                </div>
+            </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    name="description"
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                name="description"
                     value={category.description || ''}
                     onChange={handleInputChange}
                     placeholder="Add a description for this category"
-                    rows={4}
-                  />
+                rows={4}
+              />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -640,13 +658,13 @@ const CategoryEditPage: React.FC = () => {
                     onChange={handleInputChange}
                     placeholder="Meta description for search results"
                     rows={3}
-                  />
-                  <p className="text-xs text-muted-foreground">
+              />
+              <p className="text-xs text-muted-foreground">
                     Recommended length: 150-160 characters
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+              </p>
+            </div>
+          </CardContent>
+        </Card>
           </TabsContent>
         </Tabs>
       </form>

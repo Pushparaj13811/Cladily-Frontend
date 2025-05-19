@@ -438,7 +438,7 @@ const DashboardPage: React.FC = () => {
                         {product.fallback}
                       </AvatarFallback>
                     </Avatar>
-                  </div>
+                    </div>
                       </div>
                 <div className="text-center">
                   <h3 className="font-medium text-sm">{product.name}</h3>
