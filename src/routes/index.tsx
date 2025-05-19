@@ -5,15 +5,15 @@ import { ProductDetailPage } from '@pages/ProductDetail';
 import { CartPage } from '@pages/Cart';
 import { CheckoutPage } from '@pages/Checkout';
 import { ThankYouPage } from '@pages/ThankYou';
-import { 
-  LoginPage, 
-  SignupPage, 
-  ForgotPasswordPage, 
-  ResetPasswordPage 
+import {
+  LoginPage,
+  SignupPage,
+  ForgotPasswordPage,
+  ResetPasswordPage
 } from '@pages/Auth';
 import { UserRoute, AdminRoute, } from '@app/components/ProtectedRoute';
 import { UserRole } from '@shared/types';
-import { 
+import {
   WishlistPage,
   OrdersPage,
   ProfilePage,
@@ -22,6 +22,7 @@ import DashboardPage from '@pages/Admin/Dashboard/ui/DashboardPage';
 import AccountDashboardPage from '@pages/Account/ui/DashboardPage';
 import { PageTransition } from '@app/components/ui/motion';
 import { useAuth } from '@app/hooks/useAppRedux';
+import AdminLayout from '@widgets/Sidebar/ui/AdminLayout';
 
 // Admin pages imports
 import ProductsManagementPage from '@pages/Admin/Products/ui/ProductsManagementPage';
@@ -49,12 +50,25 @@ import CommunicationPreferencesPage from '@pages/Account/Communication/ui/Commun
  */
 const AnonymousRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuth();
-  
+
   if (isAuthenticated) {
     return <Navigate to="/account" replace />;
   }
-  
+
   return <>{children}</>;
+};
+
+/**
+ * AdminLayoutWrapper - Wraps admin components with AdminLayout
+ */
+const AdminLayoutWrapper = () => {
+  return (
+    <AdminRoute>
+      <AdminLayout>
+        <Outlet />
+      </AdminLayout>
+    </AdminRoute>
+  );
 };
 
 /**
@@ -64,7 +78,7 @@ export const AppRoutes = () => {
   const location = useLocation();
   const { user, isAuthenticated } = useAuth();
   const isAdmin = isAuthenticated && user?.role === UserRole.ADMIN;
-  
+
   return (
     <PageTransition>
       <Routes location={location} key={location.pathname}>
@@ -72,7 +86,7 @@ export const AppRoutes = () => {
         <Route path="/" element={
           isAdmin ? <Navigate to="/admin" replace /> : <HomePage />
         } />
-        
+
         {/* Shopping pages - Only for non-admin users */}
         <Route path="/products" element={
           isAdmin ? <Navigate to="/admin/products" replace /> : <ProductsPage />
@@ -89,7 +103,7 @@ export const AppRoutes = () => {
         <Route path="/thank-you" element={
           isAdmin ? <Navigate to="/admin" replace /> : <ThankYouPage />
         } />
-        
+
         {/* Category Pages - Only for non-admin users */}
         <Route path="/menswear" element={
           isAdmin ? <Navigate to="/admin" replace /> : <ProductsPage />
@@ -111,42 +125,42 @@ export const AppRoutes = () => {
         } />
 
         {/* Auth Pages - Only accessible if not logged in */}
-        <Route 
-          path="/login" 
+        <Route
+          path="/login"
           element={
             <AnonymousRoute>
               <LoginPage />
             </AnonymousRoute>
-          } 
+          }
         />
-        <Route 
-          path="/signup" 
+        <Route
+          path="/signup"
           element={
             <AnonymousRoute>
               <SignupPage />
             </AnonymousRoute>
-          } 
+          }
         />
-        <Route 
-          path="/forgot-password" 
+        <Route
+          path="/forgot-password"
           element={
             <AnonymousRoute>
               <ForgotPasswordPage />
             </AnonymousRoute>
-          } 
+          }
         />
-        <Route 
-          path="/reset-password" 
+        <Route
+          path="/reset-password"
           element={
             <AnonymousRoute>
               <ResetPasswordPage />
             </AnonymousRoute>
-          } 
+          }
         />
-        
+
         {/* User Account Pages - Protected Routes */}
-        <Route 
-          path="/account" 
+        <Route
+          path="/account"
           element={
             <UserRoute>
               <Outlet />
@@ -163,11 +177,11 @@ export const AppRoutes = () => {
           <Route path="shopping-preferences" element={<ShoppingPreferencesPage />} />
           <Route path="communication-preferences" element={<CommunicationPreferencesPage />} />
         </Route>
-        
+
         {/* Admin Pages - Protected Routes */}
         <Route path="/admin" element={<AdminRoute><Navigate to="/admin/dashboard" replace /></AdminRoute>} />
-        
-        <Route path="/admin/*" element={<AdminRoute><Outlet /></AdminRoute>}>
+
+        <Route path="/admin/*" element={<AdminLayoutWrapper />}>
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="products" element={<ProductsManagementPage />} />
           <Route path="products/new" element={<ProductEditPage />} />

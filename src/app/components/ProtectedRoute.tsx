@@ -3,7 +3,6 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAppDispatch, useAuth } from '@app/hooks/useAppRedux';
 import { getUserProfile } from '@features/auth/authSlice';
 import { UserRole } from '@shared/types';
-import { AdminLayout } from '@widgets/Sidebar';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -78,9 +77,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 export const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <ProtectedRoute allowedRoles={[UserRole.ADMIN]} redirectPath="/">
-      <AdminLayout>
         {children}
-      </AdminLayout>
     </ProtectedRoute>
   );
 };
