@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save } from 'lucide-react';
+import { Save, Trash2, Home } from 'lucide-react';
 import { Button } from '@app/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import {
@@ -17,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@app/components/ui/dialog';
+import { Card, CardContent } from '@app/components/ui/card';
 
 import useProductForm from './hooks/useProductForm';
 import BasicInfoTab from './components/BasicInfoTab';
@@ -77,140 +78,174 @@ const ProductEditPage: React.FC = () => {
   const isEditMode = Boolean(id);
   
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <div className="flex items-center space-x-2 mb-8">
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={() => navigate('/admin/products')}
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold">
-            {isEditMode ? 'Edit Product' : 'Add New Product'}
-          </h1>
-          <p className="text-muted-foreground">
-            {isEditMode 
-              ? 'Update the product information below' 
-              : 'Fill in the product information below'
-            }
-          </p>
-        </div>
-      </div>
-
-      {isLoading ? (
-        <div className="flex justify-center items-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          <span className="ml-2 text-muted-foreground">Loading product data...</span>
-                    </div>
-                  ) : (
-        <form onSubmit={(e) => {
-          // Always prevent default form submission behavior
-          e.preventDefault();
-          
-          // We manually call handleSubmit only from the submit button's onClick
-          // This ensures the form is only submitted when the submit button is clicked
-        }}>
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-6 grid grid-cols-4">
-              <TabsTrigger value="basic">Basic Information</TabsTrigger>
-              <TabsTrigger value="variants">Variants</TabsTrigger>
-              <TabsTrigger value="content">Content</TabsTrigger>
-              <TabsTrigger value="images">Images</TabsTrigger>
-              </TabsList>
-
-            {/* Basic Information Tab */}
-              <TabsContent value="basic">
-              <BasicInfoTab
-                product={product}
-                errors={errors}
-                baseSlug={baseSlug}
-                department={department}
-                departmentId={departmentId}
-                availableDepartments={availableDepartments}
-                handleChange={handleChange}
-                availableCategories={availableCategories}
-                handleNumberChange={handleNumberChange}
-                handleSelectChange={handleSelectChange}
-                handleSwitchChange={handleSwitchChange}
-                handleDepartmentChange={handleDepartmentChange}
-                handleDepartmentIdChange={handleDepartmentIdChange}
-                handleBaseSlugChange={handleBaseSlugChange}
-                handleMultiSelectChange={handleMultiSelectChange}
-                isFetchingDepartments={isFetchingDepartments}
-              />
-            </TabsContent>
-            
-            {/* Variants Tab */}
-            <TabsContent value="variants">
-              <VariantsTab
-                product={product}
-                handleVariantToggle={handleVariantToggle}
-                handleAddVariantOption={handleAddVariantOption}
-                handleUpdateVariantOption={handleUpdateVariantOption}
-                handleRemoveVariantOption={handleRemoveVariantOption}
-                handleGenerateVariants={handleGenerateVariants}
-                handleUpdateVariant={handleUpdateVariant}
-                handleRemoveVariant={handleRemoveVariant}
-              />
-              </TabsContent>
-
-            {/* Content Tab */}
-            <TabsContent value="content">
-              <ContentTab
-                product={product}
-                errors={errors}
-                handleChange={handleChange}
-              />
-              </TabsContent>
-
-            {/* Images Tab */}
-            {activeTab === 'images' && (
-              <ImagesTab
-                images={product.images}
-                onAddImage={handleAddImage}
-                onRemoveImage={handleRemoveImage}
-                onReorderImages={handleReorderImages}
-                setUploadedFiles={setUploadedFiles}
-              />
-            )}
-            </Tabs>
-
-        {/* Form Actions */}
-        <div className="flex justify-between mt-8">
-          <Button
-            type="button"
-            variant="outline"
+    <div className="p-6 w-full">
+      {/* Breadcrumb & Header */}
+      <div className="mb-6">
+        <div className="flex items-center text-sm text-muted-foreground mb-2">
+          <Button 
+            variant="link" 
+            className="p-0 h-auto"
+            onClick={() => navigate('/admin/dashboard')}
+          >
+            <Home className="h-4 w-4 mr-1" />
+            Home
+          </Button>
+          <span className="mx-2">/</span>
+          <Button 
+            variant="link" 
+            className="p-0 h-auto"
             onClick={() => navigate('/admin/products')}
           >
-            Cancel
+            Products
           </Button>
-          
-          <div className="flex space-x-2">
-            {isEditMode && (
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() => setDeleteDialogOpen(true)}
-                disabled={isSubmitting}
-              >
-                Delete
-              </Button>
-            )}
-              <Button 
-                type="button" 
-                disabled={isSubmitting}
-                onClick={handleSubmit}
-              >
+          <span className="mx-2">/</span>
+          <span className="text-foreground">
+            {isEditMode ? 'Edit Product' : 'Add Product'}
+          </span>
+        </div>
+        
+        {/* Header with actions */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">
+              {isEditMode ? 'Edit Product' : 'Add New Product'}
+            </h1>
+            <p className="text-muted-foreground">
+              {isEditMode 
+                ? 'Update information for this product' 
+                : 'Fill in the product details to create a new listing'
+              }
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => navigate('/admin/products')}
+            >
+              Cancel
+            </Button>
+            
+            <Button 
+              disabled={isSubmitting}
+              onClick={handleSubmit}
+              className="bg-primary hover:bg-primary/90 text-white"
+            >
               <Save className="mr-2 h-4 w-4" />
               {isSubmitting 
                 ? isEditMode ? 'Updating...' : 'Creating...' 
-                : isEditMode ? 'Update' : 'Create'
+                : isEditMode ? 'Save Changes' : 'Create Product'
               }
-              </Button>
-            </div>
+            </Button>
           </div>
+        </div>
+      </div>
+
+      {/* Main content */}
+      {isLoading ? (
+        <Card>
+          <CardContent className="flex justify-center items-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="ml-2 text-muted-foreground">Loading product data...</span>
+          </CardContent>
+        </Card>
+      ) : (
+        <form onSubmit={(e) => e.preventDefault()}>
+          <Card className="border rounded-md shadow-sm bg-white">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <div className="border-b p-4">
+                <TabsList className="grid grid-cols-4 w-full max-w-2xl">
+                  <TabsTrigger value="basic">Basic Info</TabsTrigger>
+                  <TabsTrigger value="variants">Variants</TabsTrigger>
+                  <TabsTrigger value="content">Content</TabsTrigger>
+                  <TabsTrigger value="images">Images</TabsTrigger>
+                </TabsList>
+              </div>
+            
+              <div className="p-6">
+                {/* Basic Information Tab */}
+                <TabsContent value="basic">
+                  <BasicInfoTab
+                    product={product}
+                    errors={errors}
+                    baseSlug={baseSlug}
+                    department={department}
+                    departmentId={departmentId}
+                    availableDepartments={availableDepartments}
+                    handleChange={handleChange}
+                    availableCategories={availableCategories}
+                    handleNumberChange={handleNumberChange}
+                    handleSelectChange={handleSelectChange}
+                    handleSwitchChange={handleSwitchChange}
+                    handleDepartmentChange={handleDepartmentChange}
+                    handleDepartmentIdChange={handleDepartmentIdChange}
+                    handleBaseSlugChange={handleBaseSlugChange}
+                    handleMultiSelectChange={handleMultiSelectChange}
+                    isFetchingDepartments={isFetchingDepartments}
+                  />
+                </TabsContent>
+                
+                {/* Variants Tab */}
+                <TabsContent value="variants">
+                  <VariantsTab
+                    product={product}
+                    handleVariantToggle={handleVariantToggle}
+                    handleAddVariantOption={handleAddVariantOption}
+                    handleUpdateVariantOption={handleUpdateVariantOption}
+                    handleRemoveVariantOption={handleRemoveVariantOption}
+                    handleGenerateVariants={handleGenerateVariants}
+                    handleUpdateVariant={handleUpdateVariant}
+                    handleRemoveVariant={handleRemoveVariant}
+                  />
+                </TabsContent>
+
+                {/* Content Tab */}
+                <TabsContent value="content">
+                  <ContentTab
+                    product={product}
+                    errors={errors}
+                    handleChange={handleChange}
+                  />
+                </TabsContent>
+
+                {/* Images Tab */}
+                <TabsContent value="images">
+                  <ImagesTab
+                    images={product.images}
+                    onAddImage={handleAddImage}
+                    onRemoveImage={handleRemoveImage}
+                    onReorderImages={handleReorderImages}
+                    setUploadedFiles={setUploadedFiles}
+                  />
+                </TabsContent>
+              </div>
+            </Tabs>
+          </Card>
+
+          {/* Additional actions */}
+          {isEditMode && (
+            <div className="mt-8">
+              <Card className="border border-destructive/20 bg-destructive/5 rounded-md">
+                <CardContent className="p-6">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="text-lg font-medium text-destructive">Delete Product</h3>
+                      <p className="text-sm text-muted-foreground">
+                        This action cannot be undone. This will permanently delete this product.
+                      </p>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      onClick={() => setDeleteDialogOpen(true)}
+                      disabled={isSubmitting}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete Product
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </form>
       )}
       

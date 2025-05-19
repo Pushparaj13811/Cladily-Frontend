@@ -2,8 +2,9 @@ import React, { useState, useRef } from 'react';
 import { Input } from '@app/components/ui/input';
 import { Label } from '@app/components/ui/label';
 import { Button } from '@app/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@app/components/ui/card';
-import { ImagePlus, Trash2, MoveUp, MoveDown, Pencil, Upload, X } from 'lucide-react';
+import { Separator } from '@app/components/ui/separator';
+import { ImagePlus, Trash2, MoveUp, MoveDown, Star, Upload, X, Info } from 'lucide-react';
+import { Badge } from '@app/components/ui/badge';
 
 // Define ProductImage interface
 interface ProductImage {
@@ -130,51 +131,106 @@ const ImagesTab: React.FC<ImagesTabProps> = ({
     setFeaturedImageUrl(url);
   };
   
+  // Check if this is the first image (featured by default)
+  const isFeatured = (index: number) => {
+    return index === 0 || images[index].url === featuredImageUrl;
+  };
+  
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Product Images</CardTitle>
-        <CardDescription>
-          Upload and manage product photos and gallery
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-2">
-          <Label htmlFor="featuredImageUrl">
-            Featured Image
-          </Label>
-          <div className="text-sm text-muted-foreground mb-2">
-            The main product image shown in listings. Click "Set as Featured" on any gallery image to update.
+    <div className="space-y-8">
+      {/* Current Images Section */}
+      <div>
+        <div className="flex justify-between items-center mb-5">
+          <h3 className="text-lg font-medium">Product Gallery</h3>
+          <div className="text-sm text-muted-foreground flex items-center">
+            <Info className="h-4 w-4 mr-1" />
+            <span>{images.length} {images.length === 1 ? 'image' : 'images'}</span>
           </div>
-          
-          {featuredImageUrl && (
-            <div className="mt-2">
-              <div className="h-40 w-full rounded-md overflow-hidden border">
-                <img
-                  src={featuredImageUrl}
-                  alt="Featured product"
-                  className="h-full w-full object-contain"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = 'https://via.placeholder.com/300x300?text=No+Image';
-                  }}
-                />
-              </div>
-            </div>
-          )}
         </div>
         
-        {/* Add new image form */}
-        <div className="border p-4 rounded-md bg-slate-50">
-          <h3 className="font-medium text-sm mb-3">Upload New Images</h3>
-          <form onSubmit={handleSubmit} className="space-y-3">
+        {images.length === 0 ? (
+          <div className="text-center py-8 border-2 border-dashed rounded-md">
+            <ImagePlus className="h-10 w-10 mx-auto text-muted-foreground" />
+            <p className="mt-2 text-muted-foreground">No product images yet</p>
+            <p className="text-sm text-muted-foreground">Upload images using the form below</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {images.map((image, index) => (
+              <div 
+                key={`${image.url}-${index}`} 
+                className="relative group border rounded-md overflow-hidden bg-white"
+              >
+                <div className="h-48 w-full overflow-hidden">
+                  <img
+                    src={image.url}
+                    alt={image.altText || `Product image ${index + 1}`}
+                    className="h-full w-full object-contain"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://via.placeholder.com/300x300?text=No+Image';
+                    }}
+                  />
+                </div>
+                
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                  <div className="flex space-x-1">
+                    {index > 0 && (
+                      <Button size="sm" variant="outline" className="bg-white" onClick={() => moveImageUp(index)}>
+                        <MoveUp className="h-4 w-4" />
+                      </Button>
+                    )}
+                    
+                    {index < images.length - 1 && (
+                      <Button size="sm" variant="outline" className="bg-white" onClick={() => moveImageDown(index)}>
+                        <MoveDown className="h-4 w-4" />
+                      </Button>
+                    )}
+                    
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      className="bg-white"
+                      onClick={() => setAsFeatured(image.url)}
+                      disabled={isFeatured(index)}
+                    >
+                      <Star className={`h-4 w-4 ${isFeatured(index) ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+                    </Button>
+                    
+                    <Button size="sm" variant="outline" className="bg-white text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => onRemoveImage(index)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                
+                {isFeatured(index) && (
+                  <Badge className="absolute top-2 left-2 bg-yellow-500">Featured</Badge>
+                )}
+                
+                <div className="p-2 text-xs border-t bg-gray-50">
+                  <p className="truncate">{image.altText || 'No alt text'}</p>
+                  <p className="text-muted-foreground">Position: {index + 1}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      
+      <Separator />
+      
+      {/* Upload Images Section */}
+      <div>
+        <h3 className="text-lg font-medium mb-5">Upload Images</h3>
+        <div className="bg-gray-50 border rounded-md p-5">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="newImageFile">
-                Image Files <span className="text-red-500">*</span>
+              <Label htmlFor="newImageFile" className="text-sm font-medium">
+                Select Images <span className="text-red-500">*</span>
               </Label>
               
               {filePreview ? (
                 <div className="relative">
-                  <div className="h-40 w-full rounded-md overflow-hidden border">
+                  <div className="h-48 w-full rounded-md overflow-hidden border bg-white">
                     <img
                       src={filePreview}
                       alt="Preview"
@@ -189,19 +245,24 @@ const ImagesTab: React.FC<ImagesTabProps> = ({
                   <Button 
                     type="button" 
                     size="sm" 
-                    variant="destructive" 
-                    className="absolute top-2 right-2"
+                    variant="outline" 
+                    className="absolute top-2 right-2 bg-white"
                     onClick={handleResetFileSelection}
                   >
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
               ) : (
-                <div className="flex items-center justify-center border-2 border-dashed rounded-md p-4 hover:border-primary cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                <div 
+                  className="flex flex-col items-center justify-center border-2 border-dashed rounded-md p-6 hover:border-primary cursor-pointer bg-white" 
+                  onClick={() => fileInputRef.current?.click()}
+                >
                   <div className="text-center">
                     <Upload className="mx-auto h-10 w-10 text-muted-foreground" />
-                    <p className="mt-2 text-sm text-muted-foreground">Click to select images</p>
-                    <p className="text-xs text-muted-foreground">JPG, PNG, GIF up to 5MB per file</p>
+                    <p className="mt-2 text-sm font-medium">Drag and drop files or click to browse</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Supports: JPG, PNG, WebP, GIF up to 5MB
+                    </p>
                   </div>
                   <input
                     id="newImageFile"
@@ -216,7 +277,7 @@ const ImagesTab: React.FC<ImagesTabProps> = ({
               )}
               
               {selectedFiles.length > 0 && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   {selectedFiles.length} file{selectedFiles.length !== 1 ? 's' : ''} selected
                 </p>
               )}
@@ -227,7 +288,7 @@ const ImagesTab: React.FC<ImagesTabProps> = ({
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="newImageAlt">
+              <Label htmlFor="newImageAlt" className="text-sm font-medium">
                 Alt Text
               </Label>
               <Input
@@ -236,77 +297,26 @@ const ImagesTab: React.FC<ImagesTabProps> = ({
                 value={newImageAlt}
                 onChange={(e) => setNewImageAlt(e.target.value)}
               />
+              <p className="text-xs text-muted-foreground">
+                Text describing the image for users who can't see it. Good for SEO too.
+              </p>
             </div>
             
-            <Button 
-              type="button" 
-              className="w-full" 
-              disabled={selectedFiles.length === 0}
-              onClick={handleSubmit}
-            >
-              <ImagePlus className="mr-2 h-4 w-4" />
-              Add {selectedFiles.length > 1 ? `${selectedFiles.length} Images` : 'Image'}
-            </Button>
+            <div className="flex justify-end">
+              <Button 
+                type="button" 
+                className="bg-primary hover:bg-primary/90 text-white" 
+                disabled={selectedFiles.length === 0}
+                onClick={handleSubmit}
+              >
+                <ImagePlus className="mr-2 h-4 w-4" />
+                Upload {selectedFiles.length > 1 ? `${selectedFiles.length} Images` : 'Image'}
+              </Button>
+            </div>
           </form>
         </div>
-        
-        {/* Image gallery */}
-        <div className="space-y-4">
-          <h3 className="font-medium">Image Gallery</h3>
-          
-          {images.length === 0 ? (
-            <div className="text-center py-8 border rounded-md">
-              <p className="text-muted-foreground">No images added yet</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {images.map((image, index) => (
-                <div key={`${image.url}-${index}`} className="group relative border rounded-md overflow-hidden">
-                  <div className="h-40 w-full overflow-hidden">
-                    <img
-                      src={image.url}
-                      alt={image.altText || `Product image ${index + 1}`}
-                      className="h-full w-full object-contain"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://via.placeholder.com/300x300?text=No+Image';
-                      }}
-                    />
-                  </div>
-                  
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <div className="flex space-x-1">
-                      {index > 0 && (
-                        <Button size="sm" variant="secondary" onClick={() => moveImageUp(index)}>
-                          <MoveUp className="h-4 w-4" />
-                        </Button>
-                      )}
-                      
-                      {index < images.length - 1 && (
-                        <Button size="sm" variant="secondary" onClick={() => moveImageDown(index)}>
-                          <MoveDown className="h-4 w-4" />
-                        </Button>
-                      )}
-                      
-                      <Button size="sm" variant="secondary" onClick={() => setAsFeatured(image.url)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      
-                      <Button size="sm" variant="destructive" onClick={() => onRemoveImage(index)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <div className="p-2 text-xs truncate">
-                    {image.altText || `Image ${index + 1}`}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 
