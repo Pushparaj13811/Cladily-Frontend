@@ -5,7 +5,7 @@ import {
   ShoppingCart,
   CreditCard,
   DollarSign,
-  Users,
+  Users, 
   Star
 } from 'lucide-react';
 import { Button } from '@app/components/ui/button';
@@ -298,18 +298,18 @@ const DashboardPage: React.FC = () => {
               Monthly sales overview for the current year
             </CardDescription>
           </div>
-          <Tabs 
-            value={timeRange} 
-            onValueChange={(v) => setTimeRange(v as 'daily' | 'weekly' | 'monthly')}
-            className="w-auto"
-          >
-            <TabsList className="h-8">
-              <TabsTrigger value="daily" className="text-xs px-2">Daily</TabsTrigger>
-              <TabsTrigger value="weekly" className="text-xs px-2">Weekly</TabsTrigger>
-              <TabsTrigger value="monthly" className="text-xs px-2">Monthly</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </CardHeader>
+              <Tabs 
+                value={timeRange} 
+                onValueChange={(v) => setTimeRange(v as 'daily' | 'weekly' | 'monthly')}
+                className="w-auto"
+              >
+                <TabsList className="h-8">
+                  <TabsTrigger value="daily" className="text-xs px-2">Daily</TabsTrigger>
+                  <TabsTrigger value="weekly" className="text-xs px-2">Weekly</TabsTrigger>
+                  <TabsTrigger value="monthly" className="text-xs px-2">Monthly</TabsTrigger>
+                </TabsList>
+              </Tabs>
+          </CardHeader>
         <CardContent>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -328,10 +328,10 @@ const DashboardPage: React.FC = () => {
                 />
               </LineChart>
             </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
-
+            </div>
+          </CardContent>
+        </Card>
+        
       {/* Two columns layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Weekly Stats */}
@@ -365,7 +365,7 @@ const DashboardPage: React.FC = () => {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Orders</p>
                 <p className="text-xl font-bold">{SUMMARY_METRICS.totalOrders}</p>
-              </div>
+                      </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Revenue</p>
                 <p className="text-xl font-bold">{formatCurrency(SUMMARY_METRICS.totalSales)}</p>
@@ -424,9 +424,9 @@ const DashboardPage: React.FC = () => {
           </div>
           <Button variant="outline" size="sm">
             View All Products
-          </Button>
-        </CardHeader>
-        <CardContent>
+              </Button>
+          </CardHeader>
+          <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
             {topProducts.map((product) => (
               <div key={product.id} className="border rounded-lg p-4 shadow-sm">
@@ -439,7 +439,7 @@ const DashboardPage: React.FC = () => {
                       </AvatarFallback>
                     </Avatar>
                   </div>
-                </div>
+                      </div>
                 <div className="text-center">
                   <h3 className="font-medium text-sm">{product.name}</h3>
                   <p className="text-xs text-muted-foreground mb-2">Code: {product.code}</p>
@@ -447,12 +447,12 @@ const DashboardPage: React.FC = () => {
                     <StarRating rating={product.rating} />
                   </div>
                   <p className="text-xs text-muted-foreground">{product.reviews} Reviews</p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
     </div>
   );
 };
