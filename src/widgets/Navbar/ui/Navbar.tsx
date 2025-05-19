@@ -30,58 +30,58 @@ export function MainNavbar() {
 
     // Get auth state from Redux
     const { user, isAuthenticated } = useAuth();
-    
+
     // Check if user is admin, handling both lowercase and uppercase role values
     const isAdmin = user?.role?.toLowerCase() === UserRole.ADMIN.toLowerCase();
-
+    
     const handleLogout = () => {
         dispatch(logout());
         navigate("/");
     };
 
     const renderAdminNavigation = () => (
-        <>
-            <NavigationMenuItem>
-                <Link to="/admin/dashboard" className="text-sm font-medium px-3 flex items-center">
-                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                    Dashboard
-                </Link>
-            </NavigationMenuItem>
-            <NavigationMenuItem>
-                <Link to="/admin/products" className="text-sm font-medium px-3 flex items-center">
-                    <Package className="mr-2 h-4 w-4" />
-                    Products
-                </Link>
-            </NavigationMenuItem>
-            <NavigationMenuItem>
-                <Link to="/admin/categories" className="text-sm font-medium px-3 flex items-center">
-                    <Tag className="mr-2 h-4 w-4" />
-                    Categories
-                </Link>
-            </NavigationMenuItem>
-            <NavigationMenuItem>
-                <Link to="/admin/discounts" className="text-sm font-medium px-3 flex items-center">
-                    <Percent className="mr-2 h-4 w-4" />
-                    Discounts
-                </Link>
-            </NavigationMenuItem>
-            <NavigationMenuItem>
-                <Link to="/admin/coupons" className="text-sm font-medium px-3 flex items-center">
-                    <Ticket className="mr-2 h-4 w-4" />
-                    Coupons
-                </Link>
-            </NavigationMenuItem>
-        </>
+                                <>
+                                    <NavigationMenuItem>
+                                        <Link to="/admin/dashboard" className="text-sm font-medium px-3 flex items-center">
+                                            <LayoutDashboard className="mr-2 h-4 w-4" />
+                                            Dashboard
+                                        </Link>
+                                    </NavigationMenuItem>
+                                    <NavigationMenuItem>
+                                        <Link to="/admin/products" className="text-sm font-medium px-3 flex items-center">
+                                            <Package className="mr-2 h-4 w-4" />
+                                            Products
+                                        </Link>
+                                    </NavigationMenuItem>
+                                    <NavigationMenuItem>
+                                        <Link to="/admin/categories" className="text-sm font-medium px-3 flex items-center">
+                                            <Tag className="mr-2 h-4 w-4" />
+                                            Categories
+                                        </Link>
+                                    </NavigationMenuItem>
+                                    <NavigationMenuItem>
+                                        <Link to="/admin/discounts" className="text-sm font-medium px-3 flex items-center">
+                                            <Percent className="mr-2 h-4 w-4" />
+                                            Discounts
+                                        </Link>
+                                    </NavigationMenuItem>
+                                    <NavigationMenuItem>
+                                        <Link to="/admin/coupons" className="text-sm font-medium px-3 flex items-center">
+                                            <Ticket className="mr-2 h-4 w-4" />
+                                            Coupons
+                                        </Link>
+                                    </NavigationMenuItem>
+                                </>
     );
 
     const renderUserNavigation = () => (
-        NAVIGATION.MAIN_CATEGORIES.map((category) => (
-            <NavigationMenuItem key={category.name}>
-                <Link to={category.href} className="text-sm font-medium px-3">
-                    {category.name}
-                </Link>
-            </NavigationMenuItem>
-        ))
+                                NAVIGATION.MAIN_CATEGORIES.map((category) => (
+                                    <NavigationMenuItem key={category.name}>
+                                        <Link to={category.href} className="text-sm font-medium px-3">
+                                            {category.name}
+                                        </Link>
+                                    </NavigationMenuItem>
+                                ))
     );
 
     const renderDropdownMenuItems = () => (
