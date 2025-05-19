@@ -224,4 +224,69 @@ export const deleteProduct = async (id: string): Promise<void> => {
     console.error(`Error deleting product ${id}:`, error);
     throw error;
   }
+};
+
+/**
+ * Fetch products by department ID
+ * @param departmentId Department ID
+ * @param options Options for filtering and pagination
+ */
+export const getProductsByDepartment = async (
+  departmentId: string,
+  options: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    category?: string;
+    brand?: string;
+    search?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  } = {}
+): Promise<{
+  products: Product[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}> => {
+  try {
+    // Build query parameters
+    const queryParams = new URLSearchParams();
+    
+    if (options.page) queryParams.append('page', options.page.toString());
+    if (options.limit) queryParams.append('limit', options.limit.toString());
+    if (options.status) queryParams.append('status', options.status);
+    if (options.category) queryParams.append('category', options.category);
+    if (options.brand) queryParams.append('brand', options.brand);
+    if (options.search) queryParams.append('search', options.search);
+    if (options.minPrice) queryParams.append('minPrice', options.minPrice.toString());
+    if (options.maxPrice) queryParams.append('maxPrice', options.maxPrice.toString());
+    if (options.sortBy) queryParams.append('sortBy', options.sortBy);
+    if (options.sortOrder) queryParams.append('sortOrder', options.sortOrder);
+    
+    const url = `/api/departments/${departmentId}/products${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    console.log(`Fetching products by department: ${url}`);
+    
+    const response = await api.get(url);
+    console.log("Department products response:", response.data);
+    
+    // Handle different response formats
+    let result = { products: [], pagination: { total: 0, page: 1, limit: 20, totalPages: 0 } };
+    
+    if (response.data?.success && response.data?.message) {
+      result = response.data.message;
+    } else if (response.data) {
+      result = response.data;
+    }
+    
+    return result;
+  } catch (error) {
+    console.error(`Error fetching products for department ${departmentId}:`, error);
+    throw error;
+  }
 }; 

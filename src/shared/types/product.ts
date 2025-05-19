@@ -27,6 +27,7 @@ export interface Product {
   featuredImageUrl?: string;
   discount: string | null;
   department: string;
+  departmentId?: string;
   description: string;
   shortDescription?: string;
   material: string;
@@ -82,6 +83,7 @@ export interface CreateProductDto {
   image: string;
   discount?: string | null;
   department: string;
+  departmentId?: string;
   description: string;
   shortDescription?: string;
   material: string;
@@ -119,6 +121,7 @@ export interface UpdateProductDto {
   image?: string;
   discount?: string | null;
   department?: string;
+  departmentId?: string;
   description?: string;
   shortDescription?: string;
   material?: string;

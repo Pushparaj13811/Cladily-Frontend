@@ -14,6 +14,23 @@ export enum Department {
 }
 
 /**
+ * Department interface representing a department entity
+ */
+export interface DepartmentType extends BaseEntity {
+  /** Department name */
+  name: string;
+  
+  /** URL-friendly slug */
+  slug: string;
+  
+  /** Optional department description */
+  description?: string;
+  
+  /** Categories that belong to this department */
+  categories?: Category[];
+}
+
+/**
  * Category interface representing a product category
  */
 export interface Category extends BaseEntity {
