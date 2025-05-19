@@ -26,6 +26,14 @@ const initialState: AuthState = {
 // Base URL for API calls
 const API_URL = '/api/auth';
 
+// Helper function for error handling in thunks
+const handleAxiosError = (error: unknown, defaultMessage: string): string => {
+  if (axios.isAxiosError(error)) {
+    return error.response?.data?.message || defaultMessage;
+  }
+  return `${defaultMessage}: An unexpected error occurred`;
+};
+
 // Login thunk
 export const login = createAsyncThunk<
   AuthResponse,
@@ -35,29 +43,17 @@ export const login = createAsyncThunk<
   'auth/login',
   async (credentials, { rejectWithValue }) => {
     try {
-      console.log('Attempting login with credentials:', { phone: credentials.phone });
       const response = await api.post(`${API_URL}/login`, credentials);
       
       // Validate that we received a proper token
       const data = response.data.data;
       if (!data || !data.accessToken) {
-        console.error('Invalid login response - missing token:', data);
         return rejectWithValue('Invalid response from server: Missing authentication token');
       }
       
-      // Add refresh token from response if it's not in the data
-      if (!data.refreshToken) {
-        console.log('Warning: refreshToken not in API response, using cookie instead');
-      }
-      
-      console.log('Login successful, received token');
       return data;
     } catch (error) {
-      console.error('Login error:', error);
-      if (axios.isAxiosError(error)) {
-        return rejectWithValue(error.response?.data?.message || 'Invalid credentials');
-      }
-      return rejectWithValue('Login failed: An unexpected error occurred');
+      return rejectWithValue(handleAxiosError(error, 'Invalid credentials'));
     }
   }
 );
@@ -77,16 +73,10 @@ export const register = createAsyncThunk<
   'auth/register',
   async (userData, { rejectWithValue }) => {
     try {
-      console.log('Attempting registration');
       const response = await api.post(`${API_URL}/register`, userData);
-      console.log('Registration successful');
       return response.data.data;
     } catch (error) {
-      console.error('Registration error:', error);
-      if (axios.isAxiosError(error)) {
-        return rejectWithValue(error.response?.data?.message || 'Registration failed');
-      }
-      return rejectWithValue('Registration failed: An unexpected error occurred');
+      return rejectWithValue(handleAxiosError(error, 'Registration failed'));
     }
   }
 );
@@ -100,17 +90,10 @@ export const getUserProfile = createAsyncThunk<
   'auth/getUserProfile',
   async (_, { rejectWithValue }) => {
     try {
-      console.log('Fetching user profile...');
-      // We'll set the auth token in the API interceptor when configured
       const response = await api.get('/api/user/profile');
-      console.log('User profile received:', response.data.data);
       return response.data.data;
     } catch (error) {
-      console.error('Error fetching user profile:', error);
-      if (axios.isAxiosError(error)) {
-        return rejectWithValue(error.response?.data?.message || 'Failed to fetch user profile');
-      }
-      return rejectWithValue('Failed to fetch user profile');
+      return rejectWithValue(handleAxiosError(error, 'Failed to fetch user profile'));
     }
   }
 );
@@ -127,10 +110,7 @@ export const updateUserProfile = createAsyncThunk<
       const response = await api.put('/api/user/profile', userData);
       return response.data.data;
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        return rejectWithValue(error.response?.data?.message || 'Failed to update profile');
-      }
-      return rejectWithValue('Failed to update profile');
+      return rejectWithValue(handleAxiosError(error, 'Failed to update profile'));
     }
   }
 );
@@ -150,24 +130,13 @@ export const logout = createAsyncThunk<
       
       // If there's no refreshToken or userId, we can just return (the reducer will clear state)
       if (!refreshToken || !userId) {
-        console.log('No refresh token or user ID available, skipping API call');
         return null;
       }
       
       // Send the refreshToken in the request body (userId comes from auth middleware)
       await api.post(`${API_URL}/logout`, { refreshToken });
       return null;
-    } catch (error) {
-      console.error('Logout error:', error);
-      
-      if (axios.isAxiosError(error)) {
-        // Log the error but don't reject - we'll clear the state regardless
-        console.error(
-          'API error during logout:', 
-          error.response?.data?.message || error.message
-        );
-      }
-      
+    } catch {
       // Return null instead of rejecting so the state still gets cleared
       return null;
     }
@@ -186,10 +155,7 @@ export const requestOtp = createAsyncThunk<
       const response = await api.post(`${API_URL}/request-otp`, { phone });
       return response.data.data;
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        return rejectWithValue(error.response?.data?.message || 'Failed to request OTP');
-      }
-      return rejectWithValue('Failed to request OTP');
+      return rejectWithValue(handleAxiosError(error, 'Failed to request OTP'));
     }
   }
 );
@@ -206,10 +172,7 @@ export const verifyOtp = createAsyncThunk<
       const response = await api.post(`${API_URL}/verify-otp`, credentials);
       return response.data.data;
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        return rejectWithValue(error.response?.data?.message || 'OTP verification failed');
-      }
-      return rejectWithValue('OTP verification failed');
+      return rejectWithValue(handleAxiosError(error, 'OTP verification failed'));
     }
   }
 );
@@ -227,11 +190,8 @@ export const refreshAccessToken = createAsyncThunk<
       const refreshToken = state.auth.refreshToken;
       
       if (!refreshToken) {
-        console.error('No refresh token available');
         return rejectWithValue('No refresh token available');
       }
-      
-      console.log('Attempting to refresh token');
       
       const response = await api.post(`${API_URL}/refresh-token`, {
         refreshToken
@@ -239,33 +199,23 @@ export const refreshAccessToken = createAsyncThunk<
       
       const data = response.data.data;
       if (!data || !data.accessToken) {
-        console.error('Invalid refresh token response - missing new token:', data);
         return rejectWithValue('Invalid response from server: Missing new token');
       }
       
       // Return both tokens, handling case where refreshToken might not be in response
-      console.log('Token refresh successful, received new token');
       return {
         accessToken: data.accessToken,
         refreshToken: data.refreshToken || refreshToken // Use existing refresh token if not returned
       };
     } catch (error) {
-      console.error('Token refresh error:', error);
-      
-      if (axios.isAxiosError(error)) {
-        // Check for specific error about JWT secret
-        if (error.response?.data?.message?.includes('secretOrPrivateKey') || 
-            error.message?.includes('secretOrPrivateKey')) {
-          console.error('JWT Secret key error detected during refresh');
-          return rejectWithValue('Authentication server error: JWT configuration issue');
-        }
-        
-        const errorMessage = error.response?.data?.message || 'Failed to refresh token';
-        console.error('Token refresh failed with message:', errorMessage);
-        return rejectWithValue(errorMessage);
+      // Check for specific error about JWT secret
+      if (axios.isAxiosError(error) && 
+          (error.response?.data?.message?.includes('secretOrPrivateKey') || 
+          error.message?.includes('secretOrPrivateKey'))) {
+        return rejectWithValue('Authentication server error: JWT configuration issue');
       }
       
-      return rejectWithValue('Failed to refresh token: An unexpected error occurred');
+      return rejectWithValue(handleAxiosError(error, 'Failed to refresh token'));
     }
   }
 );
@@ -282,10 +232,7 @@ export const forgotPassword = createAsyncThunk<
       const response = await api.post(`${API_URL}/forgot-password`, { email });
       return response.data.data;
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        return rejectWithValue(error.response?.data?.message || 'Failed to send reset password email');
-      }
-      return rejectWithValue('Failed to send reset password email');
+      return rejectWithValue(handleAxiosError(error, 'Failed to send reset password email'));
     }
   }
 );
@@ -302,10 +249,7 @@ export const resetPassword = createAsyncThunk<
       const response = await api.post(`${API_URL}/reset-password`, credentials);
       return response.data.data;
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        return rejectWithValue(error.response?.data?.message || 'Failed to reset password');
-      }
-      return rejectWithValue('Failed to reset password');
+      return rejectWithValue(handleAxiosError(error, 'Failed to reset password'));
     }
   }
 );
@@ -319,16 +263,10 @@ export const getUserDebugInfo = createAsyncThunk<
   'auth/getUserDebugInfo',
   async (_, { rejectWithValue }) => {
     try {
-      console.log('Fetching user debug info...');
       const response = await api.get('/api/auth/debug');
-      console.log('User debug info received:', response.data.data);
       return response.data.data;
     } catch (error) {
-      console.error('Error fetching user debug info:', error);
-      if (axios.isAxiosError(error)) {
-        return rejectWithValue(error.response?.data?.message || 'Failed to fetch user debug info');
-      }
-      return rejectWithValue('Unknown error occurred while fetching user debug info');
+      return rejectWithValue(handleAxiosError(error, 'Failed to fetch user debug info'));
     }
   }
 );
@@ -342,16 +280,10 @@ export const testAdminAccess = createAsyncThunk<
   'auth/testAdminAccess',
   async (_, { rejectWithValue }) => {
     try {
-      console.log('Testing admin access...');
       const response = await api.get('/api/auth/admin-test');
-      console.log('Admin access test response:', response.data.data);
       return response.data.data;
     } catch (error) {
-      console.error('Error testing admin access:', error);
-      if (axios.isAxiosError(error)) {
-        return rejectWithValue(error.response?.data?.message || 'Failed to verify admin access');
-      }
-      return rejectWithValue('Unknown error occurred while testing admin access');
+      return rejectWithValue(handleAxiosError(error, 'Failed to verify admin access'));
     }
   }
 );
@@ -365,16 +297,10 @@ export const activateAccount = createAsyncThunk<
   'auth/activateAccount',
   async (_, { rejectWithValue }) => {
     try {
-      console.log('Attempting to activate user account...');
-      const response = await api.post('/api/user/activate');
-      console.log('Account activation response:', response.data);
+      const response = await api.post('/api/auth/activate-account');
       return response.data.data;
     } catch (error) {
-      console.error('Account activation error:', error);
-      if (axios.isAxiosError(error)) {
-        return rejectWithValue(error.response?.data?.message || 'Failed to activate account');
-      }
-      return rejectWithValue('Failed to activate account: An unexpected error occurred');
+      return rejectWithValue(handleAxiosError(error, 'Failed to activate account'));
     }
   }
 );

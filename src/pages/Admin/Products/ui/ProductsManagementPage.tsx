@@ -1,496 +1,409 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Package, 
-  PlusCircle, 
-  Search, 
-  Edit, 
-  Trash2, 
-  ArrowUpDown
-} from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, ArrowUpDown } from 'lucide-react';
 import { Button } from '@app/components/ui/button';
 import { Input } from '@app/components/ui/input';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '@app/components/ui/table';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from '@app/components/ui/dialog';
 import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from '@app/components/ui/pagination';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@app/components/ui/dropdown-menu';
 import { Badge } from '@app/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@app/components/ui/card';
-import { formatCurrency } from '@shared/utils/format';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@app/components/ui/select';
+import { getAllProducts, deleteProduct } from '@features/dashboard/productAPI';
+import { Product } from '@shared/types';
+import { useToast } from '@app/hooks/use-toast';
 
-// Mock products data
-const MOCK_PRODUCTS = [
-  {
-    id: 'P1001',
-    name: 'Classic White T-shirt',
-    sku: 'TS-WHT-001',
-    category: 'T-shirts',
-    price: 1999,
-    stock: 120,
-    status: 'active',
-    createdAt: '2023-06-15',
-    image: 'https://placehold.co/80x80',
-  },
-  {
-    id: 'P1002',
-    name: 'Black Denim Jeans',
-    sku: 'JN-BLK-002',
-    category: 'Jeans',
-    price: 3499,
-    stock: 85,
-    status: 'active',
-    createdAt: '2023-07-02',
-    image: 'https://placehold.co/80x80',
-  },
-  {
-    id: 'P1003',
-    name: 'Blue Hoodie',
-    sku: 'HD-BLU-003',
-    category: 'Sweatshirts',
-    price: 2499,
-    stock: 0,
-    status: 'out_of_stock',
-    createdAt: '2023-05-20',
-    image: 'https://placehold.co/80x80',
-  },
-  {
-    id: 'P1004',
-    name: 'Leather Jacket',
-    sku: 'JK-LTH-004',
-    category: 'Outerwear',
-    price: 7999,
-    stock: 25,
-    status: 'active',
-    createdAt: '2023-08-10',
-    image: 'https://placehold.co/80x80',
-  },
-  {
-    id: 'P1005',
-    name: 'Striped Socks',
-    sku: 'SK-STR-005',
-    category: 'Accessories',
-    price: 499,
-    stock: 5,
-    status: 'low_stock',
-    createdAt: '2023-09-01',
-    image: 'https://placehold.co/80x80',
-  },
-  {
-    id: 'P1006',
-    name: 'Summer Shorts',
-    sku: 'SH-SMR-006',
-    category: 'Shorts',
-    price: 1799,
-    stock: 0,
-    status: 'draft',
-    createdAt: '2023-09-15',
-    image: 'https://placehold.co/80x80',
-  },
-];
-
-// Status badge styles
-const getStatusBadge = (status: string) => {
-  switch (status) {
-    case 'active':
-      return 'bg-green-100 text-green-800 border-green-200';
-    case 'draft':
-      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    case 'out_of_stock':
-      return 'bg-red-100 text-red-800 border-red-200';
-    case 'low_stock':
-      return 'bg-orange-100 text-orange-800 border-orange-200';
-    default:
-      return 'bg-gray-100 text-gray-800 border-gray-200';
-  }
-};
-
-// Format status text
-const formatStatus = (status: string) => {
-  return status.split('_').map(word => 
-    word.charAt(0).toUpperCase() + word.slice(1)
-  ).join(' ');
+// Add a type to handle backend product type
+type ExtendedProduct = Product & {
+  featuredImageUrl?: string;
+  status?: string;
 };
 
 const ProductsManagementPage: React.FC = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [products, setProducts] = useState(MOCK_PRODUCTS);
+  const [isLoading, setIsLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [productToDelete, setProductToDelete] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [sortField, setSortField] = useState<string>('createdAt');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-
-  // Filter products based on search query and filters
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                           product.sku.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || product.status === statusFilter;
-    const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter;
+  const [productToDelete, setProductToDelete] = useState<{ id: number; name: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [sortField, setSortField] = useState<'name' | 'price' | 'category'>('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  
+  // Load products
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setIsLoading(true);
+        const fetchedProducts = await getAllProducts();
+        console.log('Fetched products:', fetchedProducts);
+        
+        // Validate and normalize received products
+        const validProducts = fetchedProducts
+          .filter(product => 
+            // Ensure product has required fields
+            product && 
+            product.id !== undefined && 
+            product.name
+          )
+          .map(product => {
+            // Cast to extended product type to handle backend fields
+            const extProduct = product as ExtendedProduct;
+            return {
+              ...product,
+              // Ensure price is a string (some APIs return it as a number)
+              price: typeof product.price === 'number' 
+                ? String(product.price) 
+                : (product.price || '0'),
+              // Ensure originalPrice is a string or null
+              originalPrice: typeof product.originalPrice === 'number'
+                ? String(product.originalPrice)
+                : product.originalPrice,
+              // Ensure category exists
+              category: product.category || 'Uncategorized',
+              // Ensure subcategory exists
+              subcategory: product.subcategory || '',
+              // Ensure image exists
+              image: product.image || extProduct.featuredImageUrl || '',
+              // Ensure inStock flag exists
+              inStock: product.inStock !== undefined 
+                ? product.inStock 
+                : extProduct.status !== 'OUT_OF_STOCK',
+              // Ensure department exists
+              department: product.department || 'Menswear',
+              // Set other required fields with defaults if missing
+              material: product.material || 'N/A',
+              care: Array.isArray(product.care) ? product.care : [],
+              features: Array.isArray(product.features) ? product.features : [],
+              sizes: Array.isArray(product.sizes) ? product.sizes : [],
+              colors: Array.isArray(product.colors) ? product.colors : [],
+              deliveryInfo: product.deliveryInfo || 'Standard shipping',
+              rating: typeof product.rating === 'number' ? product.rating : 0,
+              ratingCount: typeof product.ratingCount === 'number' ? product.ratingCount : 0,
+              discount: product.discount || null,
+              images: Array.isArray(product.images) ? product.images : []
+            };
+          });
+        
+        console.log('Valid products after normalization:', validProducts.length);
+        
+        // Set products state with normalized data
+        setProducts(validProducts);
+        setFilteredProducts(validProducts);
+        
+        if (validProducts.length === 0) {
+          toast({
+            title: 'No products found',
+            description: 'Try creating your first product',
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        toast({
+          title: 'Error loading products',
+          description: 'There was a problem loading the products. Please try again.',
+          variant: 'destructive',
+        });
+        
+        // Set empty arrays in case of error
+        setProducts([]);
+        setFilteredProducts([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
     
-    return matchesSearch && matchesStatus && matchesCategory;
-  });
-
-  // Sort products
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    const fieldA = a[sortField as keyof typeof a];
-    const fieldB = b[sortField as keyof typeof b];
-    
-    if (typeof fieldA === 'number' && typeof fieldB === 'number') {
-      return sortDirection === 'asc' ? fieldA - fieldB : fieldB - fieldA;
+    fetchProducts();
+  }, [toast]);
+  
+  // Filter products based on search query
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredProducts(products);
+      return;
     }
     
-    if (typeof fieldA === 'string' && typeof fieldB === 'string') {
-      return sortDirection === 'asc' 
-        ? fieldA.localeCompare(fieldB) 
-        : fieldB.localeCompare(fieldA);
-    }
+    const query = searchQuery.toLowerCase();
+    const filtered = products.filter(product => 
+      product.name.toLowerCase().includes(query) ||
+      product.category.toLowerCase().includes(query) ||
+      product.subcategory.toLowerCase().includes(query)
+    );
     
-    return 0;
-  });
-
-  // Get unique categories for filter
-  const categories = ['all', ...new Set(products.map(product => product.category))];
-
+    setFilteredProducts(filtered);
+  }, [searchQuery, products]);
+  
   // Handle sorting
-  const handleSort = (field: string) => {
+  const handleSort = (field: 'name' | 'price' | 'category') => {
     if (sortField === field) {
+      // Toggle direction if same field
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
+      // Set new field and default to ascending
       setSortField(field);
       setSortDirection('asc');
     }
+    
+    // Sort the products
+    const sorted = [...filteredProducts].sort((a, b) => {
+      let aValue, bValue;
+      
+      if (field === 'name') {
+        aValue = a.name.toLowerCase();
+        bValue = b.name.toLowerCase();
+      } else if (field === 'price') {
+        aValue = parseFloat(a.price);
+        bValue = parseFloat(b.price);
+      } else {
+        aValue = a.category.toLowerCase();
+        bValue = b.category.toLowerCase();
+      }
+      
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+    
+    setFilteredProducts(sorted);
   };
-
-  // Delete product
-  const handleDelete = (id: string) => {
-    setProductToDelete(id);
+  
+  // Open delete confirmation dialog
+  const confirmDelete = (product: { id: number; name: string }) => {
+    setProductToDelete(product);
     setDeleteDialogOpen(true);
   };
-
-  const confirmDelete = () => {
-    if (productToDelete) {
-      setProducts(products.filter(product => product.id !== productToDelete));
+  
+  // Handle product deletion
+  const handleDelete = async () => {
+    if (!productToDelete) return;
+    
+    setIsDeleting(true);
+    
+    try {
+      await deleteProduct(productToDelete.id.toString());
+      
+      // Update local state
+      setProducts(prevProducts => prevProducts.filter(p => p.id !== productToDelete.id));
+      
+      toast({
+        title: 'Product deleted',
+        description: `${productToDelete.name} has been deleted successfully.`,
+      });
+      
       setDeleteDialogOpen(false);
       setProductToDelete(null);
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete product. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeleting(false);
     }
   };
-
-  // Calculate pagination
-  const itemsPerPage = 10;
-  const totalPages = Math.ceil(sortedProducts.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedProducts = sortedProducts.slice(startIndex, startIndex + itemsPerPage);
-
+  
+  // Render product status badge
+  const renderStatusBadge = (inStock: boolean) => {
+    if (inStock) {
+      return <Badge className="bg-green-500">In Stock</Badge>;
+    } else {
+      return <Badge variant="destructive">Out of Stock</Badge>;
+    }
+  };
+  
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold">Products</h1>
-          <p className="text-muted-foreground">Manage your product inventory</p>
+          <p className="text-muted-foreground">
+            Manage your product inventory
+          </p>
         </div>
         <Button onClick={() => navigate('/admin/products/new')}>
-          <PlusCircle className="mr-2 h-4 w-4" />
+          <Plus className="mr-2 h-4 w-4" />
           Add Product
         </Button>
       </div>
-
-      {/* Summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Products
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{products.length}</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Active Products
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {products.filter(p => p.status === 'active').length}
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Out of Stock
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-500">
-              {products.filter(p => p.status === 'out_of_stock').length}
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Low Stock
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-500">
-              {products.filter(p => p.status === 'low_stock').length}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
       
-      {/* Filters and search */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <div className="mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by name or SKU..."
+            placeholder="Search products..."
             className="pl-10"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        
-        <div className="flex gap-2">
-          <div className="w-40">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="out_of_stock">Out of Stock</SelectItem>
-                <SelectItem value="low_stock">Low Stock</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="w-40">
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map(category => (
-                  <SelectItem key={category} value={category}>
-                    {category === 'all' ? 'All Categories' : category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
       </div>
-
-      {/* Products table */}
-      <Card className="mb-6">
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[80px]">Image</TableHead>
-                  <TableHead className="cursor-pointer" onClick={() => handleSort('name')}>
-                    <div className="flex items-center">
-                      Product Name
-                      {sortField === 'name' && (
-                        <ArrowUpDown className="ml-2 h-4 w-4" />
-                      )}
-                    </div>
-                  </TableHead>
-                  <TableHead>SKU</TableHead>
-                  <TableHead className="cursor-pointer" onClick={() => handleSort('category')}>
-                    <div className="flex items-center">
-                      Category
-                      {sortField === 'category' && (
-                        <ArrowUpDown className="ml-2 h-4 w-4" />
-                      )}
-                    </div>
-                  </TableHead>
-                  <TableHead className="cursor-pointer" onClick={() => handleSort('price')}>
-                    <div className="flex items-center">
-                      Price
-                      {sortField === 'price' && (
-                        <ArrowUpDown className="ml-2 h-4 w-4" />
-                      )}
-                    </div>
-                  </TableHead>
-                  <TableHead className="cursor-pointer" onClick={() => handleSort('stock')}>
-                    <div className="flex items-center">
-                      Stock
-                      {sortField === 'stock' && (
-                        <ArrowUpDown className="ml-2 h-4 w-4" />
-                      )}
-                    </div>
-                  </TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedProducts.length > 0 ? (
-                  paginatedProducts.map((product) => (
-                    <TableRow key={product.id}>
-                      <TableCell>
-                        <img 
-                          src={product.image} 
-                          alt={product.name} 
-                          className="w-10 h-10 object-cover rounded-md"
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium">{product.name}</TableCell>
-                      <TableCell>{product.sku}</TableCell>
-                      <TableCell>{product.category}</TableCell>
-                      <TableCell>{formatCurrency(product.price)}</TableCell>
-                      <TableCell>{product.stock}</TableCell>
-                      <TableCell>
-                        <Badge className={getStatusBadge(product.status)}>
-                          {formatStatus(product.status)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end">
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => navigate(`/admin/products/edit/${product.id}`)}
-                          >
-                            <Edit className="h-4 w-4" />
-                            <span className="sr-only">Edit</span>
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="text-red-500"
-                            onClick={() => handleDelete(product.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            <span className="sr-only">Delete</span>
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={8} className="text-center h-32">
-                      <div className="flex flex-col items-center justify-center">
-                        <Package className="h-8 w-8 text-muted-foreground mb-2" />
-                        <h3 className="font-medium text-lg mb-1">No products found</h3>
-                        <p className="text-muted-foreground mb-4">
-                          {searchQuery || statusFilter !== 'all' || categoryFilter !== 'all'
-                            ? "Try adjusting your filters or search terms"
-                            : "Get started by adding your first product"}
-                        </p>
-                        {!searchQuery && statusFilter === 'all' && categoryFilter === 'all' && (
-                          <Button onClick={() => navigate('/admin/products/new')}>
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Add Product
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <Pagination className="my-6">
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious 
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-              />
-            </PaginationItem>
-            
-            {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .filter(page => page === 1 || page === totalPages || 
-                (page >= currentPage - 1 && page <= currentPage + 1))
-              .map((page, i, array) => (
-                <React.Fragment key={page}>
-                  {i > 0 && array[i - 1] !== page - 1 && (
-                    <PaginationItem>
-                      <PaginationEllipsis />
-                    </PaginationItem>
+      
+      <div className="border rounded-md">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[80px]">Image</TableHead>
+              <TableHead className="cursor-pointer" onClick={() => handleSort('name')}>
+                <div className="flex items-center">
+                  Name
+                  {sortField === 'name' && (
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
                   )}
-                  <PaginationItem>
-                    <PaginationLink 
-                      isActive={page === currentPage}
-                      onClick={() => setCurrentPage(page)}
-                    >
-                      {page}
-                    </PaginationLink>
-                  </PaginationItem>
-                </React.Fragment>
+                </div>
+              </TableHead>
+              <TableHead className="cursor-pointer" onClick={() => handleSort('category')}>
+                <div className="flex items-center">
+                  Category
+                  {sortField === 'category' && (
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  )}
+                </div>
+              </TableHead>
+              <TableHead className="cursor-pointer" onClick={() => handleSort('price')}>
+                <div className="flex items-center">
+                  Price
+                  {sortField === 'price' && (
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  )}
+                </div>
+              </TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-10">
+                  <div className="flex justify-center">
+                    <svg className="animate-spin h-6 w-6 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : filteredProducts.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-10">
+                  {searchQuery ? 'No products match your search' : 'No products found'}
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredProducts.map((product) => (
+                <TableRow key={product.id}>
+                  <TableCell>
+                    {product.image ? (
+                      <div className="h-12 w-12 rounded-md overflow-hidden">
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            // Replace broken image with a placeholder
+                            (e.target as HTMLImageElement).src = 'https://placehold.co/100x100?text=No+Image';
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="h-12 w-12 rounded-md bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                        No image
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell className="font-medium">{product.name}</TableCell>
+                  <TableCell>{product.category || 'Uncategorized'}</TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    {typeof product.price === 'string' && !isNaN(parseFloat(product.price))
+                      ? `$${parseFloat(product.price).toFixed(2)}`
+                      : typeof product.price === 'number'
+                        ? `$${(product.price as number).toFixed(2)}`
+                        : 'N/A'}
+                  </TableCell>
+                  <TableCell>{renderStatusBadge(product.inStock)}</TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          Actions
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => navigate(`/admin/products/${product.id}`)}>
+                          <Edit2 className="mr-2 h-4 w-4" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className="text-red-600" 
+                          onClick={() => confirmDelete({ id: product.id, name: product.name })}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
               ))
-            }
-            
-            <PaginationItem>
-              <PaginationNext 
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      )}
-
-      {/* Delete confirmation dialog */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Product</DialogTitle>
+            <DialogTitle>Confirm Deletion</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this product? This action cannot be undone.
+              Are you sure you want to delete the product 
+              <span className="font-medium"> {productToDelete?.name}</span>?
+              This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              disabled={isDeleting}
+            >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={confirmDelete}>
-              Delete
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,164 +1,70 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save } from 'lucide-react';
 import { Button } from '@app/components/ui/button';
-import { Input } from '@app/components/ui/input';
-import { Textarea } from '@app/components/ui/textarea';
-import { Label } from '@app/components/ui/label';
-import { useToast } from '@app/hooks/use-toast';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@app/components/ui/card';
+import { Loader2 } from 'lucide-react';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@app/components/ui/dialog';
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@app/components/ui/tabs';
 
-// Mock category data for edit mode
-const MOCK_CATEGORY = {
-  id: 'cat1',
-  name: 'T-shirts',
-  slug: 't-shirts',
-  description: 'Casual and comfortable t-shirts for everyday wear',
-  productsCount: 24,
-  createdAt: '2023-05-10',
-  updatedAt: '2023-09-20',
-};
+import useCategoryForm from './hooks/useCategoryForm';
+import CategoryTypeSelector from './components/CategoryTypeSelector';
+import BasicInfoTab from './components/BasicInfoTab';
+import MediaSettingsTab from './components/MediaSettingsTab';
+import SEOSettingsTab from './components/SEOSettingsTab';
+import DeleteCategoryDialog from './components/DeleteCategoryDialog';
+import CreateParentDialog from './components/CreateParentDialog';
 
 const CategoryEditPage: React.FC = () => {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const isEditMode = Boolean(id);
   
-  // Category form state
-  const [category, setCategory] = useState({
-    name: '',
-    slug: '',
-    description: '',
-  });
-  
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  
-  // Load category data if in edit mode
-  useEffect(() => {
-    if (isEditMode) {
-      // Fetch category data - in a real app, this would be an API call
-      // For now, we'll use mock data
-      const fetchedCategory = MOCK_CATEGORY;
-      
-      setCategory({
-        name: fetchedCategory.name,
-        slug: fetchedCategory.slug,
-        description: fetchedCategory.description,
-      });
-    }
-  }, [id, isEditMode]);
-  
-  // Handle field changes
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setCategory(prev => ({ ...prev, [name]: value }));
+  const {
+    // State
+    category,
+    categoryType,
+    isLoading,
+    isSubmitting,
+    activeTab,
+    errors,
+    deleteDialogOpen,
+    parentCategoryDialogOpen,
+    newParentCategory,
+    creatingParent,
+    parentCategories,
+    loadingParentCategories,
+    isEditMode,
+    baseSlug,
     
-    // Clear error for this field if it exists
-    if (errors[name]) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
+    // State setters
+    setActiveTab,
+    setDeleteDialogOpen,
+    setParentCategoryDialogOpen,
+    setNewParentCategory,
     
-    // Auto-generate slug when name changes
-    if (name === 'name' && (!category.slug || category.slug === slugify(category.name))) {
-      setCategory(prev => ({ ...prev, slug: slugify(value) }));
-    }
-  };
-  
-  // Helper function to generate slug
-  const slugify = (text: string) => {
-    return text
-      .toString()
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, '-')     // Replace spaces with -
-      .replace(/[^\w-]+/g, '')  // Remove all non-word chars
-      .replace(/--+/g, '-')     // Replace multiple - with single -
-      .replace(/^-+/, '')       // Trim - from start of text
-      .replace(/-+$/, '');      // Trim - from end of text
-  };
-  
-  // Validate form
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
+    // Event handlers
+    handleChange,
+    handleCategoryTypeChange,
+    handleNumberChange,
+    handleSelectChange,
+    handleSwitchChange,
+    handleSubmit,
+    handleDelete,
+    handleCreateParentCategory,
+    handleBaseSlugChange,
     
-    // Required fields
-    if (!category.name.trim()) newErrors.name = 'Category name is required';
-    if (!category.slug.trim()) newErrors.slug = 'Slug is required';
-    
-    // Slug format validation
-    if (category.slug && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(category.slug)) {
-      newErrors.slug = 'Slug can only contain lowercase letters, numbers, and hyphens';
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-  
-  // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      // In a real app, this would be an API call to save the category
-      console.log('Saving category:', category);
-      
-      toast({
-        title: isEditMode ? 'Category updated' : 'Category created',
-        description: `${category.name} has been ${isEditMode ? 'updated' : 'created'} successfully.`,
-      });
-      
-      setIsSubmitting(false);
-      navigate('/admin/categories');
-    }, 1000);
-  };
-  
-  // Handle category deletion
-  const handleDelete = () => {
-    setIsSubmitting(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      // In a real app, this would be an API call to delete the category
-      console.log('Deleting category:', id);
-      
-      toast({
-        title: 'Category deleted',
-        description: 'The category has been deleted successfully.',
-      });
-      
-      setIsSubmitting(false);
-      setDeleteDialogOpen(false);
-      navigate('/admin/categories');
-    }, 1000);
-  };
-  
+    // Utility functions
+    resetNewParentForm,
+  } = useCategoryForm({ categoryId: id });
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <div className="flex items-center space-x-2 mb-8">
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           size="icon"
           onClick={() => navigate('/admin/categories')}
         >
@@ -169,139 +75,127 @@ const CategoryEditPage: React.FC = () => {
             {isEditMode ? 'Edit Category' : 'Add New Category'}
           </h1>
           <p className="text-muted-foreground">
-            {isEditMode 
-              ? 'Update the category information below' 
+            {isEditMode
+              ? 'Update the category information below'
               : 'Fill in the category information below'
             }
           </p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit}>
-        <Card>
-          <CardHeader>
-            <CardTitle>Category Information</CardTitle>
-            <CardDescription>
-              Basic information about the product category
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="name">
-                Category Name <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="name"
-                name="name"
-                placeholder="e.g. T-shirts"
-                value={category.name}
-                onChange={handleChange}
-                className={errors.name ? 'border-red-500' : ''}
-              />
-              {errors.name && (
-                <p className="text-xs text-red-500">{errors.name}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="slug">
-                Slug <span className="text-red-500">*</span>
-              </Label>
-              <div className="flex items-center">
-                <span className="mr-2 text-muted-foreground">/products/category/</span>
-                <Input
-                  id="slug"
-                  name="slug"
-                  placeholder="e.g. t-shirts"
-                  value={category.slug}
-                  onChange={handleChange}
-                  className={errors.slug ? 'border-red-500' : ''}
-                />
-              </div>
-              {errors.slug && (
-                <p className="text-xs text-red-500">{errors.slug}</p>
-              )}
-              <p className="text-xs text-muted-foreground">
-                The slug is used in the URL of the category page. It should contain only lowercase letters, numbers, and hyphens.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                name="description"
-                placeholder="Brief description of the category..."
-                value={category.description}
-                onChange={handleChange}
-                rows={4}
-              />
-              <p className="text-xs text-muted-foreground">
-                A short description of the category for SEO and display purposes.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Form Actions */}
-        <div className="flex justify-between mt-8">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => navigate('/admin/categories')}
-          >
-            Cancel
-          </Button>
-          
-          <div className="flex space-x-2">
-            {isEditMode && (
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() => setDeleteDialogOpen(true)}
-                disabled={isSubmitting}
-              >
-                Delete
-              </Button>
-            )}
-            <Button type="submit" disabled={isSubmitting}>
-              <Save className="mr-2 h-4 w-4" />
-              {isSubmitting 
-                ? isEditMode ? 'Updating...' : 'Creating...' 
-                : isEditMode ? 'Update Category' : 'Create Category'
-              }
-            </Button>
-          </div>
+      {isLoading ? (
+        <div className="flex justify-center items-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <span className="ml-2 text-muted-foreground">Loading category data...</span>
         </div>
-      </form>
+      ) : (
+        <form onSubmit={handleSubmit}>
+          {!isEditMode && (
+            <CategoryTypeSelector
+              value={categoryType}
+              onChange={handleCategoryTypeChange}
+            />
+          )}
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Category</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this category? This will not delete the products in this category, but they will no longer be associated with this category.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="mb-6 grid grid-cols-3">
+              <TabsTrigger value="basic">Basic Information</TabsTrigger>
+              <TabsTrigger value="media">Media & Display</TabsTrigger>
+              <TabsTrigger value="seo">SEO Settings</TabsTrigger>
+            </TabsList>
+            
+            {/* Basic Information Tab */}
+            <TabsContent value="basic">
+              <BasicInfoTab
+                category={category}
+                categoryType={categoryType}
+                errors={errors}
+                parentCategories={parentCategories}
+                loadingParentCategories={loadingParentCategories}
+                baseSlug={baseSlug}
+                handleChange={handleChange}
+                handleNumberChange={handleNumberChange}
+                handleSelectChange={handleSelectChange}
+                handleSwitchChange={handleSwitchChange}
+                handleBaseSlugChange={handleBaseSlugChange}
+                onOpenParentCategoryDialog={() => setParentCategoryDialogOpen(true)}
+              />
+            </TabsContent>
+            
+            {/* Media Settings Tab */}
+            <TabsContent value="media">
+              <MediaSettingsTab
+                imageUrl={category.imageUrl}
+                iconUrl={category.iconUrl}
+                handleChange={handleChange}
+              />
+            </TabsContent>
+            
+            {/* SEO Settings Tab */}
+            <TabsContent value="seo">
+              <SEOSettingsTab
+                metaTitle={category.metaTitle}
+                metaDescription={category.metaDescription}
+                metaKeywords={category.metaKeywords}
+                handleChange={handleChange}
+              />
+            </TabsContent>
+          </Tabs>
+
+          {/* Form Actions */}
+          <div className="flex justify-between mt-8">
             <Button
+              type="button"
               variant="outline"
-              onClick={() => setDeleteDialogOpen(false)}
-              disabled={isSubmitting}
+              onClick={() => navigate('/admin/categories')}
             >
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Deleting...' : 'Delete'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            
+            <div className="flex space-x-2">
+              {isEditMode && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => setDeleteDialogOpen(true)}
+                  disabled={isSubmitting}
+                >
+                  Delete
+                </Button>
+              )}
+              <Button type="submit" disabled={isSubmitting}>
+                <Save className="mr-2 h-4 w-4" />
+                {isSubmitting 
+                  ? isEditMode ? 'Updating...' : 'Creating...' 
+                  : isEditMode ? 'Update Category' : `Create ${categoryType === 'parent' ? 'Parent Category' : 'Subcategory'}`
+                }
+              </Button>
+            </div>
+          </div>
+        </form>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteCategoryDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onDelete={handleDelete}
+        isSubmitting={isSubmitting}
+      />
+      
+      {/* Create Parent Category Dialog */}
+      <CreateParentDialog
+        open={parentCategoryDialogOpen}
+        onOpenChange={setParentCategoryDialogOpen}
+        newParentCategory={newParentCategory}
+        setNewParentCategory={setNewParentCategory}
+        onCreateParent={handleCreateParentCategory}
+        onCancel={() => {
+          setParentCategoryDialogOpen(false);
+          resetNewParentForm();
+        }}
+        isCreating={creatingParent}
+      />
     </div>
   );
 };

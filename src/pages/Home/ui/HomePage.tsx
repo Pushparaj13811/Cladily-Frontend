@@ -8,12 +8,84 @@ import { motion } from "framer-motion";
 import ScrollAnimation from "@app/components/ui/scroll-animation";
 import AnimatedButton from "@app/components/ui/animated-button";
 import { StaggerContainer } from "@app/components/ui/motion";
+import { CategoryImage, Product } from "@shared/types";
 
 const HomePage = () => {
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 }
   };
+
+  const renderCategoryCard = (category: CategoryImage, index: number) => (
+    <ScrollAnimation 
+      key={category.title}
+      delay={index * 0.1}
+      animationType="slideUp"
+    >
+      <Link 
+        to={category.link}
+        className="relative block overflow-hidden group"
+      >
+        <div className="h-[400px] overflow-hidden">
+          <img 
+            src={category.image} 
+            alt={category.title}
+            className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
+          />
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <h3 className="text-white text-2xl font-bold tracking-wider">
+            {category.title}
+          </h3>
+        </div>
+      </Link>
+    </ScrollAnimation>
+  );
+
+  const renderProductCard = (product: Product, index: number) => (
+    <motion.div
+      key={product.id}
+      variants={cardVariants}
+      transition={{ delay: index * 0.05 }}
+    >
+      <Card className="overflow-hidden group">
+        <div className="relative">
+          <img 
+            src={product.image} 
+            alt={product.name}
+            className="object-cover w-full aspect-[3/4]"
+          />
+          <motion.div
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 rounded-full"
+            >
+              <Heart className="h-5 w-5" />
+            </Button>
+          </motion.div>
+          {product.discount && (
+            <div className="absolute bottom-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
+              {product.discount}
+            </div>
+          )}
+        </div>
+        <CardContent className="p-4 space-y-2">
+          <h3 className="font-medium">{product.department}</h3>
+          <p className="text-sm text-muted-foreground line-clamp-1">{product.name}</p>
+          <div className="flex items-center space-x-2">
+            <span className="font-medium">{product.price}</span>
+            {product.originalPrice && (
+              <span className="text-sm text-muted-foreground line-through">{product.originalPrice}</span>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
 
   return (
     <div className="space-y-16">
@@ -23,31 +95,7 @@ const HomePage = () => {
         </ScrollAnimation>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {PRODUCTS.CATEGORY_IMAGES.map((category, index) => (
-            <ScrollAnimation 
-              key={category.title}
-              delay={index * 0.1}
-              animationType="slideUp"
-            >
-              <Link 
-                to={category.link}
-                className="relative block overflow-hidden group"
-              >
-                <div className="h-[400px] overflow-hidden">
-                  <img 
-                    src={category.image} 
-                    alt={category.title}
-                    className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
-                  />
-                </div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <h3 className="text-white text-2xl font-bold tracking-wider">
-                    {category.title}
-                  </h3>
-                </div>
-              </Link>
-            </ScrollAnimation>
-          ))}
+          {PRODUCTS.CATEGORY_IMAGES.map(renderCategoryCard)}
         </div>
       </section>
 
@@ -67,50 +115,7 @@ const HomePage = () => {
 
           <StaggerContainer>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {PRODUCTS.FEATURED.map((product, index) => (
-                <motion.div
-                  key={product.id}
-                  variants={cardVariants}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <Card className="overflow-hidden group">
-                    <div className="relative">
-                      <img 
-                        src={product.image} 
-                        alt={product.name}
-                        className="object-cover w-full aspect-[3/4]"
-                      />
-                      <motion.div
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                      >
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 rounded-full"
-                        >
-                          <Heart className="h-5 w-5" />
-                        </Button>
-                      </motion.div>
-                      {product.discount && (
-                        <div className="absolute bottom-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
-                          {product.discount}
-                        </div>
-                      )}
-                    </div>
-                    <CardContent className="p-4 space-y-2">
-                      <h3 className="font-medium">{product.department}</h3>
-                      <p className="text-sm text-muted-foreground line-clamp-1">{product.name}</p>
-                      <div className="flex items-center space-x-2">
-                        <span className="font-medium">{product.price}</span>
-                        {product.originalPrice && (
-                          <span className="text-sm text-muted-foreground line-through">{product.originalPrice}</span>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
+              {PRODUCTS.FEATURED.map(renderProductCard)}
             </div>
           </StaggerContainer>
         </section>
