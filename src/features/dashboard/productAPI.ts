@@ -25,7 +25,7 @@ const extractData = <T>(response: AxiosResponse): T => {
 export const getAllProducts = async (): Promise<Product[]> => {
   try {
     const response = await api.get(API_URL);
-    console.log("Raw API response:", response.data);
+    // console.log("Raw API response:", response.data);
     
     // Check for different response formats in a consistent way
     let products: Product[] = [];
@@ -80,8 +80,59 @@ export const getAllProducts = async (): Promise<Product[]> => {
  */
 export const getProductById = async (id: string): Promise<Product> => {
   try {
+    console.log(`Fetching product with ID: ${id}`);
     const response = await api.get(`${API_URL}/${id}`);
-    return extractData<Product>(response);
+    console.log("Product by ID raw response:", response.data);
+    
+    // Handle different response formats
+    let product = null;
+    
+    // Format: { success, statusCode, message: {...product data} }
+    if (response.data?.success && response.data?.message) {
+      if (typeof response.data.message === 'object' && response.data.message !== null) {
+        console.log("Found product in response.data.message (object)");
+        product = response.data.message;
+      } else if (typeof response.data.message === 'string' && response.data.data && typeof response.data.data === 'object') {
+        // If message is a string but data contains our object
+        console.log("Found product in response.data.data (message is string)");
+        product = response.data.data;
+      }
+    }
+    // Format: { success, statusCode, data: {...product data} }
+    else if (response.data?.success && response.data?.data && typeof response.data.data === 'object') {
+      console.log("Found product in response.data.data");
+      product = response.data.data;
+    }
+    // Format: {...product data} (direct object)
+    else if (response.data && typeof response.data === 'object' && 'id' in response.data) {
+      console.log("Found product directly in response.data");
+      product = response.data;
+    }
+    
+    console.log("Parsed product data:", product);
+    
+    if (!product) {
+      console.error("Could not find product data in response:", response.data);
+      throw new Error("Invalid product data format received from API");
+    }
+    
+    if (typeof product === 'string') {
+      console.error("Product data is a string, expected object:", product);
+      throw new Error("Invalid product data format: received string instead of object");
+    }
+    
+    if (!('id' in product)) {
+      console.error("Product data does not have an ID property:", product);
+      throw new Error("Invalid product data format: missing ID property");
+    }
+    
+    // Check if images array is present
+    if (!product.images) {
+      console.warn("Product has no images array, initializing empty array");
+      product.images = [];
+    }
+    
+    return product as Product;
   } catch (error) {
     console.error(`Error fetching product ${id}:`, error);
     throw error;
@@ -204,7 +255,23 @@ export const updateProduct = async (
     } else {
       // Standard JSON request if no files
       const response = await api.put(`${API_URL}/${productId}`, productData);
-      return extractData<Product>(response);
+      
+      // Handle different response formats
+      let updatedProduct = null;
+      
+      if (response.data?.success && response.data?.message && typeof response.data.message === 'object') {
+        updatedProduct = response.data.message;
+      } else if (response.data?.success && response.data?.data && typeof response.data.data === 'object') {
+        updatedProduct = response.data.data;
+      } else if (response.data && typeof response.data === 'object' && 'id' in response.data) {
+        updatedProduct = response.data;
+      }
+      
+      if (!updatedProduct || typeof updatedProduct === 'string' || !('id' in updatedProduct)) {
+        throw new Error("Invalid product data format received from API");
+      }
+      
+      return updatedProduct as Product;
     }
   } catch (error) {
     console.error('Error updating product:', error);
@@ -287,4 +354,4 @@ export const getProductsByDepartment = async (
     console.error(`Error fetching products for department ${departmentId}:`, error);
     throw error;
   }
-}; 
+};

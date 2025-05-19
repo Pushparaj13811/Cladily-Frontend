@@ -261,7 +261,7 @@ const CategoriesManagementPage: React.FC = () => {
 
   // Render category card for grid view
   const renderCategoryCard = (category: CategoryWithChildren) => {
-    return (
+  return (
       <Card key={category.id} className="h-full">
         <CardHeader className="pb-2">
           <div className="flex justify-between items-start">
@@ -474,37 +474,37 @@ const CategoriesManagementPage: React.FC = () => {
   // Render hierarchical table view
   const renderHierarchicalTable = () => {
     return (
-      <Table>
-        <TableHeader>
+        <Table>
+          <TableHeader>
           <TableRow className="bg-gray-50">
             <TableHead className="w-[30px] pl-4">
               <div className="flex items-center">
                 <input type="checkbox" className="rounded border-gray-300" />
               </div>
             </TableHead>
-            <TableHead 
-              className="cursor-pointer"
-              onClick={() => handleSort('name')}
-            >
-              <div className="flex items-center space-x-1">
-                <span>Name</span>
-                {sortColumn === 'name' && (
-                  <ArrowUpDown className="h-4 w-4" />
-                )}
-              </div>
-            </TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead 
-              className="cursor-pointer"
-              onClick={() => handleSort('productsCount')}
-            >
-              <div className="flex items-center space-x-1">
-                <span>Products</span>
-                {sortColumn === 'productsCount' && (
-                  <ArrowUpDown className="h-4 w-4" />
-                )}
-              </div>
-            </TableHead>
+              <TableHead 
+                className="cursor-pointer"
+                onClick={() => handleSort('name')}
+              >
+                <div className="flex items-center space-x-1">
+                  <span>Name</span>
+                  {sortColumn === 'name' && (
+                    <ArrowUpDown className="h-4 w-4" />
+                  )}
+                </div>
+              </TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead 
+                className="cursor-pointer"
+                onClick={() => handleSort('productsCount')}
+              >
+                <div className="flex items-center space-x-1">
+                  <span>Products</span>
+                  {sortColumn === 'productsCount' && (
+                    <ArrowUpDown className="h-4 w-4" />
+                  )}
+                </div>
+              </TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Action</TableHead>
           </TableRow>
