@@ -52,6 +52,8 @@ export interface Product {
     width: number;
     height: number;
   };
+  variants?: ProductVariant[];
+  hasVariants?: boolean;
 }
 
 /**

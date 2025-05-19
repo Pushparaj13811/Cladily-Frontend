@@ -1,5 +1,6 @@
 import api from '@app/lib/api';
 import { Category, CreateCategoryDto, UpdateCategoryDto, Department } from '@shared/types';
+import { getAllDepartments } from './departmentAPI';
 
 // API base URL
 const API_URL = "/api/categories";
@@ -50,14 +51,26 @@ export const getAllCategories = async (): Promise<Category[]> => {
  */
 export const getCategoriesByDepartment = async (department: Department | string): Promise<Category[]> => {
   try {
-    // First get all categories
-    const allCategories = await getAllCategories();
+    // Convert department enum to ID if needed
+    let departmentId = department;
+    if (typeof department === 'string' && !department.startsWith('uuid')) {
+      // If it's a department name, get the ID first
+      const departments = await getAllDepartments();
+      const dept = departments.find((d: { id: string; name: string }) => d.name === department);
+      if (!dept) {
+        throw new Error(`Department ${department} not found`);
+      }
+      departmentId = dept.id;
+    }
+
+    // Fetch categories for the specific department
+    const response = await api.get(`/api/departments/${departmentId}/categories`);
     
-    // Filter client-side by department
-    // Note: In a real production app, you would ideally add this filter to the API
-    return allCategories.filter(category => 
-      category.department === department.toString()
-    );
+    if (!response.data?.success) {
+      throw new Error('Failed to fetch categories');
+    }
+
+    return response.data.message;
   } catch (error) {
     console.error(`Error fetching categories for department ${department}:`, error);
     throw new Error(`Failed to fetch categories for department ${department}`);
