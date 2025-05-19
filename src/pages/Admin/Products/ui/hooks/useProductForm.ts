@@ -88,7 +88,10 @@ export const useProductForm = ({ productId }: UseProductFormProps) => {
     categoryIds: [],
     colors: [],
     tags: [],
-    images: []
+    images: [],
+    hasVariants: false,
+    variants: [],
+    variantOptions: []
   });
   
   // Track base slug separately (without department prefix)
@@ -208,7 +211,10 @@ export const useProductForm = ({ productId }: UseProductFormProps) => {
               url, 
               altText: fetchedProduct.name, 
               position: index 
-            })) || []
+            })) || [],
+            hasVariants: false,
+            variants: [],
+            variantOptions: []
           });
           
           setIsLoading(false);
@@ -383,6 +389,134 @@ export const useProductForm = ({ productId }: UseProductFormProps) => {
     }));
   };
   
+  // Handle variant toggle
+  const handleVariantToggle = (hasVariants: boolean) => {
+    setProduct(prev => ({
+      ...prev,
+      hasVariants
+    }));
+  };
+
+  // Handle adding a variant option (like Size or Color)
+  const handleAddVariantOption = (option: { name: string; values: string[] }) => {
+    setProduct(prev => ({
+      ...prev,
+      variantOptions: [...prev.variantOptions, option]
+    }));
+  };
+
+  // Handle updating a variant option
+  const handleUpdateVariantOption = (index: number, option: { name: string; values: string[] }) => {
+    setProduct(prev => {
+      const updatedOptions = [...prev.variantOptions];
+      updatedOptions[index] = option;
+      return {
+        ...prev,
+        variantOptions: updatedOptions
+      };
+    });
+  };
+
+  // Handle removing a variant option
+  const handleRemoveVariantOption = (index: number) => {
+    setProduct(prev => ({
+      ...prev,
+      variantOptions: prev.variantOptions.filter((_, i) => i !== index)
+    }));
+  };
+
+  // Generate variants from options
+  const handleGenerateVariants = () => {
+    // Generate combinations of options
+    const generateCombinations = (options: { name: string; values: string[] }[]) => {
+      if (options.length === 0) return [];
+
+      // Start with the first option's values
+      let combinations = options[0].values.map(value => ({ 
+        [options[0].name]: value 
+      }));
+
+      // For each additional option, multiply the combinations
+      for (let i = 1; i < options.length; i++) {
+        const option = options[i];
+        const newCombinations: Record<string, string>[] = [];
+
+        // For each existing combination
+        combinations.forEach(combo => {
+          // Add each value of the current option
+          option.values.forEach(value => {
+            newCombinations.push({
+              ...combo,
+              [option.name]: value
+            });
+          });
+        });
+
+        combinations = newCombinations;
+      }
+
+      return combinations;
+    };
+
+    const combinations = generateCombinations(product.variantOptions);
+    
+    // Create variants from combinations
+    const newVariants = combinations.map((combo, index) => {
+      // Create a name based on the options
+      const name = Object.values(combo).join(' / ');
+
+      return {
+        name,
+        price: product.price,
+        compareAtPrice: product.compareAtPrice,
+        sku: `${product.sku || ''}-${index + 1}`.replace(/^-/, ''),
+        position: index,
+        options: combo,
+        inventoryQuantity: 0,
+        backorder: false,
+        requiresShipping: true
+      };
+    });
+
+    // Update product with new variants
+    setProduct(prev => ({
+      ...prev,
+      variants: newVariants
+    }));
+  };
+
+  // Handle updating a variant
+  const handleUpdateVariant = (index: number, variant: {
+    name: string;
+    price: string;
+    compareAtPrice: string;
+    sku?: string;
+    barcode?: string;
+    position: number;
+    options: Record<string, string>;
+    imageUrl?: string;
+    inventoryQuantity: number;
+    backorder: boolean;
+    requiresShipping: boolean;
+  }) => {
+    setProduct(prev => {
+      const updatedVariants = [...prev.variants];
+      updatedVariants[index] = variant;
+      return {
+        ...prev,
+        variants: updatedVariants
+      };
+    });
+  };
+
+  // Handle removing a variant
+  const handleRemoveVariant = (index: number) => {
+    setProduct(prev => ({
+      ...prev,
+      variants: prev.variants.filter((_, i) => i !== index)
+    }));
+  };
+  
   // Validate form
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -423,8 +557,10 @@ export const useProductForm = ({ productId }: UseProductFormProps) => {
   };
   
   // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent | React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
     
     if (!validateForm()) {
       return;
@@ -448,10 +584,13 @@ export const useProductForm = ({ productId }: UseProductFormProps) => {
         sizes: [], // Add this to your form if needed
         colors: product.colors,
         category: product.categoryId || product.categoryIds[0] || '',
+        categoryIds: product.categoryIds,
         subcategory: '', // Set this if you have subcategories
         deliveryInfo: '',
         inStock: true,
-        images: product.images.map(img => img.url)
+        images: product.images.map(img => img.url),
+        hasVariants: product.hasVariants,
+        variants: product.hasVariants ? product.variants : undefined
       };
       
       console.log("Submitting product data to API:", productData);
@@ -596,6 +735,15 @@ export const useProductForm = ({ productId }: UseProductFormProps) => {
     handleDimensionsChange,
     handleSubmit,
     handleDelete,
+    
+    // Variant handlers
+    handleVariantToggle,
+    handleAddVariantOption,
+    handleUpdateVariantOption,
+    handleRemoveVariantOption,
+    handleGenerateVariants,
+    handleUpdateVariant,
+    handleRemoveVariant,
     
     // Utility functions
     validateForm,

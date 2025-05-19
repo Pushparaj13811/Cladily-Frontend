@@ -24,6 +24,7 @@ export interface Product {
   price: string;
   originalPrice: string | null;
   image: string;
+  featuredImageUrl?: string;
   discount: string | null;
   department: string;
   description: string;
@@ -39,6 +40,7 @@ export interface Product {
   ratingCount: number;
   deliveryInfo: string;
   inStock: boolean;
+  status?: string;
   images: string[];
   sku?: string;
   barcode?: string;
@@ -49,6 +51,24 @@ export interface Product {
     width: number;
     height: number;
   };
+}
+
+/**
+ * Represents a product variant option
+ */
+export interface ProductVariant {
+  id?: string;
+  name: string;
+  sku?: string;
+  barcode?: string;
+  price?: string;
+  compareAtPrice?: string;
+  position: number;
+  options: Record<string, string>; // E.g., {size: "S", color: "Red"}
+  imageUrl?: string;
+  inventoryQuantity: number;
+  backorder: boolean;
+  requiresShipping: boolean;
 }
 
 /**
@@ -70,6 +90,7 @@ export interface CreateProductDto {
   sizes: string[];
   colors: ProductColor[];
   category: string;
+  categoryIds?: string[];
   subcategory: string;
   deliveryInfo: string;
   inStock: boolean;
@@ -83,6 +104,8 @@ export interface CreateProductDto {
     width: number;
     height: number;
   };
+  variants?: ProductVariant[];
+  hasVariants?: boolean;
 }
 
 /**
@@ -104,6 +127,7 @@ export interface UpdateProductDto {
   sizes?: string[];
   colors?: ProductColor[];
   category?: string;
+  categoryIds?: string[];
   subcategory?: string;
   deliveryInfo?: string;
   inStock?: boolean;
@@ -117,6 +141,8 @@ export interface UpdateProductDto {
     width?: number;
     height?: number;
   };
+  variants?: ProductVariant[];
+  hasVariants?: boolean;
 }
 
 /**

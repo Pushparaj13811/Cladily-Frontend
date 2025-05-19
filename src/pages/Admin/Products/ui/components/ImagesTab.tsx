@@ -238,7 +238,12 @@ const ImagesTab: React.FC<ImagesTabProps> = ({
               />
             </div>
             
-            <Button type="submit" className="w-full" disabled={selectedFiles.length === 0}>
+            <Button 
+              type="button" 
+              className="w-full" 
+              disabled={selectedFiles.length === 0}
+              onClick={handleSubmit}
+            >
               <ImagePlus className="mr-2 h-4 w-4" />
               Add {selectedFiles.length > 1 ? `${selectedFiles.length} Images` : 'Image'}
             </Button>

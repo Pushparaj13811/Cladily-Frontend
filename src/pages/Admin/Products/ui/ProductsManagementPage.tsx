@@ -32,6 +32,12 @@ import { getAllProducts, deleteProduct } from '@features/dashboard/productAPI';
 import { Product } from '@shared/types';
 import { useToast } from '@app/hooks/use-toast';
 
+// Add a type to handle backend product type
+type ExtendedProduct = Product & {
+  featuredImageUrl?: string;
+  status?: string;
+};
+
 const ProductsManagementPage: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -52,8 +58,67 @@ const ProductsManagementPage: React.FC = () => {
       try {
         setIsLoading(true);
         const fetchedProducts = await getAllProducts();
-        setProducts(fetchedProducts);
-        setFilteredProducts(fetchedProducts);
+        console.log('Fetched products:', fetchedProducts);
+        
+        // Validate and normalize received products
+        const validProducts = fetchedProducts
+          .filter(product => 
+            // Ensure product has required fields
+            product && 
+            product.id !== undefined && 
+            product.name
+          )
+          .map(product => {
+            // Cast to extended product type to handle backend fields
+            const extProduct = product as ExtendedProduct;
+            return {
+              ...product,
+              // Ensure price is a string (some APIs return it as a number)
+              price: typeof product.price === 'number' 
+                ? String(product.price) 
+                : (product.price || '0'),
+              // Ensure originalPrice is a string or null
+              originalPrice: typeof product.originalPrice === 'number'
+                ? String(product.originalPrice)
+                : product.originalPrice,
+              // Ensure category exists
+              category: product.category || 'Uncategorized',
+              // Ensure subcategory exists
+              subcategory: product.subcategory || '',
+              // Ensure image exists
+              image: product.image || extProduct.featuredImageUrl || '',
+              // Ensure inStock flag exists
+              inStock: product.inStock !== undefined 
+                ? product.inStock 
+                : extProduct.status !== 'OUT_OF_STOCK',
+              // Ensure department exists
+              department: product.department || 'Menswear',
+              // Set other required fields with defaults if missing
+              material: product.material || 'N/A',
+              care: Array.isArray(product.care) ? product.care : [],
+              features: Array.isArray(product.features) ? product.features : [],
+              sizes: Array.isArray(product.sizes) ? product.sizes : [],
+              colors: Array.isArray(product.colors) ? product.colors : [],
+              deliveryInfo: product.deliveryInfo || 'Standard shipping',
+              rating: typeof product.rating === 'number' ? product.rating : 0,
+              ratingCount: typeof product.ratingCount === 'number' ? product.ratingCount : 0,
+              discount: product.discount || null,
+              images: Array.isArray(product.images) ? product.images : []
+            };
+          });
+        
+        console.log('Valid products after normalization:', validProducts.length);
+        
+        // Set products state with normalized data
+        setProducts(validProducts);
+        setFilteredProducts(validProducts);
+        
+        if (validProducts.length === 0) {
+          toast({
+            title: 'No products found',
+            description: 'Try creating your first product',
+          });
+        }
       } catch (error) {
         console.error('Error fetching products:', error);
         toast({
@@ -61,6 +126,10 @@ const ProductsManagementPage: React.FC = () => {
           description: 'There was a problem loading the products. Please try again.',
           variant: 'destructive',
         });
+        
+        // Set empty arrays in case of error
+        setProducts([]);
+        setFilteredProducts([]);
       } finally {
         setIsLoading(false);
       }
@@ -248,19 +317,33 @@ const ProductsManagementPage: React.FC = () => {
               filteredProducts.map((product) => (
                 <TableRow key={product.id}>
                   <TableCell>
-                    {product.image && (
+                    {product.image ? (
                       <div className="h-12 w-12 rounded-md overflow-hidden">
                         <img
                           src={product.image}
                           alt={product.name}
                           className="h-full w-full object-cover"
+                          onError={(e) => {
+                            // Replace broken image with a placeholder
+                            (e.target as HTMLImageElement).src = 'https://placehold.co/100x100?text=No+Image';
+                          }}
                         />
+                      </div>
+                    ) : (
+                      <div className="h-12 w-12 rounded-md bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                        No image
                       </div>
                     )}
                   </TableCell>
                   <TableCell className="font-medium">{product.name}</TableCell>
-                  <TableCell>{product.category}</TableCell>
-                  <TableCell className="whitespace-nowrap">${parseFloat(product.price).toFixed(2)}</TableCell>
+                  <TableCell>{product.category || 'Uncategorized'}</TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    {typeof product.price === 'string' && !isNaN(parseFloat(product.price))
+                      ? `$${parseFloat(product.price).toFixed(2)}`
+                      : typeof product.price === 'number'
+                        ? `$${(product.price as number).toFixed(2)}`
+                        : 'N/A'}
+                  </TableCell>
                   <TableCell>{renderStatusBadge(product.inStock)}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>

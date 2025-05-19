@@ -22,6 +22,7 @@ import useProductForm from './hooks/useProductForm';
 import BasicInfoTab from './components/BasicInfoTab';
 import ContentTab from './components/ContentTab';
 import ImagesTab from './components/ImagesTab';
+import VariantsTab from './components/VariantsTab';
 
 const ProductEditPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -58,13 +59,23 @@ const ProductEditPage: React.FC = () => {
     handleReorderImages,
     handleSubmit,
     handleDelete,
+    handleMultiSelectChange,
+    
+    // Variant handlers
+    handleVariantToggle,
+    handleAddVariantOption,
+    handleUpdateVariantOption,
+    handleRemoveVariantOption,
+    handleGenerateVariants,
+    handleUpdateVariant,
+    handleRemoveVariant,
   } = useProductForm({ productId: id });
-
+  
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
       <div className="flex items-center space-x-2 mb-8">
-        <Button
-          variant="ghost"
+        <Button 
+          variant="ghost" 
           size="icon"
           onClick={() => navigate('/admin/products')}
         >
@@ -75,8 +86,8 @@ const ProductEditPage: React.FC = () => {
             {isEditMode ? 'Edit Product' : 'Add New Product'}
           </h1>
           <p className="text-muted-foreground">
-            {isEditMode
-              ? 'Update the product information below'
+            {isEditMode 
+              ? 'Update the product information below' 
               : 'Fill in the product information below'
             }
           </p>
@@ -87,18 +98,25 @@ const ProductEditPage: React.FC = () => {
         <div className="flex justify-center items-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           <span className="ml-2 text-muted-foreground">Loading product data...</span>
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit}>
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-6 grid grid-cols-3">
+                    </div>
+                  ) : (
+        <form onSubmit={(e) => {
+          // Always prevent default form submission behavior
+          e.preventDefault();
+          
+          // We manually call handleSubmit only from the submit button's onClick
+          // This ensures the form is only submitted when the submit button is clicked
+        }}>
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="mb-6 grid grid-cols-4">
               <TabsTrigger value="basic">Basic Information</TabsTrigger>
+              <TabsTrigger value="variants">Variants</TabsTrigger>
               <TabsTrigger value="content">Content</TabsTrigger>
               <TabsTrigger value="images">Images</TabsTrigger>
-            </TabsList>
-            
+              </TabsList>
+
             {/* Basic Information Tab */}
-            <TabsContent value="basic">
+              <TabsContent value="basic">
               <BasicInfoTab
                 product={product}
                 errors={errors}
@@ -112,9 +130,24 @@ const ProductEditPage: React.FC = () => {
                 handleSwitchChange={handleSwitchChange}
                 handleDepartmentChange={handleDepartmentChange}
                 handleBaseSlugChange={handleBaseSlugChange}
+                handleMultiSelectChange={handleMultiSelectChange}
               />
             </TabsContent>
             
+            {/* Variants Tab */}
+            <TabsContent value="variants">
+              <VariantsTab
+                product={product}
+                handleVariantToggle={handleVariantToggle}
+                handleAddVariantOption={handleAddVariantOption}
+                handleUpdateVariantOption={handleUpdateVariantOption}
+                handleRemoveVariantOption={handleRemoveVariantOption}
+                handleGenerateVariants={handleGenerateVariants}
+                handleUpdateVariant={handleUpdateVariant}
+                handleRemoveVariant={handleRemoveVariant}
+              />
+              </TabsContent>
+
             {/* Content Tab */}
             <TabsContent value="content">
               <ContentTab
@@ -122,8 +155,8 @@ const ProductEditPage: React.FC = () => {
                 errors={errors}
                 handleChange={handleChange}
               />
-            </TabsContent>
-            
+              </TabsContent>
+
             {/* Images Tab */}
             {activeTab === 'images' && (
               <ImagesTab
@@ -134,39 +167,43 @@ const ProductEditPage: React.FC = () => {
                 setUploadedFiles={setUploadedFiles}
               />
             )}
-          </Tabs>
+            </Tabs>
 
-          {/* Form Actions */}
-          <div className="flex justify-between mt-8">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => navigate('/admin/products')}
-            >
-              Cancel
-            </Button>
-            
-            <div className="flex space-x-2">
-              {isEditMode && (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  onClick={() => setDeleteDialogOpen(true)}
-                  disabled={isSubmitting}
-                >
-                  Delete
-                </Button>
-              )}
-              <Button type="submit" disabled={isSubmitting}>
-                <Save className="mr-2 h-4 w-4" />
-                {isSubmitting 
-                  ? isEditMode ? 'Updating...' : 'Creating...' 
-                  : isEditMode ? 'Update Product' : 'Create Product'
-                }
+        {/* Form Actions */}
+        <div className="flex justify-between mt-8">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate('/admin/products')}
+          >
+            Cancel
+          </Button>
+          
+          <div className="flex space-x-2">
+            {isEditMode && (
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => setDeleteDialogOpen(true)}
+                disabled={isSubmitting}
+              >
+                Delete
               </Button>
-            </div>
+            )}
+              <Button 
+                type="button" 
+                disabled={isSubmitting}
+                onClick={handleSubmit}
+              >
+              <Save className="mr-2 h-4 w-4" />
+              {isSubmitting 
+                ? isEditMode ? 'Updating...' : 'Creating...' 
+                : isEditMode ? 'Update Product' : 'Create Product'
+              }
+            </Button>
           </div>
-        </form>
+        </div>
+      </form>
       )}
 
       {/* Delete Confirmation Dialog */}
@@ -182,14 +219,14 @@ const ProductEditPage: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setDeleteDialogOpen(false)}
               disabled={isSubmitting}
             >
               Cancel
             </Button>
-            <Button 
+            <Button
               variant="destructive"
               onClick={handleDelete}
               disabled={isSubmitting}

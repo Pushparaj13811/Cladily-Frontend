@@ -18,7 +18,8 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
     handleSwitchChange,
     handleDepartmentChange,
     handleBaseSlugChange,
-    availableCategories
+    availableCategories,
+    handleMultiSelectChange
 }) => {
     // Helper to format currency input
     const formatCurrency = (value: string) => {
@@ -213,25 +214,59 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
                     </Select>
                 </div>
                 <div className='space-y-2'>
-                    <Label htmlFor='categoryId'>
+                    <Label htmlFor='categoryIds'>
                         Categories
                     </Label>
-                    <Select
-                        value={product.categoryId || ''}
-                        onValueChange={(value) => handleSelectChange('categoryId', value === '_none' ? null : value)}
-                    >
-                        <SelectTrigger id='categoryId'>
-                            <SelectValue placeholder="Select Category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value='_none'>None</SelectItem>
-                            {availableCategories && availableCategories.map((category) => (
-                                <SelectItem key={category.id} value={category.id}>
-                                    {category.name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <div className="flex flex-col space-y-2">
+                        <div className="flex flex-wrap gap-2 border rounded-md p-2 min-h-[2.5rem]">
+                            {product.categoryIds && product.categoryIds.length > 0 ? (
+                                product.categoryIds.map((categoryId) => {
+                                    const category = availableCategories.find(c => c.id === categoryId);
+                                    return (
+                                        <div key={categoryId} className="bg-primary/10 text-primary rounded-md px-2 py-1 text-sm flex items-center">
+                                            {category ? category.name : categoryId}
+                                            <button 
+                                                type="button"
+                                                className="ml-1 text-primary/70 hover:text-primary"
+                                                onClick={() => {
+                                                    const newCategoryIds = product.categoryIds.filter(id => id !== categoryId);
+                                                    handleMultiSelectChange('categoryIds', newCategoryIds);
+                                                }}
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
+                                    );
+                                })
+                            ) : (
+                                <div className="text-muted-foreground text-sm">No categories selected</div>
+                            )}
+                        </div>
+                        <Select
+                            onValueChange={(value) => {
+                                if (value === '_none') return;
+                                
+                                // Don't add duplicates
+                                if (!product.categoryIds.includes(value)) {
+                                    handleMultiSelectChange('categoryIds', [...product.categoryIds, value]);
+                                }
+                            }}
+                        >
+                            <SelectTrigger id='categorySelect'>
+                                <SelectValue placeholder="Add Category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {availableCategories && availableCategories.map((category) => (
+                                    <SelectItem key={category.id} value={category.id}>
+                                        {category.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        {errors.categoryIds && (
+                            <p className="text-xs text-red-500">{errors.categoryIds}</p>
+                        )}
+                    </div>
                 </div>
 
                 <div className="space-y-2">

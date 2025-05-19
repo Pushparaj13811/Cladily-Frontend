@@ -36,6 +36,25 @@ export interface ProductFormState {
   colors: ProductColor[];
   tags: string[];
   images: { url: string; altText: string; position: number }[];
+  hasVariants: boolean;
+  variants: {
+    id?: string;
+    name: string;
+    sku?: string;
+    barcode?: string;
+    price: string;
+    compareAtPrice: string;
+    position: number;
+    options: Record<string, string>;
+    imageUrl?: string;
+    inventoryQuantity: number;
+    backorder: boolean;
+    requiresShipping: boolean;
+  }[];
+  variantOptions: {
+    name: string;
+    values: string[];
+  }[];
 }
 
 /**
@@ -54,6 +73,7 @@ export interface BasicInfoTabProps {
   handleSwitchChange: (name: string, checked: boolean) => void;
   handleDepartmentChange: (value: Department) => void;
   handleBaseSlugChange: (value: string) => void;
+  handleMultiSelectChange: (name: string, values: string[]) => void;
 }
 
 /**

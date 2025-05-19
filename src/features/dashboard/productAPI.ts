@@ -25,33 +25,48 @@ const extractData = <T>(response: AxiosResponse): T => {
 export const getAllProducts = async (): Promise<Product[]> => {
   try {
     const response = await api.get(API_URL);
-    let data;
+    console.log("Raw API response:", response.data);
     
-    // Check response.data.data first (common pattern)
-    if (response?.data?.data) {
-      data = response.data.data;
-    } else if (response?.data) {
-      data = response.data;
-    } else {
-      data = response;
+    // Check for different response formats in a consistent way
+    let products: Product[] = [];
+    
+    // Format: { success, statusCode, message: { products: [...], pagination: {...} } }
+    if (response.data?.success && response.data?.message?.products) {
+      console.log("Found products in response.data.message.products");
+      products = response.data.message.products;
+    }
+    // Format: { success, statusCode, message, data: { products: [...], pagination: {...} } }
+    else if (response.data?.success && response.data?.data?.products) {
+      console.log("Found products in response.data.data.products");
+      products = response.data.data.products;
+    }
+    // Format: { success, statusCode, message, data: [...] }
+    else if (response.data?.success && Array.isArray(response.data.data)) {
+      console.log("Found products in response.data.data (array)");
+      products = response.data.data;
+    }
+    // Format: { products: [...], pagination: {...} }
+    else if (response.data?.products && Array.isArray(response.data.products)) {
+      console.log("Found products in response.data.products");
+      products = response.data.products;
+    }
+    // Format: [...] (direct array)
+    else if (Array.isArray(response.data)) {
+      console.log("Found products as direct array");
+      products = response.data;
+    }
+    // Last resort: check if response.data is a valid Product object
+    else if (response.data && typeof response.data === 'object' && 'id' in response.data) {
+      console.log("Found single product in response.data");
+      products = [response.data as Product];
     }
     
-    // Handle different response formats
-    if (Array.isArray(data)) {
-      return data;
-    } else if (data && typeof data === 'object') {
-      // Check if products are in a nested property
-      if ('products' in data && Array.isArray(data.products)) {
-        return data.products;
-      }
-      // If data is an object with product-like properties, wrap in array
-      if ('id' in data && 'name' in data) {
-        return [data as Product];
-      }
+    if (products.length > 0) {
+      console.log(`Successfully parsed ${products.length} products`);
+      return products;
     }
     
-    // If we can't find products, return empty array
-    console.warn('Unexpected API response format:', data);
+    console.error("Unexpected API response format, couldn't find products:", response.data);
     return [];
   } catch (error) {
     console.error('Error fetching products:', error);
@@ -78,29 +93,69 @@ export const getProductById = async (id: string): Promise<Product> => {
  */
 export const createProduct = async (productData: CreateProductDto, imageFiles?: File[]): Promise<Product> => {
   try {
+    // Log the data being sent to help diagnose issues
+    console.log('Creating product with data:', JSON.stringify(productData, null, 2));
+    console.log('Image files:', imageFiles?.length || 0);
+    
     // Check if we have image files to upload
     if (imageFiles && imageFiles.length > 0) {
       // Use FormData to send files
       const formData = new FormData();
       
+      // Make sure numeric values are properly formatted
+      const preparedData = { ...productData };
+      
+      // Convert price to number if it's a string
+      if (typeof preparedData.price === 'string') {
+        const numericPrice = parseFloat(preparedData.price);
+        if (!isNaN(numericPrice)) {
+          preparedData.price = numericPrice as unknown as string;
+        }
+      }
+      
       // Add product data as JSON
-      formData.append('productData', JSON.stringify(productData));
+      formData.append('productData', JSON.stringify(preparedData));
+      
+      // Add individual fields for maximum compatibility
+      Object.keys(preparedData).forEach(key => {
+        const value = preparedData[key as keyof typeof preparedData];
+        
+        // Skip null/undefined values and the complete productData object
+        if (value === null || value === undefined) return;
+        
+        // For arrays and objects, stringify them
+        if (typeof value === 'object') {
+          formData.append(key, JSON.stringify(value));
+        } else {
+          // For primitive values, convert to string
+          formData.append(key, String(value));
+        }
+      });
       
       // Add image files
-      imageFiles.forEach((file) => {
+      imageFiles.forEach(file => {
         formData.append('images', file);
       });
       
+      console.log('Sending multipart form data with images');
       const response = await api.post(`${API_URL}/`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       });
       
+      console.log('Product creation response:', response.data);
       return extractData<Product>(response);
     } else {
       // Standard JSON request if no files
-      const response = await api.post(`${API_URL}/`, productData);
+      console.log('Sending JSON data directly');
+      const response = await api.post(`${API_URL}/`, productData, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('Product creation response:', response.data);
       return extractData<Product>(response);
     }
   } catch (error) {
