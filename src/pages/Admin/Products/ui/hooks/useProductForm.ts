@@ -586,7 +586,7 @@ export const useProductForm = ({ productId }: UseProductFormProps) => {
       }
     }
     
-    return Object.keys(newErrors).length === 0;
+    return newErrors;
   };
   
   // Handle department change by ID (from backend)
@@ -622,8 +622,6 @@ export const useProductForm = ({ productId }: UseProductFormProps) => {
     // Validate form
     const formErrors = validateForm();
     if (Object.keys(formErrors).length > 0) {
-      setErrors(formErrors);
-      
       // Show error toast
       toast({
         title: 'Validation Error',
