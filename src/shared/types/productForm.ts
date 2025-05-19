@@ -30,7 +30,7 @@ export interface ProductFormState {
   taxCode: string;
   featuredImageUrl: string;
   searchKeywords: string;
-  brandId: string | null;
+  departmentId?: string; // Department ID from the backend
   categoryId: string | null; // Single category ID
   categoryIds: string[]; // For multi-select categories if needed
   colors: ProductColor[];
@@ -65,13 +65,17 @@ export interface BasicInfoTabProps {
   errors: Record<string, string>;
   baseSlug: string;
   department: Department;
-  availableBrands: { id: string; name: string }[];
+  departmentId: string;
+  availableDepartments: { id: string; name: string }[];
   availableCategories: { id: string; name: string; department?: Department }[];
+  isFetchingDepartments: boolean;
+  isFetchingCategories?: boolean;
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleNumberChange: (name: string, value: string) => void;
   handleSelectChange: (name: string, value: string | null) => void;
   handleSwitchChange: (name: string, checked: boolean) => void;
   handleDepartmentChange: (value: Department) => void;
+  handleDepartmentIdChange: (value: string) => void;
   handleBaseSlugChange: (value: string) => void;
   handleMultiSelectChange: (name: string, values: string[]) => void;
 }
@@ -86,15 +90,24 @@ export interface ContentTabProps {
 }
 
 /**
+ * Interface for product image with file support
+ */
+export interface ProductImage {
+  url: string;
+  altText: string;
+  position: number;
+  file?: File;
+}
+
+/**
  * Props for the ImagesTab component
  */
 export interface ImagesTabProps {
-  product: ProductFormState;
-  errors: Record<string, string>;
-  handleAddImage: (image: { url: string; altText: string }) => void;
-  handleRemoveImage: (index: number) => void;
-  handleReorderImages: (images: { url: string; altText: string; position: number }[]) => void;
-  handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  images: ProductImage[];
+  onAddImage: (image: { url: string; altText: string; file?: File }) => void;
+  onRemoveImage: (index: number) => void;
+  onReorderImages: (images: ProductImage[]) => void;
+  setUploadedFiles: React.Dispatch<React.SetStateAction<File[]>>;
 }
 
 /**

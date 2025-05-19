@@ -4,22 +4,22 @@ import { Label } from '@app/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@app/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@app/components/ui/select';
 import { Switch } from '@app/components/ui/switch';
-import { Department, BasicInfoTabProps } from '@shared/types';
+import { BasicInfoTabProps } from '@shared/types';
 
 const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
     product,
     errors,
     baseSlug,
-    department,
-    availableBrands,
+    availableDepartments,
     handleChange,
     handleNumberChange,
     handleSelectChange,
     handleSwitchChange,
-    handleDepartmentChange,
     handleBaseSlugChange,
     availableCategories,
-    handleMultiSelectChange
+    handleMultiSelectChange,
+    handleDepartmentIdChange,
+    isFetchingDepartments
 }) => {
     // Helper to format currency input
     const formatCurrency = (value: string) => {
@@ -54,25 +54,30 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
                     )}
                 </div>
 
+
                 <div className="space-y-2">
-                    <Label htmlFor="department">
-                        Department <span className="text-red-500">*</span>
+                    <Label htmlFor="departmentId">
+                        Department Selection <span className="text-red-500">*</span>
                     </Label>
                     <Select
-                        value={department}
-                        onValueChange={(value) => handleDepartmentChange(value as Department)}
+                        value={product.departmentId || ''}
+                        onValueChange={(value) => handleDepartmentIdChange(value)}
+                        disabled={isFetchingDepartments}
                     >
-                        <SelectTrigger id="department">
+                        <SelectTrigger id="departmentId">
                             <SelectValue placeholder="Select a department" />
                         </SelectTrigger>
                         <SelectContent>
-                            {Object.values(Department).map((dept) => (
-                                <SelectItem key={dept} value={dept}>
-                                    {dept}
+                            {availableDepartments?.map((dept) => (
+                                <SelectItem key={dept.id} value={dept.id}>
+                                    {dept.name}
                                 </SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
+                    {errors.departmentId && (
+                        <p className="text-xs text-red-500">{errors.departmentId}</p>
+                    )}
                 </div>
 
                 <div className="space-y-2">
@@ -192,27 +197,6 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
                     </div>
                 </div>
 
-                <div className="space-y-2">
-                    <Label htmlFor="brandId">
-                        Brand
-                    </Label>
-                    <Select
-                        value={product.brandId || '_none'}
-                        onValueChange={(value) => handleSelectChange('brandId', value === '_none' ? null : value)}
-                    >
-                        <SelectTrigger id="brandId">
-                            <SelectValue placeholder="Select a brand" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="_none">None</SelectItem>
-                            {availableBrands.map((brand) => (
-                                <SelectItem key={brand.id} value={brand.id}>
-                                    {brand.name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
                 <div className='space-y-2'>
                     <Label htmlFor='categoryIds'>
                         Categories

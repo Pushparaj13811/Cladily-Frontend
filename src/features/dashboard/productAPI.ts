@@ -238,7 +238,6 @@ export const getProductsByDepartment = async (
     limit?: number;
     status?: string;
     category?: string;
-    brand?: string;
     search?: string;
     minPrice?: number;
     maxPrice?: number;
@@ -262,7 +261,6 @@ export const getProductsByDepartment = async (
     if (options.limit) queryParams.append('limit', options.limit.toString());
     if (options.status) queryParams.append('status', options.status);
     if (options.category) queryParams.append('category', options.category);
-    if (options.brand) queryParams.append('brand', options.brand);
     if (options.search) queryParams.append('search', options.search);
     if (options.minPrice) queryParams.append('minPrice', options.minPrice.toString());
     if (options.maxPrice) queryParams.append('maxPrice', options.maxPrice.toString());

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { 
-  CreateProductDto, 
   UpdateProductDto, 
   ProductColor, 
   Department,
+  DepartmentType,
   WeightUnit,
   ProductFormState
 } from '@shared/types';
@@ -14,6 +14,7 @@ import {
   deleteProduct 
 } from '@features/dashboard/productAPI';
 import { getCategoriesByDepartment } from '@features/dashboard/categoryAPI';
+import { getAllDepartments } from '@features/dashboard/departmentAPI';
 import { useToast } from '@app/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -83,7 +84,6 @@ export const useProductForm = ({ productId }: UseProductFormProps) => {
     taxCode: '',
     featuredImageUrl: '',
     searchKeywords: '',
-    brandId: null,
     categoryId: null,
     categoryIds: [],
     colors: [],
@@ -97,6 +97,8 @@ export const useProductForm = ({ productId }: UseProductFormProps) => {
   // Track base slug separately (without department prefix)
   const [baseSlug, setBaseSlug] = useState('');
   const [department, setDepartment] = useState<Department>(Department.Menswear);
+  const [departmentId, setDepartmentId] = useState<string>('');
+  const [availableDepartments, setAvailableDepartments] = useState<DepartmentType[]>([]);
   
   // Track uploaded image files
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
@@ -110,14 +112,46 @@ export const useProductForm = ({ productId }: UseProductFormProps) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   
   // Available options
-  const [availableBrands] = useState<{ id: string; name: string }[]>([
-    { id: 'brand1', name: 'Nike' },
-    { id: 'brand2', name: 'Adidas' },
-    { id: 'brand3', name: 'Puma' },
-    { id: 'brand4', name: 'Under Armour' }
-  ]);
   const [availableCategories, setAvailableCategories] = useState<{ id: string; name: string; department: Department }[]>([]);
   const [isFetchingCategories, setIsFetchingCategories] = useState(true);
+  const [isFetchingDepartments, setIsFetchingDepartments] = useState(true);
+  
+  // Load available departments
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        setIsFetchingDepartments(true);
+        const departments = await getAllDepartments();
+        setAvailableDepartments(departments);
+        
+        // If we have departments and no departmentId is selected yet,
+        // set the first one as default
+        if (departments.length > 0 && !departmentId) {
+          setDepartmentId(departments[0].id);
+          // Also set the corresponding department enum
+          const deptName = departments[0].name;
+          if (deptName === 'Womenswear') {
+            setDepartment(Department.Womenswear);
+          } else if (deptName === 'Kidswear') {
+            setDepartment(Department.Kidswear);
+          } else {
+            setDepartment(Department.Menswear);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading departments:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load departments. Please try again.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsFetchingDepartments(false);
+      }
+    };
+    
+    fetchDepartments();
+  }, [toast]);
   
   // Load available categories based on selected department
   useEffect(() => {
@@ -202,7 +236,6 @@ export const useProductForm = ({ productId }: UseProductFormProps) => {
             taxCode: '',
             featuredImageUrl: fetchedProduct.image || '',
             searchKeywords: '',
-            brandId: null,
             categoryId: fetchedProduct.category || null,
             categoryIds: [],
             colors: fetchedProduct.colors || [],
@@ -556,41 +589,93 @@ export const useProductForm = ({ productId }: UseProductFormProps) => {
     return Object.keys(newErrors).length === 0;
   };
   
+  // Handle department change by ID (from backend)
+  const handleDepartmentIdChange = (value: string) => {
+    setDepartmentId(value);
+    
+    // Find the corresponding department in available departments
+    const selectedDept = availableDepartments.find(d => d.id === value);
+    if (selectedDept) {
+      // Map the name to the Department enum
+      if (selectedDept.name === 'Womenswear') {
+        setDepartment(Department.Womenswear);
+      } else if (selectedDept.name === 'Kidswear') {
+        setDepartment(Department.Kidswear);
+      } else {
+        setDepartment(Department.Menswear);
+      }
+    }
+    
+    // Update the product state with the new department ID
+    setProduct(prev => ({
+      ...prev,
+      departmentId: value
+    }));
+  };
+  
   // Handle form submission
   const handleSubmit = async (e?: React.FormEvent | React.MouseEvent) => {
     if (e) {
       e.preventDefault();
     }
     
-    if (!validateForm()) {
+    // Validate form
+    const formErrors = validateForm();
+    if (Object.keys(formErrors).length > 0) {
+      setErrors(formErrors);
+      
+      // Show error toast
+      toast({
+        title: 'Validation Error',
+        description: 'Please fix the errors in the form.',
+        variant: 'destructive',
+      });
+      
       return;
     }
     
+    // Clear any previous errors
+    setErrors({});
     setIsSubmitting(true);
     
     try {
-      // Create API-compatible data object
-      const productData: CreateProductDto = {
+      // Prepare data for API
+      const productData = {
         name: product.name,
+        slug: product.slug,
         price: product.price,
         originalPrice: product.compareAtPrice || null,
-        image: product.featuredImageUrl || product.images[0]?.url || '',
-        discount: null, // Calculate this if needed
-        department: department.toString(),
         description: product.description,
-        material: '', // Add this to your form if needed
-        care: [], // Add this to your form if needed
-        features: [], // Add this to your form if needed
-        sizes: [], // Add this to your form if needed
+        shortDescription: product.shortDescription,
+        image: product.featuredImageUrl,
+        category: product.categoryId || '',
+        subcategory: '',
+        department: department,
+        departmentId: departmentId,
+        inStock: product.status === 'ACTIVE',
+        material: 'Cotton',
+        care: ['Machine wash cold', 'Do not bleach', 'Tumble dry low'],
+        features: ['Premium quality', 'Comfortable fit', 'Durable material'],
+        sizes: ['S', 'M', 'L', 'XL'],
         colors: product.colors,
-        category: product.categoryId || product.categoryIds[0] || '',
-        categoryIds: product.categoryIds,
-        subcategory: '', // Set this if you have subcategories
-        deliveryInfo: '',
-        inStock: true,
+        deliveryInfo: 'Free shipping on orders over $50',
         images: product.images.map(img => img.url),
-        hasVariants: product.hasVariants,
-        variants: product.hasVariants ? product.variants : undefined
+        sku: product.sku,
+        barcode: product.barcode,
+        weight: product.weight ? parseFloat(product.weight) : undefined,
+        weightUnit: product.weightUnit as WeightUnit,
+        dimensions: product.dimensions.length && product.dimensions.width && product.dimensions.height
+          ? {
+              length: parseFloat(product.dimensions.length.toString()),
+              width: parseFloat(product.dimensions.width.toString()),
+              height: parseFloat(product.dimensions.height.toString())
+            }
+          : undefined,
+        variants: product.hasVariants ? product.variants.map(v => ({
+          ...v,
+          price: v.price,
+          compareAtPrice: v.compareAtPrice
+        })) : []
       };
       
       console.log("Submitting product data to API:", productData);
@@ -696,47 +781,39 @@ export const useProductForm = ({ productId }: UseProductFormProps) => {
   };
   
   return {
-    // State
     product,
-    isLoading,
     isSubmitting,
-    activeTab,
-    errors,
+    isLoading,
     deleteDialogOpen,
-    isEditMode,
+    errors,
+    activeTab,
     baseSlug,
     department,
-    availableBrands,
+    departmentId,
+    availableDepartments,
     availableCategories,
     isFetchingCategories,
+    isFetchingDepartments,
     uploadedFiles,
     
-    // State setters
-    setProduct,
+    // Functions
     setActiveTab,
     setDeleteDialogOpen,
-    setBaseSlug,
-    setDepartment,
     setUploadedFiles,
-    
-    // Event handlers
     handleChange,
+    handleDepartmentChange,
+    handleDepartmentIdChange,
+    handleBaseSlugChange,
     handleNumberChange,
     handleSelectChange,
     handleMultiSelectChange,
     handleSwitchChange,
-    handleDepartmentChange,
-    handleBaseSlugChange,
     handleAddColor,
     handleRemoveColor,
     handleAddImage,
     handleRemoveImage,
     handleReorderImages,
     handleDimensionsChange,
-    handleSubmit,
-    handleDelete,
-    
-    // Variant handlers
     handleVariantToggle,
     handleAddVariantOption,
     handleUpdateVariantOption,
@@ -744,12 +821,8 @@ export const useProductForm = ({ productId }: UseProductFormProps) => {
     handleGenerateVariants,
     handleUpdateVariant,
     handleRemoveVariant,
-    
-    // Utility functions
-    validateForm,
-    slugify,
-    generateFullSlug,
-    extractBaseSlug,
+    handleSubmit,
+    handleDelete
   };
 };
 

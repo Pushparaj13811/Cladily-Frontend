@@ -36,11 +36,12 @@ const ProductEditPage: React.FC = () => {
     activeTab,
     errors,
     deleteDialogOpen,
-    isEditMode,
     baseSlug,
     department,
-    availableBrands,
+    departmentId,
+    availableDepartments,
     availableCategories,
+    isFetchingDepartments,
     
     // State setters
     setActiveTab,
@@ -53,6 +54,7 @@ const ProductEditPage: React.FC = () => {
     handleSelectChange,
     handleSwitchChange,
     handleDepartmentChange,
+    handleDepartmentIdChange,
     handleBaseSlugChange,
     handleAddImage,
     handleRemoveImage,
@@ -70,6 +72,9 @@ const ProductEditPage: React.FC = () => {
     handleUpdateVariant,
     handleRemoveVariant,
   } = useProductForm({ productId: id });
+  
+  // Determine if we're in edit mode based on presence of productId
+  const isEditMode = Boolean(id);
   
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
@@ -122,15 +127,18 @@ const ProductEditPage: React.FC = () => {
                 errors={errors}
                 baseSlug={baseSlug}
                 department={department}
-                availableBrands={availableBrands}
+                departmentId={departmentId}
+                availableDepartments={availableDepartments}
                 handleChange={handleChange}
                 availableCategories={availableCategories}
                 handleNumberChange={handleNumberChange}
                 handleSelectChange={handleSelectChange}
                 handleSwitchChange={handleSwitchChange}
                 handleDepartmentChange={handleDepartmentChange}
+                handleDepartmentIdChange={handleDepartmentIdChange}
                 handleBaseSlugChange={handleBaseSlugChange}
                 handleMultiSelectChange={handleMultiSelectChange}
+                isFetchingDepartments={isFetchingDepartments}
               />
             </TabsContent>
             
@@ -198,47 +206,38 @@ const ProductEditPage: React.FC = () => {
               <Save className="mr-2 h-4 w-4" />
               {isSubmitting 
                 ? isEditMode ? 'Updating...' : 'Creating...' 
-                : isEditMode ? 'Update Product' : 'Create Product'
+                : isEditMode ? 'Update' : 'Create'
               }
-            </Button>
+              </Button>
+            </div>
           </div>
-        </div>
-      </form>
+        </form>
       )}
-
+      
       {/* Delete Confirmation Dialog */}
-      <Dialog 
-        open={deleteDialogOpen} 
-        onOpenChange={setDeleteDialogOpen}
-      >
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogTitle>Are you sure you want to delete this product?</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this product? This action cannot be undone.
+              This action cannot be undone. This will permanently delete the
+              product and remove its data from our servers.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant="outline"
+            <Button 
+              variant="outline" 
               onClick={() => setDeleteDialogOpen(false)}
               disabled={isSubmitting}
             >
               Cancel
             </Button>
-            <Button
-              variant="destructive"
+            <Button 
+              variant="destructive" 
               onClick={handleDelete}
               disabled={isSubmitting}
             >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                'Delete Product'
-              )}
+              {isSubmitting ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogFooter>
         </DialogContent>
