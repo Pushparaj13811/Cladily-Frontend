@@ -1,20 +1,10 @@
 import api from '@app/lib/api';
-import { Category, CreateCategoryDto, UpdateCategoryDto, Department } from '@shared/types';
+import { Category, UpdateCategoryDto, Department } from '@shared/types';
 import { getAllDepartments } from './departmentAPI';
 
 // API base URL
 const API_URL = "/api/categories";
 
-// API error response interface
-interface ApiErrorResponse {
-  data?: {
-    message?: string;
-    statusCode?: number;
-    success?: boolean;
-  };
-  status?: number;
-  statusText?: string;
-}
 
 /**
  * Extract data from API response
@@ -121,11 +111,38 @@ export const getSubcategories = async (parentId: string): Promise<Category[]> =>
  */
 export const getCategoryById = async (id: string): Promise<Category> => {
   try {
-    const response = await api.get(`${API_URL}/id/${id}`);
-    return extractData<Category>(response);
+    console.log(`Fetching category with ID: ${id}`);
+    const response = await api.get(`/api/categories/id/${id}`);
+    console.log("Category by ID response:", response.data);
+    
+    // Handle different response formats
+    let category = null;
+    
+    // Format: { success, statusCode, message: {...category data} }
+    if (response.data?.success && response.data?.message && typeof response.data.message === 'object') {
+      console.log("Found category in response.data.message");
+      category = response.data.message;
+    }
+    // Format: { success, statusCode, data: {...category data} }
+    else if (response.data?.success && response.data?.data && typeof response.data.data === 'object') {
+      console.log("Found category in response.data.data");
+      category = response.data.data;
+    }
+    // Format: {...category data} (direct object)
+    else if (response.data && typeof response.data === 'object' && 'id' in response.data) {
+      console.log("Found category directly in response.data");
+      category = response.data;
+    }
+    
+    if (!category || typeof category === 'string' || !('id' in category)) {
+      console.error("Invalid category data format:", category);
+      throw new Error("Failed to fetch category");
+    }
+    
+    return category as Category;
   } catch (error) {
     console.error(`Error fetching category ${id}:`, error);
-    throw new Error('Failed to fetch category');
+    throw new Error("Failed to fetch category");
   }
 };
 
@@ -145,23 +162,39 @@ export const getCategoryBySlug = async (slug: string): Promise<Category> => {
 /**
  * Create a new category
  */
-export const createCategory = async (category: CreateCategoryDto): Promise<Category> => {
+export const createCategory = async (categoryData: Category): Promise<Category> => {
   try {
-    console.log("Sending category data to API:", category);
-    const response = await api.post(`${API_URL}`, category);
-    return extractData<Category>(response);
+    const response = await api.post('/api/categories', categoryData);
+    console.log("Create category response:", response.data);
+    
+    // Handle different response formats
+    let category = null;
+    
+    // Format: { success, statusCode, message: {...category data} }
+    if (response.data?.success && response.data?.message && typeof response.data.message === 'object') {
+      console.log("Found created category in response.data.message");
+      category = response.data.message;
+    }
+    // Format: { success, statusCode, data: {...category data} }
+    else if (response.data?.success && response.data?.data && typeof response.data.data === 'object') {
+      console.log("Found created category in response.data.data");
+      category = response.data.data;
+    }
+    // Format: {...category data} (direct object)
+    else if (response.data && typeof response.data === 'object' && 'id' in response.data) {
+      console.log("Found created category directly in response.data");
+      category = response.data;
+    }
+    
+    if (!category || typeof category === 'string' || !('id' in category)) {
+      console.error("Invalid created category data format:", category);
+      throw new Error("Failed to create category");
+    }
+    
+    return category as Category;
   } catch (error) {
     console.error('Error creating category:', error);
-    if (error && typeof error === 'object' && 'response' in error) {
-      console.error('API Error response:', error.response);
-      
-      // Extract the specific error message from the response if available
-      const errorResponse = error.response as ApiErrorResponse;
-      if (errorResponse?.data?.message) {
-        throw new Error(errorResponse.data.message);
-      }
-    }
-    throw new Error('Failed to create category');
+    throw new Error("Failed to create category");
   }
 };
 

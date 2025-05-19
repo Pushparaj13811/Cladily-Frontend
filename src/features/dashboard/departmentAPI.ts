@@ -35,7 +35,7 @@ const extractData = <T>(response: AxiosResponse): T => {
 export const getAllDepartments = async (): Promise<Department[]> => {
     try {
         const response = await api.get(API_URL);
-        console.log("Raw departments API response:", response.data);
+        // console.log("Raw departments API response:", response.data);
 
         // Handle different response formats
         let departments: Department[] = [];
