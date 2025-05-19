@@ -2,6 +2,13 @@
  * Type definitions for products
  */
 
+export enum WeightUnit {
+  GRAMS = 'GRAMS',
+  KILOGRAMS = 'KILOGRAMS',
+  POUNDS = 'POUNDS',
+  OUNCES = 'OUNCES'
+}
+
 export interface ProductColor {
   name: string;
   code: string;
@@ -13,12 +20,14 @@ export interface ProductColor {
 export interface Product {
   id: number;
   name: string;
+  slug?: string;
   price: string;
   originalPrice: string | null;
   image: string;
   discount: string | null;
   department: string;
   description: string;
+  shortDescription?: string;
   material: string;
   care: string[];
   features: string[];
@@ -31,6 +40,15 @@ export interface Product {
   deliveryInfo: string;
   inStock: boolean;
   images: string[];
+  sku?: string;
+  barcode?: string;
+  weight?: number;
+  weightUnit?: WeightUnit;
+  dimensions?: {
+    length: number;
+    width: number;
+    height: number;
+  };
 }
 
 /**
@@ -38,12 +56,14 @@ export interface Product {
  */
 export interface CreateProductDto {
   name: string;
+  slug?: string;
   price: string;
   originalPrice?: string | null;
   image: string;
   discount?: string | null;
   department: string;
   description: string;
+  shortDescription?: string;
   material: string;
   care: string[];
   features: string[];
@@ -54,6 +74,15 @@ export interface CreateProductDto {
   deliveryInfo: string;
   inStock: boolean;
   images: string[];
+  sku?: string;
+  barcode?: string;
+  weight?: number;
+  weightUnit?: WeightUnit;
+  dimensions?: {
+    length: number;
+    width: number;
+    height: number;
+  };
 }
 
 /**
@@ -61,12 +90,14 @@ export interface CreateProductDto {
  */
 export interface UpdateProductDto {
   name?: string;
+  slug?: string;
   price?: string;
   originalPrice?: string | null;
   image?: string;
   discount?: string | null;
   department?: string;
   description?: string;
+  shortDescription?: string;
   material?: string;
   care?: string[];
   features?: string[];
@@ -77,6 +108,15 @@ export interface UpdateProductDto {
   deliveryInfo?: string;
   inStock?: boolean;
   images?: string[];
+  sku?: string;
+  barcode?: string;
+  weight?: number;
+  weightUnit?: WeightUnit;
+  dimensions?: {
+    length?: number;
+    width?: number;
+    height?: number;
+  };
 }
 
 /**
@@ -112,4 +152,4 @@ export interface SaleBanner {
   ctaMen: string;
   hrefWomen: string;
   hrefMen: string;
-} 
+}

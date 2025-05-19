@@ -11,6 +11,12 @@ export * from './store';
 export * from './footer';
 export * from './category';
 export * from './base';
+export * from './productForm';
+
 // Export admin types using namespace to avoid ambiguities with checkout
 import * as AdminTypes from './admin';
 export { AdminTypes };
+
+// Re-export important enums for easy access
+export { Department } from './category';
+export { WeightUnit } from './product';

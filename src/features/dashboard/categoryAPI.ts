@@ -1,5 +1,5 @@
 import api from '@app/lib/api';
-import { Category, CreateCategoryDto, UpdateCategoryDto } from '@shared/types';
+import { Category, CreateCategoryDto, UpdateCategoryDto, Department } from '@shared/types';
 
 // API base URL
 const API_URL = "/api/categories";
@@ -42,6 +42,25 @@ export const getAllCategories = async (): Promise<Category[]> => {
   } catch (error) {
     console.error('Error fetching categories:', error);
     throw new Error('Failed to fetch categories');
+  }
+};
+
+/**
+ * Fetch categories filtered by department
+ */
+export const getCategoriesByDepartment = async (department: Department | string): Promise<Category[]> => {
+  try {
+    // First get all categories
+    const allCategories = await getAllCategories();
+    
+    // Filter client-side by department
+    // Note: In a real production app, you would ideally add this filter to the API
+    return allCategories.filter(category => 
+      category.department === department.toString()
+    );
+  } catch (error) {
+    console.error(`Error fetching categories for department ${department}:`, error);
+    throw new Error(`Failed to fetch categories for department ${department}`);
   }
 };
 

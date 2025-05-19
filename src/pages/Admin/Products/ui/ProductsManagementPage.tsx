@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PlusCircle, Edit2, Trash2, Search, ArrowUpDown, Loader2 } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, ArrowUpDown } from 'lucide-react';
 import { Button } from '@app/components/ui/button';
 import { Input } from '@app/components/ui/input';
-import { useToast } from '@app/hooks/use-toast';
 import {
   Table,
   TableBody,
@@ -20,167 +19,153 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@app/components/ui/dialog';
-import { getAllProducts, deleteProduct } from '@features/dashboard';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@app/components/ui/dropdown-menu';
+import { Badge } from '@app/components/ui/badge';
+import { getAllProducts, deleteProduct } from '@features/dashboard/productAPI';
 import { Product } from '@shared/types';
-
-// Type for possible response format
-interface ProductsResponse {
-  products: Product[];
-  [key: string]: unknown;
-}
+import { useToast } from '@app/hooks/use-toast';
 
 const ProductsManagementPage: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  // State
-  const [searchQuery, setSearchQuery] = useState('');
+  
   const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [sortColumn, setSortColumn] = useState<keyof Product>('name');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<{ id: number; name: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-
-  // Fetch products on mount
+  const [sortField, setSortField] = useState<'name' | 'price' | 'category'>('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  
+  // Load products
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setIsLoading(true);
-        setError(null);
-        const data = await getAllProducts();
-        
-        // Validate that data is an array before setting state
-        if (Array.isArray(data)) {
-          setProducts(data);
-        } else if (data && typeof data === 'object') {
-          // Check if the data has a products property that is an array
-          const dataObj = data as ProductsResponse;
-          if ('products' in dataObj && Array.isArray(dataObj.products)) {
-            setProducts(dataObj.products);
-          } else {
-            console.error('Invalid products data format:', data);
-            setProducts([]);
-            setError('Received invalid data format from server');
-            toast({
-              title: 'Error',
-              description: 'Failed to load products: Invalid data format',
-              variant: 'destructive',
-            });
-          }
-        } else {
-          console.error('Invalid products data format:', data);
-          setProducts([]);
-          setError('Received invalid data format from server');
-          toast({
-            title: 'Error',
-            description: 'Failed to load products: Invalid data format',
-            variant: 'destructive',
-          });
-        }
+        const fetchedProducts = await getAllProducts();
+        setProducts(fetchedProducts);
+        setFilteredProducts(fetchedProducts);
       } catch (error) {
         console.error('Error fetching products:', error);
-        setError('Failed to fetch products');
-        setProducts([]);
         toast({
-          title: 'Error',
-          description: 'Failed to load products',
+          title: 'Error loading products',
+          description: 'There was a problem loading the products. Please try again.',
           variant: 'destructive',
         });
       } finally {
         setIsLoading(false);
       }
     };
-
+    
     fetchProducts();
   }, [toast]);
-
-  // Filter products based on search query (with safety check)
-  const filteredProducts = Array.isArray(products) 
-    ? products.filter(product =>
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (product.description && product.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (product.category && product.category.toLowerCase().includes(searchQuery.toLowerCase()))
-      )
-    : [];
-
-  // Sort products
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    const valueA = a[sortColumn];
-    const valueB = b[sortColumn];
-
-    // Handle string comparisons
-    if (typeof valueA === 'string' && typeof valueB === 'string') {
-      return sortOrder === 'asc'
-        ? valueA.localeCompare(valueB)
-        : valueB.localeCompare(valueA);
+  
+  // Filter products based on search query
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredProducts(products);
+      return;
     }
-
-    // Handle number comparisons
-    if (typeof valueA === 'number' && typeof valueB === 'number') {
-      return sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
-    }
-
-    // Handle boolean comparisons
-    if (typeof valueA === 'boolean' && typeof valueB === 'boolean') {
-      if (sortOrder === 'asc') {
-        return valueA === valueB ? 0 : valueA ? 1 : -1;
-      } else {
-        return valueA === valueB ? 0 : valueA ? -1 : 1;
-      }
-    }
-
-    return 0;
-  });
-
-  // Handle column sort
-  const handleSort = (column: keyof Product) => {
-    if (sortColumn === column) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    
+    const query = searchQuery.toLowerCase();
+    const filtered = products.filter(product => 
+      product.name.toLowerCase().includes(query) ||
+      product.category.toLowerCase().includes(query) ||
+      product.subcategory.toLowerCase().includes(query)
+    );
+    
+    setFilteredProducts(filtered);
+  }, [searchQuery, products]);
+  
+  // Handle sorting
+  const handleSort = (field: 'name' | 'price' | 'category') => {
+    if (sortField === field) {
+      // Toggle direction if same field
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
-      setSortColumn(column);
-      setSortOrder('asc');
+      // Set new field and default to ascending
+      setSortField(field);
+      setSortDirection('asc');
     }
+    
+    // Sort the products
+    const sorted = [...filteredProducts].sort((a, b) => {
+      let aValue, bValue;
+      
+      if (field === 'name') {
+        aValue = a.name.toLowerCase();
+        bValue = b.name.toLowerCase();
+      } else if (field === 'price') {
+        aValue = parseFloat(a.price);
+        bValue = parseFloat(b.price);
+      } else {
+        aValue = a.category.toLowerCase();
+        bValue = b.category.toLowerCase();
+      }
+      
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+    
+    setFilteredProducts(sorted);
   };
-
+  
+  // Open delete confirmation dialog
+  const confirmDelete = (product: { id: number; name: string }) => {
+    setProductToDelete(product);
+    setDeleteDialogOpen(true);
+  };
+  
   // Handle product deletion
-  const handleDeleteProduct = async () => {
+  const handleDelete = async () => {
     if (!productToDelete) return;
-
+    
     setIsDeleting(true);
-
+    
     try {
       await deleteProduct(productToDelete.id.toString());
-
-      // Update local state - ensure products is an array before filtering
-      if (Array.isArray(products)) {
-        setProducts(products.filter(product => product.id !== productToDelete.id));
-      }
-
+      
+      // Update local state
+      setProducts(prevProducts => prevProducts.filter(p => p.id !== productToDelete.id));
+      
       toast({
         title: 'Product deleted',
         description: `${productToDelete.name} has been deleted successfully.`,
       });
-
+      
+      setDeleteDialogOpen(false);
       setProductToDelete(null);
-    } catch {
+    } catch (error) {
+      console.error('Error deleting product:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete product',
+        description: 'Failed to delete product. Please try again.',
         variant: 'destructive',
       });
     } finally {
       setIsDeleting(false);
     }
   };
-
-  // Format price for display
-  const formatPrice = (price: string): string => {
-    if (!price) return '$0.00';
-    return price.startsWith('$') ? price : `$${price}`;
+  
+  // Render product status badge
+  const renderStatusBadge = (inStock: boolean) => {
+    if (inStock) {
+      return <Badge className="bg-green-500">In Stock</Badge>;
+    } else {
+      return <Badge variant="destructive">Out of Stock</Badge>;
+    }
   };
-
+  
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
@@ -191,188 +176,148 @@ const ProductsManagementPage: React.FC = () => {
           </p>
         </div>
         <Button onClick={() => navigate('/admin/products/new')}>
-          <PlusCircle className="mr-2 h-4 w-4" />
+          <Plus className="mr-2 h-4 w-4" />
           Add Product
         </Button>
       </div>
-
-      {/* Search */}
-      <div className="flex items-center mb-6">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+      
+      <div className="mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search products by name, description, or category..."
-            className="pl-8"
+            placeholder="Search products..."
+            className="pl-10"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
       </div>
-
-      {/* Loading state */}
-      {isLoading ? (
-        <div className="flex justify-center items-center py-16">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          <span className="ml-2 text-lg text-muted-foreground">Loading products...</span>
-        </div>
-      ) : error ? (
-        <div className="text-center py-16">
-          <p className="text-red-500">{error}</p>
-          <Button
-            variant="outline"
-            className="mt-4"
-            onClick={() => window.location.reload()}
-          >
-            Try Again
-          </Button>
-        </div>
-      ) : (
-        <>
-          {/* Products Table */}
-          <div className="border rounded-md">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead
-                    className="cursor-pointer w-[250px]"
-                    onClick={() => handleSort('name')}
-                  >
-                    <div className="flex items-center space-x-1">
-                      <span>Product Name</span>
-                      {sortColumn === 'name' && (
-                        <ArrowUpDown className="h-4 w-4" />
-                      )}
-                    </div>
-                  </TableHead>
-                  <TableHead
-                    className="cursor-pointer"
-                    onClick={() => handleSort('category')}
-                  >
-                    <div className="flex items-center space-x-1">
-                      <span>Category</span>
-                      {sortColumn === 'category' && (
-                        <ArrowUpDown className="h-4 w-4" />
-                      )}
-                    </div>
-                  </TableHead>
-                  <TableHead
-                    className="cursor-pointer"
-                    onClick={() => handleSort('price')}
-                  >
-                    <div className="flex items-center space-x-1">
-                      <span>Price</span>
-                      {sortColumn === 'price' && (
-                        <ArrowUpDown className="h-4 w-4" />
-                      )}
-                    </div>
-                  </TableHead>
-                  <TableHead
-                    className="cursor-pointer"
-                    onClick={() => handleSort('inStock')}
-                  >
-                    <div className="flex items-center space-x-1">
-                      <span>Status</span>
-                      {sortColumn === 'inStock' && (
-                        <ArrowUpDown className="h-4 w-4" />
-                      )}
-                    </div>
-                  </TableHead>
-                  <TableHead>Actions</TableHead>
+      
+      <div className="border rounded-md">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[80px]">Image</TableHead>
+              <TableHead className="cursor-pointer" onClick={() => handleSort('name')}>
+                <div className="flex items-center">
+                  Name
+                  {sortField === 'name' && (
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  )}
+                </div>
+              </TableHead>
+              <TableHead className="cursor-pointer" onClick={() => handleSort('category')}>
+                <div className="flex items-center">
+                  Category
+                  {sortField === 'category' && (
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  )}
+                </div>
+              </TableHead>
+              <TableHead className="cursor-pointer" onClick={() => handleSort('price')}>
+                <div className="flex items-center">
+                  Price
+                  {sortField === 'price' && (
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  )}
+                </div>
+              </TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-10">
+                  <div className="flex justify-center">
+                    <svg className="animate-spin h-6 w-6 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : filteredProducts.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-10">
+                  {searchQuery ? 'No products match your search' : 'No products found'}
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredProducts.map((product) => (
+                <TableRow key={product.id}>
+                  <TableCell>
+                    {product.image && (
+                      <div className="h-12 w-12 rounded-md overflow-hidden">
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell className="font-medium">{product.name}</TableCell>
+                  <TableCell>{product.category}</TableCell>
+                  <TableCell className="whitespace-nowrap">${parseFloat(product.price).toFixed(2)}</TableCell>
+                  <TableCell>{renderStatusBadge(product.inStock)}</TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          Actions
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => navigate(`/admin/products/${product.id}`)}>
+                          <Edit2 className="mr-2 h-4 w-4" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className="text-red-600" 
+                          onClick={() => confirmDelete({ id: product.id, name: product.name })}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedProducts.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8">
-                      {searchQuery ? 'No products match your search' : 'No products found'}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  sortedProducts.map((product) => (
-                    <TableRow key={product.id}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center space-x-3">
-                          <div className="h-10 w-10 rounded-md overflow-hidden">
-                            <img 
-                              src={product.image} 
-                              alt={product.name}
-                              className="h-full w-full object-cover"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/150';
-                              }} 
-                            />
-                          </div>
-                          <span className="truncate">{product.name}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>{product.category}</TableCell>
-                      <TableCell>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{formatPrice(product.price)}</span>
-                          {product.originalPrice && (
-                            <span className="text-xs text-muted-foreground line-through">
-                              {formatPrice(product.originalPrice)}
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          product.inStock 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {product.inStock ? 'In Stock' : 'Out of Stock'}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => navigate(`/admin/products/${product.id}`)}
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setProductToDelete(product)}
-                          >
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </>
-      )}
-
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      
       {/* Delete Confirmation Dialog */}
-      <Dialog open={Boolean(productToDelete)} onOpenChange={(open) => !open && setProductToDelete(null)}>
+      <Dialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Product</DialogTitle>
+            <DialogTitle>Confirm Deletion</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete the product "{productToDelete?.name}"?
+              Are you sure you want to delete the product 
+              <span className="font-medium"> {productToDelete?.name}</span>?
               This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setProductToDelete(null)}
+              onClick={() => setDeleteDialogOpen(false)}
               disabled={isDeleting}
             >
               Cancel
             </Button>
             <Button
               variant="destructive"
-              onClick={handleDeleteProduct}
+              onClick={handleDelete}
               disabled={isDeleting}
             >
               {isDeleting ? 'Deleting...' : 'Delete'}

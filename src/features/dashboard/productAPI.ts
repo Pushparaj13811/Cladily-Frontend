@@ -1,8 +1,23 @@
 import api from '../../app/lib/api';
 import { Product, CreateProductDto, UpdateProductDto } from '@shared/types';
+import { AxiosResponse } from 'axios';
 
 // API endpoints
 const API_URL = '/api/products';
+
+/**
+ * Helper function to extract data from API response
+ */
+const extractData = <T>(response: AxiosResponse): T => {
+  // Handle different response formats
+  if (response?.data?.data) {
+    return response.data.data;
+  } else if (response?.data) {
+    return response.data;
+  }
+  
+  throw new Error('Invalid response format');
+};
 
 /**
  * Fetch all products
@@ -51,15 +66,7 @@ export const getAllProducts = async (): Promise<Product[]> => {
 export const getProductById = async (id: string): Promise<Product> => {
   try {
     const response = await api.get(`${API_URL}/${id}`);
-    
-    // Handle different response formats
-    if (response?.data?.data) {
-      return response.data.data;
-    } else if (response?.data) {
-      return response.data;
-    } 
-    
-    throw new Error('Invalid response format');
+    return extractData<Product>(response);
   } catch (error) {
     console.error(`Error fetching product ${id}:`, error);
     throw error;
@@ -68,46 +75,85 @@ export const getProductById = async (id: string): Promise<Product> => {
 
 /**
  * Create a new product
- * @param productData Product data
  */
-export const createProduct = async (productData: CreateProductDto): Promise<Product> => {
+export const createProduct = async (productData: CreateProductDto, imageFiles?: File[]): Promise<Product> => {
   try {
-    const response = await api.post(API_URL, productData);
-    
-    // Handle different response formats
-    if (response?.data?.data) {
-      return response.data.data;
-    } else if (response?.data) {
-      return response.data;
+    // Check if we have image files to upload
+    if (imageFiles && imageFiles.length > 0) {
+      // Use FormData to send files
+      const formData = new FormData();
+      
+      // Add product data as JSON
+      formData.append('productData', JSON.stringify(productData));
+      
+      // Add image files
+      imageFiles.forEach((file) => {
+        formData.append('images', file);
+      });
+      
+      const response = await api.post(`${API_URL}/`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      return extractData<Product>(response);
+    } else {
+      // Standard JSON request if no files
+      const response = await api.post(`${API_URL}/`, productData);
+      return extractData<Product>(response);
     }
-    
-    throw new Error('Invalid response format');
   } catch (error) {
     console.error('Error creating product:', error);
-    throw error;
+    throw new Error('Failed to create product');
   }
 };
 
 /**
  * Update an existing product
- * @param id Product ID
- * @param productData Updated product data
  */
-export const updateProduct = async (id: string, productData: UpdateProductDto): Promise<Product> => {
+export const updateProduct = async (
+  productId: string, 
+  productData: UpdateProductDto,
+  imageFiles?: File[],
+  deleteImageIds?: string[]
+): Promise<Product> => {
   try {
-    const response = await api.put(`${API_URL}/${id}`, productData);
-    
-    // Handle different response formats
-    if (response?.data?.data) {
-      return response.data.data;
-    } else if (response?.data) {
-      return response.data;
+    // Check if we have image files to upload or images to delete
+    if ((imageFiles && imageFiles.length > 0) || (deleteImageIds && deleteImageIds.length > 0)) {
+      // Use FormData to send files
+      const formData = new FormData();
+      
+      // Add product data as JSON
+      formData.append('productData', JSON.stringify(productData));
+      
+      // Add image files
+      if (imageFiles && imageFiles.length > 0) {
+        imageFiles.forEach((file) => {
+          formData.append('images', file);
+        });
+      }
+      
+      // Add image IDs to delete
+      if (deleteImageIds && deleteImageIds.length > 0) {
+        formData.append('deleteImageIds', JSON.stringify(deleteImageIds));
+      }
+      
+      const response = await api.put(`${API_URL}/${productId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      return extractData<Product>(response);
+    } else {
+      // Standard JSON request if no files
+      const response = await api.put(`${API_URL}/${productId}`, productData);
+      return extractData<Product>(response);
     }
-    
-    throw new Error('Invalid response format');
   } catch (error) {
-    console.error(`Error updating product ${id}:`, error);
-    throw error;
+    console.error('Error updating product:', error);
+    throw new Error('Failed to update product');
   }
 };
 
