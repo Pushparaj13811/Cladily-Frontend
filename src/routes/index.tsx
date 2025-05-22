@@ -44,6 +44,7 @@ import DetailsPage from '@pages/Account/Details/ui/DetailsPage';
 import AddressBookPage from '@pages/Account/AddressBook/ui/AddressBookPage';
 import ShoppingPreferencesPage from '@pages/Account/ShoppingPreferences/ui/ShoppingPreferencesPage';
 import CommunicationPreferencesPage from '@pages/Account/Communication/ui/CommunicationPreferencesPage';
+import DepartmentPage from '@pages/Admin/Departments/ui/DepartmentPage';
 
 /**
  * AnonymousRoute - Component that redirects to account page if user is already authenticated
@@ -197,6 +198,7 @@ export const AppRoutes = () => {
           <Route path="coupons" element={<CouponsManagementPage />} />
           <Route path="coupons/new" element={<CouponCreatePage />} />
           <Route path="coupons/:id" element={<CouponEditPage />} />
+          <Route path="departments" element={<DepartmentPage />} />
         </Route>
       </Routes>
     </PageTransition>

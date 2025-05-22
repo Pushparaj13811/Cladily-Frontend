@@ -4,7 +4,7 @@ interface CloudinaryOptions {
   width?: number;
   height?: number;
   crop?: string;
-  quality?: string;
+  quality?: string | number;
   format?: string;
 }
 
@@ -22,24 +22,35 @@ interface CloudinaryImage {
 export const generateCloudinaryUrl = (publicId: string, options: CloudinaryOptions = {}) => {
   if (!publicId) return '';
 
-  const cloudName = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
   if (!cloudName) {
     console.error('Cloudinary cloud name not configured');
     return '';
   }
 
-  const defaultOptions = {
-    quality: 'auto',
-    fetch_format: 'auto',
-    ...options
+  // Map parameter names to Cloudinary's single-letter prefixes
+  const paramMap: Record<string, string> = {
+    width: 'w',
+    height: 'h',
+    crop: 'c',
+    quality: 'q',
+    format: 'f',
+    fetch_format: 'f'
   };
 
-  const transformations = Object.entries(defaultOptions)
+  // Build transformation string with proper format
+  const transformations = Object.entries(options)
     .filter(([, value]) => value !== undefined)
-    .map(([key, value]) => `${key}_${value}`)
+    .map(([key, value]) => {
+      const param = paramMap[key] || key;
+      return `${param}_${value}`;
+    })
     .join(',');
 
-  return `https://res.cloudinary.com/${cloudName}/image/upload/${transformations}/${publicId}`;
+  const transformedImage = `https://res.cloudinary.com/${cloudName}/image/upload/${transformations}/${publicId}`;
+  console.log("Transformed image:", transformedImage);
+
+  return transformedImage;
 };
 
 /**

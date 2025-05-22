@@ -9,9 +9,18 @@ export interface Department {
     id: string;
     name: string;
     slug: string;
+    imageId: string;
     description?: string;
     createdAt: string;
     updatedAt: string;
+}
+
+// Department creation/update data type
+export interface DepartmentFormData {
+    name: string;
+    slug: string;
+    description?: string;
+    image?: File;
 }
 
 /**
@@ -47,7 +56,7 @@ export const getAllDepartments = async (): Promise<Department[]> => {
         } else if (Array.isArray(response.data)) {
             departments = response.data;
         }
-
+        console.log("Departments:", departments);
         return departments;
     } catch (error) {
         console.error('Error fetching departments:', error);
@@ -70,11 +79,24 @@ export const getDepartmentById = async (id: string): Promise<Department> => {
 };
 
 /**
- * Create a new department
+ * Create a new department with image upload support
  */
-export const createDepartment = async (departmentData: { name: string; description?: string }): Promise<Department> => {
+export const createDepartment = async (departmentData: DepartmentFormData): Promise<Department> => {
     try {
-        const response = await api.post(API_URL, departmentData);
+        const formData = new FormData();
+        formData.append('name', departmentData.name);
+        if (departmentData.description) {
+            formData.append('description', departmentData.description);
+        }
+        if (departmentData.image) {
+            formData.append('image', departmentData.image);
+        }
+
+        const response = await api.post(API_URL, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
         return extractData<Department>(response);
     } catch (error) {
         console.error('Error creating department:', error);
@@ -83,11 +105,24 @@ export const createDepartment = async (departmentData: { name: string; descripti
 };
 
 /**
- * Update an existing department
+ * Update an existing department with image upload support
  */
-export const updateDepartment = async (id: string, departmentData: { name?: string; description?: string }): Promise<Department> => {
+export const updateDepartment = async (id: string, departmentData: DepartmentFormData): Promise<Department> => {
     try {
-        const response = await api.put(`${API_URL}/${id}`, departmentData);
+        const formData = new FormData();
+        formData.append('name', departmentData.name);
+        if (departmentData.description) {
+            formData.append('description', departmentData.description);
+        }
+        if (departmentData.image) {
+            formData.append('image', departmentData.image);
+        }
+
+        const response = await api.put(`${API_URL}/${id}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
         return extractData<Department>(response);
     } catch (error) {
         console.error(`Error updating department ${id}:`, error);

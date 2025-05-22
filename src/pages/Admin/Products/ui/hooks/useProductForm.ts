@@ -18,12 +18,19 @@ import { getAllDepartments } from '@features/dashboard/departmentAPI';
 import { useToast } from '@app/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
-// Update the ProductImages interface to include optional file property
+// Define more specific interfaces for handling API responses
+interface ProductDepartment {
+  id?: string;
+  name: string;
+  [key: string]: any;
+}
+
 interface ProductImage {
   url: string;
-  altText: string;
-  position: number;
+  altText?: string;
+  position?: number;
   file?: File;
+  [key: string]: any;
 }
 
 // Helper function to generate slug
@@ -46,11 +53,12 @@ export const generateFullSlug = (department: Department | string, baseSlug: stri
   return `${deptSlug}/${cleanBaseSlug}`;
 };
 
-// Helper to extract base slug (without department)
-export const extractBaseSlug = (fullSlug: string): string => {
-  if (fullSlug && fullSlug.includes('/')) {
-    const parts = fullSlug.split('/');
-    return parts[parts.length - 1];
+// Helper function to extract base slug from full slug
+const extractBaseSlug = (fullSlug: string, dept?: Department | string): string => {
+  // Remove department prefix if it exists
+  const deptPrefix = dept ? String(dept).toLowerCase() : '';
+  if (deptPrefix && fullSlug.startsWith(`${deptPrefix}-`)) {
+    return fullSlug.substring(deptPrefix.length + 1);
   }
   return fullSlug;
 };
@@ -196,30 +204,60 @@ export const useProductForm = ({ productId }: UseProductFormProps) => {
     fetchCategories();
   }, [department, toast]); // Dependency on department ensures categories are updated when department changes
   
-  // Load product data if in edit mode
+  // Load product data from API when in edit mode
   useEffect(() => {
     if (isEditMode && productId) {
       const fetchProduct = async () => {
         try {
           setIsLoading(true);
+          console.log(`Fetching product with ID: ${productId}`);
+          
           const fetchedProduct = await getProductById(productId);
+
+          console.log("Fetched product data:", fetchedProduct);
           
-          // Extract department from slug or first category
-          let productDepartment = Department.Menswear;
-          if (fetchedProduct.slug && fetchedProduct.slug.includes('/')) {
-            const deptSlug = fetchedProduct.slug.split('/')[0];
-            if (deptSlug === 'womenswear') productDepartment = Department.Womenswear;
-            else if (deptSlug === 'kidswear') productDepartment = Department.Kidswear;
+          if (!fetchedProduct || !fetchedProduct.id) {
+            console.error("Invalid product data received", fetchedProduct);
+            toast({
+              title: 'Error',
+              description: 'Failed to load product data - invalid or empty response',
+              variant: 'destructive',
+            });
+            setIsLoading(false);
+            safeNavigate('/admin/products');
+            return;
           }
-          setDepartment(productDepartment);
           
-          // Extract base slug
-          const extractedBaseSlug = extractBaseSlug(fetchedProduct.slug || '');
-          setBaseSlug(extractedBaseSlug);
+          // Handle department information
+          const dept = fetchedProduct.department;
+          if (dept) {
+            if (typeof dept === 'string') {
+              setDepartment(dept as Department);
+            } else if (
+              typeof dept === 'object' && 
+              dept !== null
+            ) {
+              // Use properly typed interface instead of any
+              const deptObj = dept as ProductDepartment;
+              if ('name' in deptObj && typeof deptObj.name === 'string') {
+                setDepartment(deptObj.name as Department);
+              }
+            }
+          }
+          
+          if (fetchedProduct.departmentId) {
+            setDepartmentId(fetchedProduct.departmentId);
+          }
+          
+          // Extract base slug without department prefix
+          if (fetchedProduct.slug) {
+            const extractedBaseSlug = extractBaseSlug(fetchedProduct.slug, fetchedProduct.department as Department);
+            setBaseSlug(extractedBaseSlug);
+          }
           
           // Convert API product to form state
           setProduct({
-            name: fetchedProduct.name,
+            name: fetchedProduct.name || '',
             slug: fetchedProduct.slug || '',
             description: fetchedProduct.description || '',
             shortDescription: fetchedProduct.shortDescription || '',
@@ -228,41 +266,82 @@ export const useProductForm = ({ productId }: UseProductFormProps) => {
             cost: '',
             sku: fetchedProduct.sku || '',
             barcode: fetchedProduct.barcode || '',
-            weight: '',
-            weightUnit: WeightUnit.KILOGRAMS,
-            dimensions: { length: '', width: '', height: '' },
-            status: 'ACTIVE',
+            weight: fetchedProduct.weight?.toString() || '',
+            weightUnit: fetchedProduct.weightUnit || WeightUnit.KILOGRAMS,
+            dimensions: { 
+              length: fetchedProduct.dimensions?.length?.toString() || '',
+              width: fetchedProduct.dimensions?.width?.toString() || '', 
+              height: fetchedProduct.dimensions?.height?.toString() || '' 
+            },
+            status: fetchedProduct.status || 'ACTIVE',
             taxable: true,
             taxCode: '',
-            featuredImageUrl: fetchedProduct.image || '',
+            featuredImageUrl: fetchedProduct.image || fetchedProduct.featuredImageUrl || '',
             searchKeywords: '',
             categoryId: fetchedProduct.category || null,
             categoryIds: [],
             colors: fetchedProduct.colors || [],
             tags: [],
-            images: fetchedProduct.images?.map((url, index) => ({ 
-              url, 
-              altText: fetchedProduct.name, 
-              position: index 
-            })) || [],
-            hasVariants: false,
-            variants: [],
+            images: Array.isArray(fetchedProduct.images) 
+              ? fetchedProduct.images.map((item, index) => {
+                  let url = '';
+                  if (typeof item === 'string') {
+                    url = item;
+                  } else if (
+                    item && 
+                    typeof item === 'object'
+                  ) {
+                    // Use properly typed interface instead of any
+                    const imgObj = item as ProductImage;
+                    if ('url' in imgObj && typeof imgObj.url === 'string') {
+                      url = imgObj.url;
+                    }
+                  }
+                  return {
+                    url,
+                    altText: fetchedProduct.name || '',
+                    position: index
+                  };
+                })
+              : [],
+            hasVariants: Boolean(fetchedProduct.hasVariants || (fetchedProduct.variants && fetchedProduct.variants.length > 0)),
+            variants: fetchedProduct.variants 
+              ? fetchedProduct.variants.map(v => ({
+                  id: v.id?.toString(),
+                  name: v.name || '',
+                  sku: v.sku || '',
+                  barcode: v.barcode || '',
+                  price: v.price?.toString() || '',
+                  compareAtPrice: v.compareAtPrice?.toString() || '',
+                  position: v.position || 0,
+                  options: v.options || {},
+                  imageUrl: v.imageUrl || '',
+                  inventoryQuantity: v.inventoryQuantity || 0,
+                  backorder: v.backorder || false,
+                  requiresShipping: v.requiresShipping !== false
+                }))
+              : [],
             variantOptions: []
           });
           
+          console.log("Product state initialized successfully");
           setIsLoading(false);
         } catch (error: unknown) {
+          console.error('Failed to fetch product:', error);
           toast({
             title: 'Error',
             description: error instanceof Error ? error.message : 'Failed to load product data',
             variant: 'destructive',
           });
           setIsLoading(false);
-          navigate('/admin/products');
+          safeNavigate('/admin/products');
         }
       };
       
       fetchProduct();
+    } else if (!isEditMode) {
+      // Clear form for new product creation
+      setIsLoading(false);
     }
   }, [productId, isEditMode, navigate, toast]);
   
@@ -703,7 +782,7 @@ export const useProductForm = ({ productId }: UseProductFormProps) => {
           description: `${product.name} has been updated successfully.`,
         });
         
-        navigate('/admin/products');
+        safeNavigate('/admin/products');
       } else {
         await createProduct(productData, imageFiles);
         
@@ -712,7 +791,7 @@ export const useProductForm = ({ productId }: UseProductFormProps) => {
           description: `${product.name} has been created successfully.`,
         });
         
-        navigate('/admin/products');
+        safeNavigate('/admin/products');
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : (isEditMode ? 'Failed to update product' : 'Failed to create product');
@@ -766,7 +845,7 @@ export const useProductForm = ({ productId }: UseProductFormProps) => {
       });
       
       setDeleteDialogOpen(false);
-      navigate('/admin/products');
+      safeNavigate('/admin/products');
     } catch (error: unknown) {
       toast({
         title: 'Error',
@@ -775,6 +854,17 @@ export const useProductForm = ({ productId }: UseProductFormProps) => {
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+  
+  // Add safe navigation helper
+  const safeNavigate = (path: string) => {
+    try {
+      navigate(path);
+    } catch (error) {
+      console.error('Navigation error:', error);
+      // Force a reload if navigation fails
+      window.location.href = path;
     }
   };
   

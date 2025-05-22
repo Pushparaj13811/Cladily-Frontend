@@ -68,6 +68,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 { title: 'All Products', href: '/admin/products' },
                 { title: 'Add New', href: '/admin/products/new' },
                 { title: 'Categories', href: '/admin/categories' },
+                { title: 'Departments', href: '/admin/departments' },
             ],
         },
         {
