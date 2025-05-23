@@ -288,7 +288,7 @@ const CouponEditPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
+    <div className="p-6 w-full">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold">

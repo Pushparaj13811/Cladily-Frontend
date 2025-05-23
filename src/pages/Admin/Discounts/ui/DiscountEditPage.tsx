@@ -225,7 +225,7 @@ const DiscountEditPage: React.FC = () => {
       case DiscountType.BUY_X_GET_Y:
         return (
           <>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="p-6 w-full">
               <FormField
                 control={form.control}
                 name="buyQuantity"
